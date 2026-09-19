@@ -4,6 +4,14 @@ import type { ModelAsset, Product } from "@contracts";
 
 export type ImportResult = { product: Product; asset: ModelAsset; cost?: number; cached?: boolean; page?: { title: string; images: string[]; dimensionsText: string } };
 
+/** POST a product link to the dev server; resolves with the new catalog entry (throws with a readable message). */
+export async function importProductUrl(url: string): Promise<ImportResult> {
+  const res = await fetch("/api/import-product", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
+  const json = (await res.json()) as ImportResult & { error?: string };
+  if (!res.ok || json.error) throw new Error(json.error || `Import failed (${res.status})`);
+  return json;
+}
+
 export function mountImporter(root: HTMLElement, onImported: (r: ImportResult) => void): { open: () => void } {
   const close = () => { root.hidden = true; };
   root.addEventListener("click", (e) => { if (e.target === root) close(); });
@@ -34,9 +42,7 @@ export function mountImporter(root: HTMLElement, onImported: (r: ImportResult) =
       let i = 0; status.textContent = steps[0];
       const tick = window.setInterval(() => { i = Math.min(steps.length - 1, i + 1); status.textContent = steps[i]; }, 4000);
       try {
-        const res = await fetch("/api/import-product", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
-        const json = (await res.json()) as ImportResult & { error?: string };
-        if (!res.ok || json.error) throw new Error(json.error || `Import failed (${res.status})`);
+        const json = await importProductUrl(url);
         status.className = "status ok";
         status.textContent = `Added "${json.product.title}"${json.cached ? " (from cache)" : json.cost != null ? ` · cost $${json.cost.toFixed(3)}` : ""}`;
         onImported(json);

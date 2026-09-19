@@ -6,13 +6,37 @@ import { join } from "node:path";
 
 const PRICING = { "gpt-4o-mini": [0.15, 0.6], "gpt-4.1-mini": [0.4, 1.6], "gpt-4.1-nano": [0.1, 0.4] }; // USD per 1M tokens (in, out)
 
+/** Session spend tally shared by every OpenAI-backed endpoint (.cache/openai-usage.json). */
+export function createUsage(root, budgetUsd = 5) {
+  const usageFile = join(root, ".cache", "openai-usage.json");
+  mkdirSync(join(root, ".cache"), { recursive: true });
+  const read = () => { try { return JSON.parse(readFileSync(usageFile, "utf8")); } catch { return { usd: 0, calls: 0 }; } };
+  const add = (usd) => { const u = read(); u.usd += usd; u.calls += 1; writeFileSync(usageFile, JSON.stringify(u)); return u; };
+  const assertBudget = () => { const u = read(); if (u.usd >= budgetUsd) throw new Error(`OpenAI budget cap reached ($${u.usd.toFixed(2)} of $${budgetUsd}). Delete .cache/openai-usage.json to reset.`); };
+  return { read, add, assertBudget, budgetUsd };
+}
+
+/** One strict-JSON chat completion. Returns parsed data plus token usage and estimated cost. */
+export async function chatJson({ apiKey, model, system, content, schema, name, maxTokens = 800, temperature = 0.2 }) {
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not set in apps/web/.env");
+  const body = {
+    model, max_tokens: maxTokens, temperature,
+    messages: [{ role: "system", content: system }, { role: "user", content }],
+    response_format: { type: "json_schema", json_schema: { name, strict: true, schema } },
+  };
+  const res = await fetch("https://api.openai.com/v1/chat/completions", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` }, body: JSON.stringify(body), signal: AbortSignal.timeout(60_000) });
+  const json = await res.json();
+  if (!res.ok) throw new Error(`OpenAI: ${json.error?.message ?? res.status}`);
+  const text = json.choices?.[0]?.message?.content ?? "{}";
+  const usage = json.usage ?? {};
+  return { data: JSON.parse(text), usage, cost: estimateCost(model, usage) };
+}
+
 export function createImporter({ root, apiKey, model = "gpt-4o-mini", budgetUsd = 5 }) {
   const cacheDir = join(root, ".cache", "imports");
-  const usageFile = join(root, ".cache", "openai-usage.json");
   mkdirSync(cacheDir, { recursive: true });
-
-  const readUsage = () => { try { return JSON.parse(readFileSync(usageFile, "utf8")); } catch { return { usd: 0, calls: 0 }; } };
-  const addUsage = (usd) => { const u = readUsage(); u.usd += usd; u.calls += 1; writeFileSync(usageFile, JSON.stringify(u)); return u; };
+  const usage = createUsage(root, budgetUsd);
+  const readUsage = usage.read;
 
   async function importProduct(url) {
     const key = createHash("sha1").update(url).digest("hex").slice(0, 16);
@@ -21,12 +45,11 @@ export function createImporter({ root, apiKey, model = "gpt-4o-mini", budgetUsd 
 
     const page = await scrape(url);
     if (!apiKey) throw new Error("OPENAI_API_KEY is not set in apps/web/.env");
-    const usage = readUsage();
-    if (usage.usd >= budgetUsd) throw new Error(`OpenAI budget cap reached ($${usage.usd.toFixed(2)} of $${budgetUsd}). Delete .cache/openai-usage.json to reset.`);
+    usage.assertBudget();
 
     const result = await askModel({ apiKey, model, page, url });
-    const cost = estimateCost(model, result.usage);
-    const total = addUsage(cost);
+    const cost = result.cost;
+    const total = usage.add(cost);
     console.log(`[import] ${url}\n  tokens in=${result.usage.prompt_tokens} out=${result.usage.completion_tokens} → $${cost.toFixed(4)} (session $${total.usd.toFixed(3)} of $${budgetUsd})`);
 
     const data = result.data;
@@ -61,7 +84,7 @@ export function createImporter({ root, apiKey, model = "gpt-4o-mini", budgetUsd 
   return { importProduct, readUsage };
 }
 
-function estimateCost(model, usage) {
+export function estimateCost(model, usage) {
   const [pin, pout] = PRICING[model] ?? [1, 4];
   return ((usage?.prompt_tokens ?? 0) * pin + (usage?.completion_tokens ?? 0) * pout) / 1e6;
 }
@@ -70,7 +93,7 @@ function estimateCost(model, usage) {
 export async function scrape(url) {
   const res = await fetch(url, {
     headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36", Accept: "text/html,*/*" },
-    redirect: "follow",
+    redirect: "follow", signal: AbortSignal.timeout(12_000),
   });
   if (!res.ok) throw new Error(`Couldn't fetch the page (${res.status})`);
   const html = (await res.text()).slice(0, 2_000_000);
@@ -173,16 +196,7 @@ async function askModel({ apiKey, model, page, url }) {
   const inlined = (await Promise.all(page.images.slice(0, 5).map(inlineImage))).filter(Boolean).slice(0, 3);
   page.imagesUsed = inlined.length;
   for (const data of inlined) content.push({ type: "image_url", image_url: { url: data, detail: "low" } });
-  const body = {
-    model, max_tokens: 2500, temperature: 0.2,
-    messages: [{ role: "system", content: SYSTEM }, { role: "user", content }],
-    response_format: { type: "json_schema", json_schema: { name: "furniture_import", strict: true, schema: SPEC_SCHEMA } },
-  };
-  const res = await fetch("https://api.openai.com/v1/chat/completions", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` }, body: JSON.stringify(body) });
-  const json = await res.json();
-  if (!res.ok) throw new Error(`OpenAI: ${json.error?.message ?? res.status}`);
-  const text = json.choices?.[0]?.message?.content ?? "{}";
-  return { data: JSON.parse(text), usage: json.usage ?? {} };
+  return chatJson({ apiKey, model, system: SYSTEM, content, schema: SPEC_SCHEMA, name: "furniture_import", maxTokens: 2500 });
 }
 
 /** Same fix as src/interactions/specBuilder.ts tidySpec, applied before the spec is saved. */

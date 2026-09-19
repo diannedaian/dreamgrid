@@ -11,6 +11,7 @@ export class MeasureTool {
   private markers: Mesh[] = [];
   private line: Line;
   private hoverPoint: Vector3 | null = null;
+  private once: ((meters: number) => void) | null = null;
 
   constructor(
     private scene: Object3D,
@@ -37,6 +38,12 @@ export class MeasureTool {
 
   toggle() { this.active ? this.stop() : this.start(); }
 
+  /** Start measuring; call `cb` with the distance (meters) once two points are picked, then stop. */
+  measureOnce(cb: (meters: number) => void) {
+    this.once = cb;
+    this.start();
+  }
+
   start() {
     this.active = true;
     this.points = [];
@@ -50,6 +57,7 @@ export class MeasureTool {
     this.active = false;
     this.points = [];
     this.hoverPoint = null;
+    this.once = null;
     delete this.canvas.dataset.measuring;
     this.canvas.style.cursor = "";
     this.render();
@@ -99,6 +107,12 @@ export class MeasureTool {
     this.points.push(p);
     this.hoverPoint = null;
     this.render();
+    if (this.points.length === 2 && this.once) {
+      const cb = this.once;
+      const d = this.points[0].distanceTo(this.points[1]);
+      this.stop();
+      cb(d);
+    }
   }
 
   private render() {

@@ -5,7 +5,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import type { RoomSpec } from "@contracts";
+import type { ModelAsset, Product, RoomSpec } from "@contracts";
 import { RoomShell } from "./room/buildRoom";
 import { DEFAULT_SUN, lookAt, type SunSettings } from "./room/sun";
 import { DEFAULT_FLOOR, DEFAULT_PAINT } from "./room/floors";
@@ -26,6 +26,8 @@ import { mountDetail } from "./catalog/detail";
 import { mountImporter } from "./catalog/importer";
 import { createDesignStore } from "./interactions/designs";
 import { mountDesignsBar } from "./catalog/designsBar";
+import { mountShopBar } from "./catalog/shopBar";
+import { importProductUrl } from "./catalog/importer";
 
 const overlay = document.getElementById("dims") as HTMLDivElement;
 const form = document.getElementById("dims-form") as HTMLFormElement;
@@ -245,11 +247,12 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       thumbnail: (entry, size) => thumbs.render(entry, size),
       onAdd: (entry) => placement!.add(entry.product, entry.asset, [0, 0, 0]),
     });
-    const importer = mountImporter(document.getElementById("import-popup")!, (r) => {
+    const onImported = (r: { product: Product; asset: ModelAsset }) => {
       catalog.add([r.product], [r.asset]);
       const entry = catalog.get(r.product.id);
       if (entry) detail.open(entry);
-    });
+    };
+    const importer = mountImporter(document.getElementById("import-popup")!, onImported);
     mountSidebar(sidebar, {
       catalog,
       drag: { start: (entry, e) => placement!.beginCatalogDrag(entry, e) },
@@ -303,6 +306,12 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       const r = canvas.getBoundingClientRect();
       measureLabel.style.left = `${r.left + ((v.x + 1) / 2) * r.width}px`;
       measureLabel.style.top = `${r.top + ((1 - v.y) / 2) * r.height - 14}px`;
+    });
+
+    // Right drawer: furniture browser + shopping agent.
+    mountShopBar(document.getElementById("rightbar")!, {
+      addFromUrl: async (url) => { const r = await importProductUrl(url); onImported(r); return { title: r.product.title }; },
+      measure: (cb) => measure.measureOnce(cb),
     });
 
     // Reset: back to an empty room with the same measurements (two clicks, no dialog).
