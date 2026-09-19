@@ -29,7 +29,7 @@ export function mountDetail(root: HTMLElement, o: DetailOptions): { open: (entry
           <dl>
             <dt>Size</dt><dd>${inches(w)}″ W × ${inches(d)}″ D × ${inches(h)}″ H</dd>
           </dl>
-          <div class="shop"><span>Shopping info coming soon</span>${product.sourceUrl ? `<a href="${esc(product.sourceUrl)}" target="_blank" rel="noopener">View listing</a>` : ""}</div>
+          ${product.sourceUrl ? `<div class="shop"><a href="${esc(product.sourceUrl)}" target="_blank" rel="noopener">View listing at ${esc(product.merchant || new URL(product.sourceUrl).host.replace(/^www\./, ""))} ↗</a></div>` : ""}
           <button type="button" class="add">Add to room</button>
         </div>
       </div>`;
