@@ -1,0 +1,102 @@
+[
+  {
+    "id": "product-bed-compact-twin",
+    "title": "Compact Twin Platform Bed",
+    "category": "bed",
+    "priceUsd": 199,
+    "merchant": "DreamGrid Demo Catalog",
+    "sourceUrl": "https://example.com/products/compact-twin-bed",
+    "imageUrl": "/demo-assets/previews/compact-twin-bed.webp",
+    "dimensionsM": [1.05, 0.55, 2.03],
+    "styleTags": ["cozy", "minimal", "dorm"],
+    "colorTags": ["birch", "cream"],
+    "modelAssetId": "asset-bed-compact-twin"
+  },
+  {
+    "id": "product-desk-birch",
+    "title": "Birch Study Desk",
+    "category": "desk",
+    "priceUsd": 129,
+    "merchant": "DreamGrid Demo Catalog",
+    "sourceUrl": "https://example.com/products/birch-study-desk",
+    "imageUrl": "/demo-assets/previews/birch-study-desk.webp",
+    "dimensionsM": [1.2, 0.75, 0.6],
+    "styleTags": ["minimal", "scandinavian", "study"],
+    "colorTags": ["birch", "white"],
+    "modelAssetId": "asset-desk-birch"
+  },
+  {
+    "id": "product-chair-sage",
+    "title": "Sage Task Chair",
+    "category": "chair",
+    "priceUsd": 89,
+    "merchant": "DreamGrid Demo Catalog",
+    "sourceUrl": "https://example.com/products/sage-task-chair",
+    "imageUrl": "/demo-assets/previews/sage-task-chair.webp",
+    "dimensionsM": [0.58, 0.92, 0.61],
+    "styleTags": ["soft", "modern", "study"],
+    "colorTags": ["sage", "white"]
+  },
+  {
+    "id": "product-shelf-cube",
+    "title": "Two-by-Two Cube Shelf",
+    "category": "shelf",
+    "priceUsd": 79,
+    "merchant": "DreamGrid Demo Catalog",
+    "sourceUrl": "https://example.com/products/cube-shelf",
+    "imageUrl": "/demo-assets/previews/cube-shelf.webp",
+    "dimensionsM": [0.78, 0.78, 0.3],
+    "styleTags": ["modular", "minimal", "storage"],
+    "colorTags": ["white"],
+    "modelAssetId": "asset-shelf-cube"
+  },
+  {
+    "id": "product-shelf-cart",
+    "title": "Three-Tier Rolling Cart",
+    "category": "shelf",
+    "priceUsd": 39,
+    "merchant": "DreamGrid Demo Catalog",
+    "sourceUrl": "https://example.com/products/rolling-cart",
+    "imageUrl": "/demo-assets/previews/rolling-cart.webp",
+    "dimensionsM": [0.44, 0.78, 0.33],
+    "styleTags": ["compact", "mobile", "storage"],
+    "colorTags": ["cream"]
+  },
+  {
+    "id": "product-lamp-mushroom",
+    "title": "Mushroom Desk Lamp",
+    "category": "lamp",
+    "priceUsd": 45,
+    "merchant": "DreamGrid Demo Catalog",
+    "sourceUrl": "https://example.com/products/mushroom-lamp",
+    "imageUrl": "/demo-assets/previews/mushroom-lamp.webp",
+    "dimensionsM": [0.28, 0.38, 0.28],
+    "styleTags": ["playful", "retro", "cozy"],
+    "colorTags": ["coral", "cream"],
+    "modelAssetId": "asset-lamp-mushroom"
+  },
+  {
+    "id": "product-lamp-floor",
+    "title": "Slim Arc Floor Lamp",
+    "category": "lamp",
+    "priceUsd": 62,
+    "merchant": "DreamGrid Demo Catalog",
+    "sourceUrl": "https://example.com/products/arc-floor-lamp",
+    "imageUrl": "/demo-assets/previews/arc-floor-lamp.webp",
+    "dimensionsM": [0.42, 1.65, 0.55],
+    "styleTags": ["modern", "warm", "slim"],
+    "colorTags": ["black", "gold"]
+  },
+  {
+    "id": "product-decor-rug",
+    "title": "Cloud Woven Rug",
+    "category": "decor",
+    "priceUsd": 58,
+    "merchant": "DreamGrid Demo Catalog",
+    "sourceUrl": "https://example.com/products/cloud-rug",
+    "imageUrl": "/demo-assets/previews/cloud-rug.webp",
+    "dimensionsM": [1.5, 0.02, 1.0],
+    "styleTags": ["soft", "cozy", "organic"],
+    "colorTags": ["cream", "blush"]
+  }
+]

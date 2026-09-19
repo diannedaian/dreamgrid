@@ -1,0 +1,11 @@
+{
+  "room": {
+    "widthM": 3.5,
+    "depthM": 4,
+    "heightM": 2.5,
+    "gridSizeM": 0.25,
+    "lightingMode": "day"
+  },
+  "budgetUsd": 500,
+  "items": []
+}

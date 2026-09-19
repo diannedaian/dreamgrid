@@ -1,4 +1,3 @@
-/Users/dianne/.zprofile:1: no such file or directory: /opt/homebrew/bin/brew
 # DreamGrid GitHub Workflow
 
 Status: Required collaboration process for the HackMIT 2026 build  
@@ -25,14 +24,14 @@ dreamgrid/
     CODEOWNERS
     workflows/check.yml
   apps/web/
-  services/model-generation/
-  services/commerce/
+  services/api/
   packages/contracts/
-  public/demo-assets/
+  apps/web/public/demo-assets/
   docs/
     PROJECT_MANIFESTO.md
     GITHUB_WORKFLOW.md
-  .env.example
+  apps/web/.env.example
+  services/api/.env.example
   .gitignore
   README.md
 ```
@@ -87,13 +86,13 @@ Enable **Squash merging** and disable ordinary merge commits. Each pull request 
 
 ```text
 /apps/web/src/room/             Dianne
-/services/model-generation/     Dianne
+/services/api/src/dreamgrid_api/adapters/model_generation/ Dianne
 /apps/web/src/interactions/     Cindy
 /apps/web/src/catalog/          Cindy
 /apps/web/src/commerce/         Linda
-/services/commerce/             Linda
+/services/api/src/dreamgrid_api/adapters/commerce/         Linda
 /packages/contracts/            All three
-/public/demo-assets/             Dianne, reviewed by Cindy
+/apps/web/public/demo-assets/    Dianne, reviewed by Cindy
 ```
 
 Review by the person who consumes the change:

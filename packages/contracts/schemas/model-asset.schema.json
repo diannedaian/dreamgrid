@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dreamgrid.dev/schemas/model-asset.schema.json",
+  "title": "ModelAsset",
+  "description": "A normalized GLB and a truthful description of how it was produced.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "productId",
+    "glbUrl",
+    "dimensionsM",
+    "pivot",
+    "forwardAxis",
+    "generationMethod",
+    "status",
+    "disclosure"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "productId": { "type": "string", "minLength": 1 },
+    "glbUrl": { "type": "string", "minLength": 1 },
+    "previewUrl": { "type": "string", "minLength": 1 },
+    "dimensionsM": { "$ref": "#/$defs/dimensionsM" },
+    "pivot": { "const": "bottom-center" },
+    "forwardAxis": { "const": "+Z" },
+    "generationMethod": {
+      "enum": ["gpt-blender", "meshy", "tripo", "public-preset"]
+    },
+    "status": { "enum": ["queued", "generating", "ready", "failed"] },
+    "disclosure": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "dimensionsM": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number", "exclusiveMinimum": 0 },
+        { "type": "number", "exclusiveMinimum": 0 },
+        { "type": "number", "exclusiveMinimum": 0 }
+      ],
+      "minItems": 3,
+      "maxItems": 3
+    }
+  }
+}

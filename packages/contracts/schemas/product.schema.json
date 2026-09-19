@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dreamgrid.dev/schemas/product.schema.json",
+  "title": "Product",
+  "description": "Shopping metadata shared by catalog, scene, and budget features.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "category",
+    "priceUsd",
+    "merchant",
+    "sourceUrl",
+    "imageUrl",
+    "dimensionsM",
+    "styleTags",
+    "colorTags"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "category": { "enum": ["bed", "desk", "chair", "shelf", "lamp", "decor"] },
+    "priceUsd": { "type": "number", "minimum": 0 },
+    "merchant": { "type": "string", "minLength": 1 },
+    "sourceUrl": { "type": "string", "minLength": 1 },
+    "imageUrl": { "type": "string", "minLength": 1 },
+    "dimensionsM": { "$ref": "#/$defs/dimensionsM" },
+    "styleTags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "colorTags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "modelAssetId": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "dimensionsM": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number", "exclusiveMinimum": 0 },
+        { "type": "number", "exclusiveMinimum": 0 },
+        { "type": "number", "exclusiveMinimum": 0 }
+      ],
+      "minItems": 3,
+      "maxItems": 3
+    }
+  }
+}
