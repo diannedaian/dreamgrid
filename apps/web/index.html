@@ -16,7 +16,7 @@
       body.has-leftbar { --left-w: 0px; }
       body.has-leftbar.leftbar-open { --left-w: 250px; }
       #stage canvas { position: absolute; inset: 0; }
-      body.has-sidebar { --panel-h: 236px; }
+      body.has-sidebar { --panel-h: 256px; }
 
       /* Dimension form ------------------------------------------------ */
       #dims { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: var(--sage);
@@ -98,7 +98,7 @@
       #save-popup [hidden] { display: none; }
 
       /* Bottom panel --------------------------------------------------- */
-      #sidebar { position: fixed; left: var(--left-w, 0px); right: 0; bottom: 0; height: 236px; z-index: 6; transition: left 0.25s ease; box-sizing: border-box; padding: 12px 18px 14px; display: flex; gap: 26px; align-items: stretch; overflow-x: auto; overflow-y: hidden; background: var(--cream); box-shadow: 0 -8px 30px rgba(40,50,30,0.18); }
+      #sidebar { position: fixed; left: var(--left-w, 0px); right: 0; bottom: 0; height: 256px; z-index: 6; transition: left 0.25s ease; box-sizing: border-box; padding: 12px 18px 14px; display: flex; gap: 26px; align-items: stretch; overflow-x: auto; overflow-y: hidden; background: var(--cream); box-shadow: 0 -8px 30px rgba(40,50,30,0.18); }
       #sidebar[hidden] { display: none; }
       #sidebar .col { flex: 0 0 auto; display: flex; flex-direction: column; min-width: 0; }
       #sidebar h2 { font-family: var(--serif); font-weight: 500; font-size: 18px; margin: 0 0 8px; }
@@ -124,7 +124,11 @@
       .floor-btn { border: 2px solid transparent; border-radius: 9px; background: #fff; padding: 3px; cursor: pointer; display: grid; gap: 2px; font: inherit; font-size: 9px; color: var(--ink-soft); }
       .floor-btn img { width: 100%; aspect-ratio: 1; border-radius: 6px; object-fit: cover; }
       .floor-btn.on { border-color: var(--honey); }
-      .col.sun .section { width: 300px; }
+      .col.sun .section { display: grid; grid-template-columns: 300px 230px; column-gap: 22px; row-gap: 4px; align-content: start; }
+      .col.sun .section > .time { grid-column: 1; grid-row: 1; }
+      .col.sun .section > .row:nth-of-type(1) { grid-column: 1; grid-row: 2; }
+      .col.sun .section > .row:nth-of-type(2) { grid-column: 2; grid-row: 1; }
+      .col.sun .section > .seg:last-child { grid-column: 2; grid-row: 2; align-self: start; }
       .seg { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
       .seg button, .compass button { font: inherit; font-size: 11px; padding: 5px 9px; border-radius: 999px; border: 1px solid #d9cdb8; background: #fff; color: var(--ink); cursor: pointer; }
       .seg button.on, .compass button.on { background: var(--honey); border-color: var(--honey); color: #fff; }
