@@ -30,3 +30,6 @@ venv/
 *.blend1
 *.blend2
 *.blend@
+
+# OpenAI import cache and spend tally
+.cache/

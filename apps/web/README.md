@@ -31,6 +31,9 @@ red with a warning.
   each GLB, re-centers it to a bottom-center pivot, auto-fits scale if it is far from the declared size, and
   strips node `extras.pivot` strings before parsing (three's GLTFLoader reserves that key for an array and
   otherwise produces NaN transforms). Lamp products register with the lamp registry automatically.
+- **Add furniture** (bottom bar): paste a product link; the dev server scrapes it and asks OpenAI for a
+  FurnitureSpec, built in the browser. Needs `OPENAI_API_KEY` in `apps/web/.env` (see `.env.example`); spend is
+  capped per session. Details in `HANDOFF.md`.
 - `?w=&d=&h=` (whole inches) in the URL builds the room directly.
 - **Phone measuring, no app install**: the dev server is https by default (self-signed; `npm run dev:http`
   for plain http). Click **Measure with my phone** on the first page: it shows a short link like

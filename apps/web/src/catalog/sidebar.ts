@@ -16,6 +16,8 @@ export type SidebarOptions = {
   thumbnail: (entry: CatalogEntry, size: number) => Promise<string | null>;
   /** A plain click on a card opens its details. */
   onOpen: (entry: CatalogEntry) => void;
+  /** "Add furniture" button: import a product from a link. */
+  onImport: () => void;
   paint: string;
   floor: string;
   sun: SunSettings;
@@ -34,6 +36,10 @@ const TIME_LABEL: Record<TimeOfDay, string> = { sunrise: "Sunrise", noon: "Noon"
 export function mountSidebar(root: HTMLElement, o: SidebarOptions): void {
   root.replaceChildren();
   const catalogEl = section(root, "Catalog", "catalog");
+  const importBtn = document.createElement("button");
+  importBtn.type = "button"; importBtn.className = "add-furniture"; importBtn.textContent = "+ Add furniture";
+  importBtn.addEventListener("click", () => o.onImport());
+  catalogEl.parentElement!.querySelector("h2")!.appendChild(importBtn);
   const renderCatalog = () => {
     catalogEl.replaceChildren();
     for (const group of o.catalog.grouped()) {

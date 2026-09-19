@@ -1,4 +1,5 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
+import { createImporter } from "./server/import-product.mjs";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import { fileURLToPath } from "node:url";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -73,10 +74,37 @@ function measureRelay(): Plugin {
   };
 }
 
-export default defineConfig({
+/** POST /api/import-product { url } → { product, asset, spec } (dev/preview only). */
+function productImporter(env: Record<string, string>): Plugin {
+  const importer = createImporter({ root: process.cwd(), apiKey: env.OPENAI_API_KEY, model: env.OPENAI_MODEL || "gpt-4o-mini", budgetUsd: Number(env.OPENAI_SESSION_BUDGET_USD || 5) });
+  const handle = (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+    const url = new URL(req.url ?? "/", "http://x");
+    if (url.pathname !== "/api/import-product") return next();
+    if (req.method !== "POST") return res.writeHead(405).end();
+    let body = "";
+    req.on("data", (c) => (body += c));
+    req.on("end", async () => {
+      try {
+        const { url: target } = JSON.parse(body || "{}");
+        if (!/^https?:\/\//.test(String(target))) throw new Error("Paste a full http(s) link");
+        const out = await importer.importProduct(String(target));
+        res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(out));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" }).end(JSON.stringify({ error: (e as Error).message }));
+      }
+    });
+  };
+  return { name: "dreamgrid-product-importer", configureServer: (s) => void s.middlewares.use(handle), configurePreviewServer: (s) => void s.middlewares.use(handle) };
+}
+
+export default defineConfig(({ mode }) => ({
+  ...baseConfig(loadEnv(mode, process.cwd(), "")),
+}));
+
+function baseConfig(env: Record<string, string>) { return ({
   // https by default (self-signed): iOS Safari only allows the camera and motion sensors used by
   // /measure.html over https. Accept the certificate warning once per device. DREAMGRID_HTTP=1 disables.
-  plugins: [measureRelay(), ...(process.env.DREAMGRID_HTTP ? [] : [basicSsl()])],
+  plugins: [measureRelay(), productImporter(env), ...(process.env.DREAMGRID_HTTP ? [] : [basicSsl()])],
   resolve: {
     alias: {
       "@contracts": fileURLToPath(new URL("../../packages/contracts/index.ts", import.meta.url)),
@@ -84,4 +112,4 @@ export default defineConfig({
   },
   server: { host: true, fs: { allow: ["../.."] } },
   build: { rollupOptions: { input: { main: "index.html", measure: "measure.html" } } },
-});
+}); }

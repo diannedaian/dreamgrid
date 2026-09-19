@@ -22,6 +22,7 @@ import QRCode from "qrcode";
 import { mountSidebar } from "./catalog/sidebar";
 import { ThumbnailRenderer } from "./catalog/thumbnails";
 import { mountDetail } from "./catalog/detail";
+import { mountImporter } from "./catalog/importer";
 import { createDesignStore } from "./interactions/designs";
 import { mountDesignsBar } from "./catalog/designsBar";
 
@@ -232,11 +233,17 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       thumbnail: (entry, size) => thumbs.render(entry, size),
       onAdd: (entry) => placement!.add(entry.product, entry.asset, [0, 0, 0]),
     });
+    const importer = mountImporter(document.getElementById("import-popup")!, (r) => {
+      catalog.add([r.product], [r.asset]);
+      const entry = catalog.get(r.product.id);
+      if (entry) detail.open(entry);
+    });
     mountSidebar(sidebar, {
       catalog,
       drag: { start: (entry, e) => placement!.beginCatalogDrag(entry, e) },
       thumbnail: (entry, size) => thumbs.render(entry, size),
       onOpen: (entry) => detail.open(entry),
+      onImport: () => importer.open(),
       paint: shell.paint,
       floor: shell.floor,
       sun,

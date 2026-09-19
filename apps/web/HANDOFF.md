@@ -79,6 +79,18 @@ The product detail sheet (`src/catalog/detail.ts`) has a dashed "Shopping info c
 `{ w, d, h }` inches to `/api/measurement`; the open desktop form polls it. The native ARKit app in
 `ios/` is the higher-accuracy alternative and needs Xcode once.
 
+## Add furniture from a link (OpenAI)
+
+`server/import-product.mjs` + the `productImporter` plugin in `vite.config.ts` expose `POST /api/import-product { url }`.
+It scrapes the page (JSON-LD, meta tags, dimension mentions, up to 3 product images inlined as data URLs), asks
+OpenAI (`OPENAI_MODEL`, default `gpt-4o-mini`, strict JSON schema) for catalog data plus a **FurnitureSpec** in
+Dianne's schema, writes the spec to `public/demo-assets/generated/`, appends the product+asset to `catalog.json`,
+and caches the whole result by URL under `.cache/imports/`. Assets use `glbUrl: "spec:/demo-assets/generated/<id>.spec.json"`,
+which `src/interactions/specBuilder.ts` turns into geometry (box / rounded-box / cylinder / shade, repeats).
+Cost guard: each call's tokens are priced and tallied in `.cache/openai-usage.json`; calls refuse past
+`OPENAI_SESSION_BUDGET_USD` (default $5). One import is ~$0.001. Keys live in `apps/web/.env` (gitignored).
+Never call the API from unit tests. To regenerate an item, delete its `.cache/imports/<hash>.json`.
+
 ## Known gaps / ideas
 
 - Collision feedback is bounding-box only (rotations are 90° steps, so boxes stay axis-aligned).
