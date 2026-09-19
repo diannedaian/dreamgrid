@@ -85,7 +85,7 @@ class LlmProductExtractor:
                 ),
                 output=JsonSchemaFormat(name="product_facts", schema=EXTRACTION_SCHEMA),
             )
-            facts = parse_json_object(raw)
+            facts = parse_json_object(raw.text)
         except OpenAIError as error:
             return replace(draft, note=f"AI extraction unavailable: {error}")
         return merge_llm_facts(draft, facts)

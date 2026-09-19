@@ -15,7 +15,9 @@ from dreamgrid_api.adapters.commerce.llm_product_extractor import (
 )
 from dreamgrid_api.adapters.commerce.openai_client import (
     JsonSchemaFormat,
+    ModelReply,
     OpenAIError,
+    extract_cited_urls,
     extract_output_text,
     parse_json_object,
 )
@@ -67,8 +69,11 @@ class FakeFetcher:
 
 
 class FakeModel:
-    def __init__(self, reply: str | Exception) -> None:
+    """Returns ``reply`` for every call (or raises it). Citations only on text-mode calls."""
+
+    def __init__(self, reply: str | Exception, cited: tuple[str, ...] = ()) -> None:
         self.reply = reply
+        self.cited = cited
         self.calls: list[dict[str, Any]] = []
 
     async def complete(
@@ -76,13 +81,19 @@ class FakeModel:
         *,
         instructions: str,
         user_input: str,
-        output: JsonSchemaFormat,
+        output: JsonSchemaFormat | None = None,
         tools: tuple[dict[str, Any], ...] = (),
-    ) -> str:
-        self.calls.append({"input": user_input, "schema": output.name, "tools": tools})
+    ) -> ModelReply:
+        self.calls.append(
+            {"input": user_input, "schema": output.name if output else None, "tools": tools}
+        )
         if isinstance(self.reply, Exception):
             raise self.reply
-        return self.reply
+        return ModelReply(text=self.reply, cited_urls=self.cited if output is None else ())
+
+
+async def probe_all_ok(url: str) -> int | None:
+    return 200
 
 
 class FakeSearch:
@@ -242,6 +253,30 @@ def test_extract_output_text_reads_responses_payload() -> None:
         extract_output_text({"output": []})
 
 
+def test_extract_cited_urls_reads_url_citation_annotations() -> None:
+    payload = {
+        "output": [
+            {
+                "type": "message",
+                "content": [
+                    {
+                        "type": "output_text",
+                        "text": "{}",
+                        "annotations": [
+                            {"type": "url_citation", "url": "https://a.example/p/1"},
+                            {"type": "url_citation", "url": "https://a.example/p/1"},
+                            {"type": "file_citation", "file_id": "x"},
+                            {"type": "url_citation", "url": "https://b.example/p/2?ref=1"},
+                        ],
+                    }
+                ],
+            }
+        ]
+    }
+    assert extract_cited_urls(payload) == ("https://a.example/p/1", "https://b.example/p/2?ref=1")
+    assert extract_cited_urls({"output": []}) == ()
+
+
 def test_parse_json_object_tolerates_fences_and_prose() -> None:
     assert parse_json_object('```json\n{"a": 1}\n```') == {"a": 1}
     assert parse_json_object('Here you go: {"a": 1} done') == {"a": 1}
@@ -306,7 +341,7 @@ async def test_openai_search_maps_hits_and_skips_bad_urls() -> None:
             }
         )
     )
-    provider = OpenAIWebSearchProvider(model)
+    provider = OpenAIWebSearchProvider(model, probe=probe_all_ok)
 
     outcome = await provider.search(
         ProductQuery(
@@ -322,9 +357,13 @@ async def test_openai_search_maps_hits_and_skips_bad_urls() -> None:
     assert hit.dimensions_m == (1.2, 0.75, 0.6)
     assert hit.price_usd == Decimal("120")
     assert hit.missing == ("imageUrl",)
+    # Call 1: text-mode research with the search tool. Call 2: structuring, no tools.
     assert model.calls[0]["tools"] == ({"type": "web_search"},)
+    assert model.calls[0]["schema"] is None
     assert "120 cm wide" in model.calls[0]["input"]
     assert "$150" in model.calls[0]["input"]
+    assert model.calls[1]["tools"] == ()
+    assert model.calls[1]["schema"] == "product_search"
     assert outcome.note is None
 
 
@@ -338,9 +377,112 @@ async def test_openai_search_prompts_per_region_and_flags_conversion() -> None:
     assert "pounds sterling" in search_instructions("uk")
     assert "converted" in search_instructions("uk")
 
-    provider = OpenAIWebSearchProvider(FakeModel(json.dumps({"results": []})))
+    provider = OpenAIWebSearchProvider(FakeModel(json.dumps({"results": []})), probe=probe_all_ok)
     outcome = await provider.search(ProductQuery(category="lamp", region="au"), limit=3)
     assert outcome.note is not None and "converted" in outcome.note
+
+
+def _hit(url: str, title: str = "Desk") -> dict[str, Any]:
+    return {
+        "title": title,
+        "sourceUrl": url,
+        "merchant": None,
+        "priceUsd": 50,
+        "imageUrl": None,
+        "widthCm": 100,
+        "heightCm": 75,
+        "depthCm": 50,
+        "styleTags": [],
+        "colorTags": [],
+    }
+
+
+@pytest.mark.anyio
+async def test_openai_search_keeps_only_cited_urls_and_caps_per_merchant() -> None:
+    hits = [
+        _hit("https://dumos.example/products/a", "A"),
+        _hit("https://dumos.example/products/a?variant=2", "A dup"),
+        _hit("https://dumos.example/products/b", "B"),
+        _hit("https://dumos.example/products/c", "C"),
+        _hit("https://www.amazon.com/dp/B1", "D"),
+        _hit("https://made-up.example/products/z", "Invented"),
+    ]
+    cited = (
+        "https://dumos.example/products/a",
+        "https://dumos.example/products/b",
+        "https://dumos.example/products/c",
+        "https://amazon.com/dp/B1/",
+    )
+    provider = OpenAIWebSearchProvider(
+        FakeModel(json.dumps({"results": hits}), cited=cited), probe=probe_all_ok
+    )
+
+    outcome = await provider.search(ProductQuery(category="desk"), limit=8)
+
+    titles = [r.title for r in outcome.results]
+    assert "Invented" not in titles  # not cited by the search tool
+    assert "A dup" not in titles  # same page, different query string
+    assert titles.count("C") == 0  # third product from the same merchant
+    assert titles == ["A", "B", "D"]
+
+
+@pytest.mark.anyio
+async def test_openai_search_structuring_prompt_lists_only_product_page_urls() -> None:
+    cited = (
+        "https://www.walmart.com/c/kp/small-desk?utm_source=openai",
+        "https://www.walmart.com/ip/9345372461?utm_source=openai",
+        "https://www.homedepot.com/b/Desks/N-5yc1vZc7og",
+        "https://www.homedepot.com/p/316788465",
+    )
+    model = FakeModel(json.dumps({"results": []}), cited=cited)
+    provider = OpenAIWebSearchProvider(model, probe=probe_all_ok)
+
+    await provider.search(ProductQuery(category="desk"), limit=4)
+
+    structuring_input = model.calls[1]["input"]
+    assert "walmart.com/ip/9345372461" in structuring_input
+    assert "homedepot.com/p/316788465" in structuring_input
+    assert "/c/kp/" not in structuring_input.split("NOTES:")[0]
+    assert "/b/Desks" not in structuring_input.split("NOTES:")[0]
+
+
+@pytest.mark.anyio
+async def test_openai_search_gives_up_when_only_category_pages_were_cited() -> None:
+    cited = ("https://www.walmart.com/c/kp/small-desk", "https://www.homedepot.com/b/Desks")
+    model = FakeModel("notes", cited=cited)
+    provider = OpenAIWebSearchProvider(model, probe=probe_all_ok)
+
+    outcome = await provider.search(ProductQuery(category="desk"), limit=4)
+
+    assert outcome.results == ()
+    assert outcome.note is not None and "category pages" in outcome.note
+    assert len(model.calls) == 1  # no structuring call was spent
+
+
+def test_is_listing_page() -> None:
+    from dreamgrid_api.adapters.commerce.search_provider import is_listing_page
+
+    assert is_listing_page("https://www.walmart.com/c/kp/small-desk")
+    assert is_listing_page("https://www.homedepot.com/b/Furniture-Desks/N-5yc1vZc7og")
+    assert is_listing_page("https://www.amazon.com/s?k=desk")
+    assert is_listing_page("https://store.example/")
+    assert not is_listing_page("https://www.walmart.com/ip/9345372461")
+    assert not is_listing_page("https://www.amazon.com/dp/B0BW8S1N3C")
+    assert not is_listing_page("https://www.ebay.com/itm/387632730831")
+
+
+@pytest.mark.anyio
+async def test_openai_search_drops_pages_that_404() -> None:
+    hits = [_hit("https://a.example/p/1", "Real"), _hit("https://b.example/p/2", "Gone")]
+
+    async def probe(url: str) -> int | None:
+        return 404 if "b.example" in url else 503  # a bot wall is not proof of a bad link
+
+    provider = OpenAIWebSearchProvider(FakeModel(json.dumps({"results": hits})), probe=probe)
+    outcome = await provider.search(ProductQuery(category="desk"), limit=8)
+
+    assert [r.title for r in outcome.results] == ["Real"]
+    assert outcome.note is not None and "no longer exist" in outcome.note
 
 
 @pytest.mark.anyio

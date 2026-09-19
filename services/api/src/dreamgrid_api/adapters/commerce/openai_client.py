@@ -12,7 +12,9 @@ from typing import Any, Protocol
 import httpx
 
 OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
-DEFAULT_TIMEOUT_SECONDS = 30.0
+DEFAULT_TIMEOUT_SECONDS = 60.0
+# Bounds cost and stops a runaway repetition loop from producing megabytes of output.
+DEFAULT_MAX_OUTPUT_TOKENS = 3000
 
 
 class OpenAIError(Exception):
@@ -25,6 +27,14 @@ class JsonSchemaFormat:
     schema: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class ModelReply:
+    """Output text plus the URLs the web-search tool actually cited (empty without the tool)."""
+
+    text: str
+    cited_urls: tuple[str, ...] = ()
+
+
 class TextModel(Protocol):
     """One structured-output completion. Tools such as web search are optional."""
 
@@ -33,9 +43,11 @@ class TextModel(Protocol):
         *,
         instructions: str,
         user_input: str,
-        output: JsonSchemaFormat,
+        output: JsonSchemaFormat | None = None,
         tools: tuple[dict[str, Any], ...] = (),
-    ) -> str: ...
+    ) -> ModelReply:
+        """``output`` None means free text; web-search citations only arrive in that mode."""
+        ...
 
 
 class OpenAIResponsesModel:
@@ -49,22 +61,24 @@ class OpenAIResponsesModel:
         *,
         instructions: str,
         user_input: str,
-        output: JsonSchemaFormat,
+        output: JsonSchemaFormat | None = None,
         tools: tuple[dict[str, Any], ...] = (),
-    ) -> str:
+    ) -> ModelReply:
         body: dict[str, Any] = {
             "model": self._model,
             "instructions": instructions,
             "input": user_input,
-            "text": {
+            "max_output_tokens": DEFAULT_MAX_OUTPUT_TOKENS,
+        }
+        if output is not None:
+            body["text"] = {
                 "format": {
                     "type": "json_schema",
                     "name": output.name,
                     "schema": output.schema,
                     "strict": True,
                 }
-            },
-        }
+            }
         if tools:
             body["tools"] = list(tools)
 
@@ -83,7 +97,8 @@ class OpenAIResponsesModel:
 
         if response.status_code >= 400:
             raise OpenAIError(f"OpenAI answered HTTP {response.status_code}.")
-        return extract_output_text(response.json())
+        payload = response.json()
+        return ModelReply(text=extract_output_text(payload), cited_urls=extract_cited_urls(payload))
 
 
 def extract_output_text(payload: Any) -> str:
@@ -102,6 +117,25 @@ def extract_output_text(payload: Any) -> str:
     if not parts:
         raise OpenAIError("OpenAI returned no text output.")
     return "".join(parts)
+
+
+def extract_cited_urls(payload: Any) -> tuple[str, ...]:
+    """URLs from ``url_citation`` annotations: pages the search tool really surfaced."""
+
+    found: list[str] = []
+    output = payload.get("output", []) if isinstance(payload, dict) else []
+    for item in output:
+        if not isinstance(item, dict) or item.get("type") != "message":
+            continue
+        for content in item.get("content", []):
+            if not isinstance(content, dict):
+                continue
+            for annotation in content.get("annotations", []) or []:
+                if isinstance(annotation, dict) and annotation.get("type") == "url_citation":
+                    url = annotation.get("url")
+                    if isinstance(url, str) and url not in found:
+                        found.append(url)
+    return tuple(found)
 
 
 def parse_json_object(text: str) -> dict[str, Any]:

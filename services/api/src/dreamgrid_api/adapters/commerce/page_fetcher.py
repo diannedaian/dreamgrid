@@ -69,6 +69,33 @@ def validate_public_http_url(url: str) -> str:
     return url.strip()
 
 
+async def probe_status(url: str, timeout: float = 5.0) -> int | None:
+    """HTTP status for a URL, or None when it cannot be reached at all.
+
+    Used to drop search hits that point at pages which do not exist. Bot walls
+    answer 403/429/503 for real pages, so only the caller's 404/410 check is
+    treated as proof of a bad link.
+    """
+
+    try:
+        validate_public_http_url(url)
+    except PageFetchError:
+        return None
+    try:
+        async with (
+            httpx.AsyncClient(
+                follow_redirects=True,
+                max_redirects=MAX_REDIRECTS,
+                timeout=timeout,
+                headers={"User-Agent": USER_AGENT, "Accept": "text/html,*/*"},
+            ) as client,
+            client.stream("GET", url) as response,
+        ):
+            return response.status_code
+    except httpx.HTTPError:
+        return None
+
+
 class HttpxPageFetcher:
     """Real fetcher. Not used in tests; the service takes any ``PageFetcher``."""
 

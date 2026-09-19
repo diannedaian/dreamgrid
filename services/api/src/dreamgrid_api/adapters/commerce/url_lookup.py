@@ -89,7 +89,7 @@ class OpenAIUrlLookup:
                 output=JsonSchemaFormat(name="product_lookup", schema=LOOKUP_SCHEMA),
                 tools=({"type": self._tool_type},),
             )
-            facts = parse_json_object(raw)
+            facts = parse_json_object(raw.text)
         except OpenAIError:
             return None
         return draft_from_lookup(url, facts)
