@@ -1,0 +1,555 @@
+{
+  "schemaVersion": "1.0",
+  "name": "College Bed — Honey Oak / Slate Navy",
+  "category": "bed",
+  "dimensionsM": [
+    0.9652,
+    0.9398,
+    2.1717
+  ],
+  "materials": [
+    {
+      "id": "oak",
+      "name": "Honey oak",
+      "baseColorHex": "#C79A65",
+      "roughness": 0.56,
+      "metallic": 0
+    },
+    {
+      "id": "oak-light",
+      "name": "Light end grain",
+      "baseColorHex": "#D3AA7A",
+      "roughness": 0.62,
+      "metallic": 0
+    },
+    {
+      "id": "oak-dark",
+      "name": "Oak rail end",
+      "baseColorHex": "#AD8052",
+      "roughness": 0.6,
+      "metallic": 0
+    },
+    {
+      "id": "navy",
+      "name": "Soft slate navy mattress",
+      "baseColorHex": "#334B67",
+      "roughness": 0.84,
+      "metallic": 0
+    },
+    {
+      "id": "steel",
+      "name": "Graphite steel",
+      "baseColorHex": "#3C434B",
+      "roughness": 0.38,
+      "metallic": 0.55
+    },
+    {
+      "id": "recess",
+      "name": "Adjustment slot shadow",
+      "baseColorHex": "#655344",
+      "roughness": 0.8,
+      "metallic": 0
+    },
+    {
+      "id": "seam",
+      "name": "Mattress seam",
+      "baseColorHex": "#283E57",
+      "roughness": 0.8,
+      "metallic": 0
+    }
+  ],
+  "parts": [
+    {
+      "id": "head-left-post",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.0508,
+        0.9398,
+        0.0508
+      ],
+      "positionM": [
+        -0.4572,
+        0.4699,
+        -1.06045
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.009
+    },
+    {
+      "id": "head-left-adjustment-slot",
+      "primitive": "rounded-box",
+      "role": "accent",
+      "dimensionsM": [
+        0.006,
+        0.66,
+        0.0015
+      ],
+      "positionM": [
+        -0.4572,
+        0.535,
+        -1.03525
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "recess",
+      "cornerRadiusM": 0.0007
+    },
+    {
+      "id": "head-right-post",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.0508,
+        0.9398,
+        0.0508
+      ],
+      "positionM": [
+        0.4572,
+        0.4699,
+        -1.06045
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.009
+    },
+    {
+      "id": "head-right-adjustment-slot",
+      "primitive": "rounded-box",
+      "role": "accent",
+      "dimensionsM": [
+        0.006,
+        0.66,
+        0.0015
+      ],
+      "positionM": [
+        0.4572,
+        0.535,
+        -1.03525
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "recess",
+      "cornerRadiusM": 0.0007
+    },
+    {
+      "id": "head-upper-crossbar",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.8635999999999999,
+        0.102,
+        0.028
+      ],
+      "positionM": [
+        0,
+        0.824,
+        -1.06045
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak-light",
+      "cornerRadiusM": 0.009
+    },
+    {
+      "id": "head-lower-crossbar",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.8635999999999999,
+        0.076,
+        0.028
+      ],
+      "positionM": [
+        0,
+        0.142,
+        -1.06045
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.007
+    },
+    {
+      "id": "foot-left-post",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.0508,
+        0.9398,
+        0.0508
+      ],
+      "positionM": [
+        -0.4572,
+        0.4699,
+        1.06045
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.009
+    },
+    {
+      "id": "foot-left-adjustment-slot",
+      "primitive": "rounded-box",
+      "role": "accent",
+      "dimensionsM": [
+        0.006,
+        0.66,
+        0.0015
+      ],
+      "positionM": [
+        -0.4572,
+        0.535,
+        1.03525
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "recess",
+      "cornerRadiusM": 0.0007
+    },
+    {
+      "id": "foot-right-post",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.0508,
+        0.9398,
+        0.0508
+      ],
+      "positionM": [
+        0.4572,
+        0.4699,
+        1.06045
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.009
+    },
+    {
+      "id": "foot-right-adjustment-slot",
+      "primitive": "rounded-box",
+      "role": "accent",
+      "dimensionsM": [
+        0.006,
+        0.66,
+        0.0015
+      ],
+      "positionM": [
+        0.4572,
+        0.535,
+        1.03525
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "recess",
+      "cornerRadiusM": 0.0007
+    },
+    {
+      "id": "foot-upper-crossbar",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.8635999999999999,
+        0.102,
+        0.028
+      ],
+      "positionM": [
+        0,
+        0.824,
+        1.06045
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak-light",
+      "cornerRadiusM": 0.009
+    },
+    {
+      "id": "foot-lower-crossbar",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.8635999999999999,
+        0.076,
+        0.028
+      ],
+      "positionM": [
+        0,
+        0.142,
+        1.06045
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.007
+    },
+    {
+      "id": "left-side-rail",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.03,
+        0.105,
+        2.0701
+      ],
+      "positionM": [
+        -0.462,
+        0.4346,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.006
+    },
+    {
+      "id": "bolt--0.462--0.978",
+      "primitive": "cylinder",
+      "role": "accent",
+      "dimensionsM": [
+        0.014,
+        0.004,
+        0.014
+      ],
+      "positionM": [
+        -0.47900000000000004,
+        0.4376,
+        -0.978
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        90
+      ],
+      "materialId": "steel",
+      "cornerRadiusM": 0.001
+    },
+    {
+      "id": "bolt--0.462-0.978",
+      "primitive": "cylinder",
+      "role": "accent",
+      "dimensionsM": [
+        0.014,
+        0.004,
+        0.014
+      ],
+      "positionM": [
+        -0.47900000000000004,
+        0.4376,
+        0.978
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        90
+      ],
+      "materialId": "steel",
+      "cornerRadiusM": 0.001
+    },
+    {
+      "id": "right-side-rail",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.03,
+        0.105,
+        2.0701
+      ],
+      "positionM": [
+        0.462,
+        0.4346,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.006
+    },
+    {
+      "id": "bolt-0.462--0.978",
+      "primitive": "cylinder",
+      "role": "accent",
+      "dimensionsM": [
+        0.014,
+        0.004,
+        0.014
+      ],
+      "positionM": [
+        0.47900000000000004,
+        0.4376,
+        -0.978
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        90
+      ],
+      "materialId": "steel",
+      "cornerRadiusM": 0.001
+    },
+    {
+      "id": "bolt-0.462-0.978",
+      "primitive": "cylinder",
+      "role": "accent",
+      "dimensionsM": [
+        0.014,
+        0.004,
+        0.014
+      ],
+      "positionM": [
+        0.47900000000000004,
+        0.4376,
+        0.978
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        90
+      ],
+      "materialId": "steel",
+      "cornerRadiusM": 0.001
+    },
+    {
+      "id": "steel-slat",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.9144,
+        0.014,
+        0.035
+      ],
+      "positionM": [
+        0,
+        0.47559999999999997,
+        -0.92
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "steel",
+      "cornerRadiusM": 0.003,
+      "repeat": {
+        "count": 12,
+        "offsetM": [
+          0,
+          0,
+          0.16727
+        ]
+      }
+    },
+    {
+      "id": "mattress",
+      "primitive": "rounded-box",
+      "role": "body",
+      "dimensionsM": [
+        0.9652,
+        0.1524,
+        2.032
+      ],
+      "positionM": [
+        0,
+        0.5588,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "navy",
+      "cornerRadiusM": 0.047
+    },
+    {
+      "id": "mattress-side-seam--0.4815",
+      "primitive": "rounded-box",
+      "role": "accent",
+      "dimensionsM": [
+        0.0016,
+        0.0036,
+        1.91
+      ],
+      "positionM": [
+        -0.4815,
+        0.5546,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "seam",
+      "cornerRadiusM": 0.0007
+    },
+    {
+      "id": "mattress-side-seam-0.4815",
+      "primitive": "rounded-box",
+      "role": "accent",
+      "dimensionsM": [
+        0.0016,
+        0.0036,
+        1.91
+      ],
+      "positionM": [
+        0.4815,
+        0.5546,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "seam",
+      "cornerRadiusM": 0.0007
+    }
+  ]
+}

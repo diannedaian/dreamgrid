@@ -1,0 +1,152 @@
+// Model loading with a cache. GLBs load via GLTFLoader; "fixture:*" URLs build procedural
+// stand-ins sized from the asset's dimensions. Everything returns pivot bottom-center, facing +Z.
+import { Box3, BoxGeometry, Color, ConeGeometry, CylinderGeometry, Group, Mesh, MeshStandardMaterial, Object3D, SphereGeometry, Vector3 } from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import type { ModelAsset, Product } from "@contracts";
+
+const loader = new GLTFLoader();
+const cache = new Map<string, Promise<Object3D>>();
+
+export async function loadModel(product: Product, asset?: ModelAsset): Promise<Object3D> {
+  const key = asset?.glbUrl ?? `box:${product.id}`;
+  if (!cache.has(key)) cache.set(key, build(product, asset).catch(() => fixture("box", product.dimensionsM)));
+  const proto = await cache.get(key)!;
+  const obj = proto.clone(true);
+  obj.traverse((o) => { const m = o as Mesh; if (m.isMesh) m.material = Array.isArray(m.material) ? m.material.map((x) => x.clone()) : m.material.clone(); });
+  return obj;
+}
+
+async function build(product: Product, asset?: ModelAsset): Promise<Object3D> {
+  const dims = asset?.dimensionsM ?? product.dimensionsM;
+  if (!asset || asset.status !== "ready") return fixture("box", dims);
+  if (asset.glbUrl.startsWith("fixture:")) return fixture(asset.glbUrl.slice(8), dims);
+  const gltf = await loader.parseAsync(await fetchGlbSanitized(asset.glbUrl), "");
+  const obj = gltf.scene;
+  obj.traverse((o) => { const m = o as Mesh; if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  return normalize(obj, dims, asset.glbUrl);
+}
+
+/**
+ * Fetch a GLB and neutralize node `extras.pivot` before parsing. three's GLTFLoader treats
+ * that key as its own pivot-container convention (an [x, y, z] array); Dianne's pipeline writes
+ * the contract string "bottom-center" there, which the loader turns into NaN transforms.
+ */
+async function fetchGlbSanitized(url: string): Promise<ArrayBuffer> {
+  const buf = await (await fetch(url)).arrayBuffer();
+  const dv = new DataView(buf);
+  if (buf.byteLength < 20 || dv.getUint32(0, true) !== 0x46546c67) return buf; // not a binary glTF; let the loader complain
+  const jsonLen = dv.getUint32(12, true);
+  const jsonText = new TextDecoder().decode(new Uint8Array(buf, 20, jsonLen));
+  const json = JSON.parse(jsonText);
+  let changed = false;
+  for (const node of json.nodes ?? []) {
+    if (node.extras && typeof node.extras.pivot === "string") { node.extras.pivotMode = node.extras.pivot; delete node.extras.pivot; changed = true; }
+  }
+  if (!changed) return buf;
+  let out = JSON.stringify(json);
+  while (new TextEncoder().encode(out).length % 4) out += " ";
+  const jsonBytes = new TextEncoder().encode(out);
+  const rest = new Uint8Array(buf, 20 + jsonLen); // remaining chunks (BIN)
+  const total = 20 + jsonBytes.length + rest.length;
+  const result = new Uint8Array(total);
+  const rdv = new DataView(result.buffer);
+  rdv.setUint32(0, 0x46546c67, true); rdv.setUint32(4, 2, true); rdv.setUint32(8, total, true);
+  rdv.setUint32(12, jsonBytes.length, true); rdv.setUint32(16, 0x4e4f534a, true);
+  result.set(jsonBytes, 20);
+  result.set(rest, 20 + jsonBytes.length);
+  return result.buffer;
+}
+
+/**
+ * Trust the contract (meters, bottom-center pivot) but guard against exports that are off:
+ * wrap the model so its bounds sit on the origin, and rescale uniformly if its size is far
+ * from the declared dimensions (e.g. a centimeter export). The wrapper is what gets positioned.
+ */
+function normalize(obj: Object3D, [w, h, d]: [number, number, number], url: string): Object3D {
+  const wrapper = new Group();
+  wrapper.add(obj);
+  let box = meshBounds(obj);
+  if (box.isEmpty()) return wrapper;
+  const size = new Vector3();
+  box.getSize(size);
+  const declared = Math.max(w, h, d), actual = Math.max(size.x, size.y, size.z);
+  if (actual > 0 && (actual / declared > 1.5 || actual / declared < 0.67)) {
+    const k = declared / actual;
+    console.warn(`[models] ${url}: bounds ${size.x.toFixed(3)}×${size.y.toFixed(3)}×${size.z.toFixed(3)} m vs declared ${w}×${h}×${d}; scaling by ${k.toFixed(4)}`);
+    obj.scale.multiplyScalar(k);
+    box = meshBounds(obj);
+  }
+  const c = new Vector3();
+  box.getCenter(c);
+  obj.position.set(-c.x, -box.min.y, -c.z); // bottom-center on the wrapper's origin
+  return wrapper;
+}
+
+/** World bounds of the meshes only, skipping empty geometries (an empty box turns into NaN when transformed). */
+function meshBounds(root: Object3D): Box3 {
+  root.updateWorldMatrix(true, true);
+  const out = new Box3();
+  const tmp = new Box3();
+  root.traverse((o) => {
+    const m = o as Mesh;
+    if (!m.isMesh || !m.geometry?.attributes?.position || m.geometry.attributes.position.count === 0) return;
+    m.geometry.computeBoundingBox();
+    const bb = m.geometry.boundingBox!;
+    if (bb.isEmpty() || !Number.isFinite(bb.min.x) || !Number.isFinite(bb.max.x)) return;
+    tmp.copy(bb).applyMatrix4(m.matrixWorld);
+    out.union(tmp);
+  });
+  return out;
+}
+
+function mat(color: string, extra: Partial<MeshStandardMaterial> = {}) {
+  return new MeshStandardMaterial({ color: new Color(color), roughness: 0.85, ...extra });
+}
+function shadowed<T extends Object3D>(o: T): T { o.traverse((m) => { (m as Mesh).castShadow = true; (m as Mesh).receiveShadow = true; }); return o; }
+
+function fixture(kind: string, [w, h, d]: [number, number, number]): Object3D {
+  const g = new Group();
+  switch (kind) {
+    case "floor-lamp": {
+      const brass = mat("#b8894f", { roughness: 0.4, metalness: 0.6 });
+      const base = new Mesh(new CylinderGeometry(w * 0.45, w * 0.5, 0.02, 32), brass); base.position.y = 0.01;
+      const pole = new Mesh(new CylinderGeometry(0.012, 0.012, h - 0.2, 16), brass); pole.position.y = 0.02 + (h - 0.2) / 2;
+      const bulb = new Mesh(new SphereGeometry(0.035, 16, 16), mat("#fff1d6")); bulb.name = "bulb"; bulb.position.y = h - 0.15;
+      const shade = new Mesh(new ConeGeometry(w * 0.6, 0.24, 32, 1, true), mat("#f6e7cf", { side: 2 })); shade.name = "shade"; shade.position.y = h - 0.13;
+      g.add(base, pole, bulb, shade);
+      break;
+    }
+    case "table-lamp": {
+      const base = new Mesh(new CylinderGeometry(w * 0.3, w * 0.4, h * 0.5, 24), mat("#d9c2a5")); base.position.y = h * 0.25;
+      const bulb = new Mesh(new SphereGeometry(w * 0.15, 12, 12), mat("#fff1d6")); bulb.name = "bulb"; bulb.position.y = h * 0.68;
+      const shade = new Mesh(new ConeGeometry(w * 0.5, h * 0.4, 24, 1, true), mat("#f6e7cf", { side: 2 })); shade.name = "shade"; shade.position.y = h * 0.78;
+      g.add(base, bulb, shade);
+      break;
+    }
+    case "plant": {
+      const pot = new Mesh(new CylinderGeometry(w * 0.35, w * 0.28, h * 0.35, 20), mat("#c98b5e")); pot.position.y = h * 0.175;
+      for (let i = 0; i < 7; i++) {
+        const leaf = new Mesh(new ConeGeometry(w * 0.16, h * 0.55, 8), mat("#6f9a5c"));
+        leaf.position.set(Math.cos(i * 0.9) * w * 0.18, h * 0.35 + h * 0.25, Math.sin(i * 0.9) * w * 0.18);
+        leaf.rotation.set(Math.cos(i) * 0.5, 0, Math.sin(i) * 0.5);
+        g.add(leaf);
+      }
+      g.add(pot);
+      break;
+    }
+    case "bed": {
+      const frame = new Mesh(new BoxGeometry(w, h * 0.45, d), mat("#c9a27a")); frame.position.y = h * 0.225;
+      const mattress = new Mesh(new BoxGeometry(w * 0.96, h * 0.35, d * 0.97), mat("#f3ebdc")); mattress.position.y = h * 0.45 + h * 0.175;
+      const pillow = new Mesh(new BoxGeometry(w * 0.6, h * 0.15, d * 0.14), mat("#ffffff")); pillow.position.set(0, h * 0.8 + h * 0.07, -d * 0.38);
+      const head = new Mesh(new BoxGeometry(w, h, 0.03), mat("#b98a5e")); head.position.set(0, h / 2, -d / 2 - 0.015);
+      g.add(frame, mattress, pillow, head);
+      break;
+    }
+    default: {
+      const box = new Mesh(new BoxGeometry(w, h, d), mat("#d8cbb7"));
+      box.position.y = h / 2;
+      g.add(box);
+    }
+  }
+  return shadowed(g);
+}

@@ -1,0 +1,30 @@
+# Generate the Xcode project with: brew install xcodegen && xcodegen generate
+name: DreamGridMeasure
+options:
+  bundleIdPrefix: com.dreamgrid
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  DreamGridMeasure:
+    type: application
+    platform: iOS
+    sources: [Sources]
+    info:
+      path: Sources/Info.plist
+      properties:
+        CFBundleDisplayName: DreamGrid Measure
+        UILaunchScreen: {}
+        NSCameraUsageDescription: DreamGrid uses the camera and ARKit to measure your room.
+        UIRequiredDeviceCapabilities: [arkit]
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true   # dev server on the LAN is plain http
+        CFBundleURLTypes:
+          - CFBundleURLName: com.dreamgrid.measure
+            CFBundleURLSchemes: [dreamgrid]
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: "5.9"
+        DEVELOPMENT_TEAM: ""          # set to your team in Xcode > Signing
+        CODE_SIGN_STYLE: Automatic

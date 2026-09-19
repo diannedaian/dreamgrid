@@ -1,0 +1,15 @@
+{
+  "id": "asset-campus-chair",
+  "productId": "product-campus-chair",
+  "glbUrl": "/demo-assets/campus-chair.glb",
+  "dimensionsM": [
+    0.48895,
+    0.8382,
+    0.5588
+  ],
+  "pivot": "bottom-center",
+  "forwardAxis": "+Z",
+  "generationMethod": "gpt-blender",
+  "status": "ready",
+  "disclosure": "Original Codex-authored, offline Blender reconstruction inspired by the fully upholstered MityLite/Holsag Campus 2 chair. Overall and seat dimensions follow the manufacturer brochure; frame sections, curvature, upholstery thickness, and hardware positions are simplified visual estimates. Not an official manufacturer mesh or a live API result."
+}

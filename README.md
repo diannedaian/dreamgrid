@@ -16,5 +16,8 @@ The application turns room dimensions and product images into a game-like room w
 2. Read [the GitHub workflow](docs/GITHUB_WORKFLOW.md).
 3. Keep `main` demoable and use short-lived feature branches.
 
-> This initial commit contains planning material only. Product implementation begins during HackMIT.
+## Run
+
+- Web app: `cd apps/web && npm install && npm run dev` (see `apps/web/README.md`; agents start at `apps/web/HANDOFF.md`).
+- iPhone room measuring: `ios/README.md`.
 
