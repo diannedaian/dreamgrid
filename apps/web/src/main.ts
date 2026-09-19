@@ -22,6 +22,8 @@ import QRCode from "qrcode";
 import { mountSidebar } from "./catalog/sidebar";
 import { ThumbnailRenderer } from "./catalog/thumbnails";
 import { mountDetail } from "./catalog/detail";
+import { createDesignStore } from "./interactions/designs";
+import { mountDesignsBar } from "./catalog/designsBar";
 
 const overlay = document.getElementById("dims") as HTMLDivElement;
 const form = document.getElementById("dims-form") as HTMLFormElement;
@@ -159,7 +161,14 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       sun,
       view: shell.view,
     });
-  const syncUrl = () => history.replaceState(null, "", planUrl(currentPlan(), view));
+  const designs = createDesignStore();
+  let designId: string | null = new URLSearchParams(location.search).get("design");
+  let designName = designId ? designs.get(designId)?.name ?? "" : "";
+  const syncUrl = () => {
+    const u = new URL(planUrl(currentPlan(), view));
+    if (designId) u.searchParams.set("design", designId);
+    history.replaceState(null, "", u.toString());
+  };
 
   const applySun = (s: SunSettings) => {
     sun = s;
@@ -187,6 +196,8 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     }
   } else {
     sidebar.hidden = false;
+    document.getElementById("leftbar")!.hidden = false;
+    document.body.classList.add("has-leftbar");
     onResize();
     const tools = document.getElementById("item-tools")!;
     const upBtn = document.getElementById("tool-up") as HTMLButtonElement, downBtn = document.getElementById("tool-down") as HTMLButtonElement;
@@ -236,6 +247,26 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       onView: (v) => { shell.setView(v); syncUrl(); },
       onHighlightWall: (w) => shell.setWallHighlight(w),
     });
+    const bar = mountDesignsBar(document.getElementById("leftbar")!, document.getElementById("save-popup")!, {
+      store: designs,
+      room,
+      currentId: designId,
+      currentName: designName,
+      currentPlan,
+      thumbnail: () => {
+        try {
+          composer.render(); // make sure the drawing buffer holds the current frame
+          const c = document.createElement("canvas");
+          c.width = 192; c.height = Math.round((192 * canvas.height) / canvas.width);
+          c.getContext("2d")!.drawImage(canvas, 0, 0, c.width, c.height);
+          return c.toDataURL("image/jpeg", 0.7);
+        } catch { return undefined; }
+      },
+      onOpen: (d) => { location.href = `${planUrl(d.plan, false)}&design=${encodeURIComponent(d.id)}`; },
+      onSaved: (d) => { designId = d.id; designName = d.name; syncUrl(); },
+      onNewRoom: ({ w, d, h }) => { location.href = `${location.pathname}?w=${w}&d=${d}&h=${h}`; },
+    });
+    void bar;
     share.addEventListener("click", async () => {
       const ok = await copyText(planUrl(currentPlan(), true));
       share.textContent = ok ? "Link copied" : "Copy failed";

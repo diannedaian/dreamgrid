@@ -80,10 +80,9 @@ export function buildOutside(w: number, h: number, wallT: number, look: Look, vi
   // An organic smattering of leaves: dense near the top of the view, thinning out lower down,
   // with loose clumps so it never reads as a line. No trunk or branches.
   const inner = { min: new Vector3(cx - bw / 2 + 0.05, -drop + 0.02, cz - bd / 2 + 0.05), max: new Vector3(cx + bw / 2 - 0.05, top - 0.05, -wallT - 0.25) };
-  const leafCount = Math.round(Math.min(1500, Math.max(400, w * h * 700)));
+  const leafCount = Math.round(Math.min(2200, Math.max(600, w * h * 1000)));
   const canopy = leafScatter(leafCount, { cx, w, h, wallT }, p, view, inner, rnd);
   sim.add(canopy);
-  const bush = canopy; // (kept for the sway update below)
   // Soft clouds drifting across the sky.
   const clouds = cloudField(view, bw, bd, cx, cz, h, rnd);
   sim.add(clouds.group);
@@ -114,9 +113,7 @@ export function buildOutside(w: number, h: number, wallT: number, look: Look, vi
   group.add(proxy);
 
   const update = (dt: number, time: number) => {
-    canopy.rotation.z = Math.sin(time * 0.6) * 0.012;
-    bush.rotation.z = Math.cos(time * 0.8) * 0.02;
-    clouds.update(dt, bw);
+    clouds.update(dt, bw); // leaves stay perfectly still
     if (!weather) return;
     const { mesh, vel, seed, mat, pos } = weather;
     for (let i = 0; i < pos.length; i++) {
@@ -145,29 +142,32 @@ export function buildOutside(w: number, h: number, wallT: number, look: Look, vi
   return { group, update, render, dispose };
 }
 
-/** Leaves scattered across the view: many near the top, few lower down, gathered into loose clumps. */
+/**
+ * Leaves scattered across the whole view with a smooth density field: densest at the very top,
+ * thinning out downward, with gentle noise so the edge is ragged and organic (no clumps, no trunk).
+ */
 function leafScatter(n: number, f: { cx: number; w: number; h: number; wallT: number }, p: Palette, view: OutsideView, inner: { min: Vector3; max: Vector3 }, rnd: () => number): InstancedMesh {
   const geo = new PlaneGeometry(0.2, 0.2);
   const mat = new MeshStandardMaterial({ map: leafTexture(), alphaTest: 0.5, side: DoubleSide, roughness: 1, color: new Color("#ffffff") });
   const mesh = new InstancedMesh(geo, mat, n);
   const m = new Matrix4(), q = new Quaternion(), s = new Vector3(), pos = new Vector3(), col = new Color();
   const palette = p.leaves.map((c) => new Color(c));
-  const spread = f.w * 1.4 + 0.8;
-  // loose clump centers, mostly high up
-  const clumps = Array.from({ length: 7 }, () => new Vector3(f.cx + (rnd() - 0.5) * spread, f.h * (0.85 + rnd() * 0.5), -f.wallT - 0.5 - rnd() * 1.2));
+  const spread = f.w * 2.2 + 1.5; // well past both edges so nothing "ends" inside the frame
+  const yTop = f.h * 1.6, yBot = f.h * 0.3;
+  // smooth noise from a few random sine waves
+  const ph = Array.from({ length: 6 }, () => rnd() * 6.283);
+  const noise = (x: number, y: number) =>
+    0.5 + 0.5 * (Math.sin(x * 2.1 + ph[0]) * Math.sin(y * 3.3 + ph[1]) * 0.6 + Math.sin(x * 4.7 + ph[2] + y * 1.7) * 0.25 + Math.sin(x * 9.1 + ph[3]) * Math.sin(y * 7.3 + ph[4]) * 0.15);
   for (let i = 0; i < n; i++) {
-    // height: bias strongly toward the top of the view; a few stragglers reach lower
-    const t = Math.pow(rnd(), 2.4); // mostly near 0 → near the top; a few stragglers lower
-    let y = f.h * 1.35 - t * f.h * 0.95;
-    let x = f.cx + (rnd() - 0.5) * spread;
-    let z = -f.wallT - 0.4 - rnd() * 1.4;
-    if (rnd() < 0.65) { // pull toward a clump for organic density variation
-      const c = clumps[Math.floor(rnd() * clumps.length)];
-      const k = 0.35 + rnd() * 0.35;
-      x = x * (1 - k) + (c.x + (rnd() - 0.5) * 0.5) * k;
-      y = y * (1 - k) + (c.y + (rnd() - 0.5) * 0.35) * k;
-      z = z * (1 - k) + c.z * k;
-    }
+    let x = 0, y = yTop, tries = 0;
+    do {
+      x = f.cx + (rnd() - 0.5) * spread;
+      const t = rnd(); // 0 at the top, 1 at the bottom of the leaf zone
+      y = yTop - t * (yTop - yBot);
+      const density = Math.pow(1 - t, 2.2); // dense up top, sparse below
+      if (rnd() < density * (0.35 + 0.65 * noise(x, y))) break;
+    } while (++tries < 40);
+    const z = -f.wallT - 0.4 - rnd() * 1.4;
     pos.set(x, y, z).clamp(inner.min, inner.max);
     q.setFromEuler(new Euler((rnd() - 0.5) * 1.6, rnd() * Math.PI, (rnd() - 0.5) * 1.6));
     const sc = 0.65 + rnd() * 0.85;
@@ -175,7 +175,8 @@ function leafScatter(n: number, f: { cx: number; w: number; h: number; wallT: nu
     m.compose(pos, q, s);
     mesh.setMatrixAt(i, m);
     col.copy(palette[Math.floor(rnd() * palette.length)]);
-    if (view !== "snowy") col.offsetHSL(0, 0, (1 - t) * 0.12 - 0.05 + (z > -f.wallT - 1 ? 0.03 : -0.03)); // brighter near the top and nearer the glass
+    const t = (yTop - y) / (yTop - yBot);
+    if (view !== "snowy") col.offsetHSL(0, 0, (1 - t) * 0.12 - 0.05 + (z > -f.wallT - 1 ? 0.03 : -0.03));
     mesh.setColorAt(i, col);
   }
   mesh.instanceMatrix.needsUpdate = true;
