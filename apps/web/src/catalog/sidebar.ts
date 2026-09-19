@@ -216,7 +216,10 @@ function card(entry: CatalogEntry, o: SidebarOptions): HTMLElement {
   hideBtn.addEventListener("pointerdown", (e) => e.stopPropagation()); // don't start a drag
   hideBtn.addEventListener("click", (e) => { e.stopPropagation(); o.catalog.hide(product.id); });
   const img = el.querySelector("img")!;
-  o.thumbnail(entry, 128).then((url) => { if (url) { img.src = url; img.hidden = false; } });
+  // Real product photo when the listing has one; the rendered model is the fallback.
+  const rendered = () => o.thumbnail(entry, 128).then((url) => { if (url) { img.src = url; img.hidden = false; } });
+  if (product.imageUrl) { img.referrerPolicy = "no-referrer"; img.onerror = () => { img.onerror = null; void rendered(); }; img.src = product.imageUrl; img.hidden = false; }
+  else void rendered();
 
   // Drag to place; a click without movement opens the details.
   el.addEventListener("pointerdown", (e) => {

@@ -36,7 +36,10 @@ export function mountDetail(root: HTMLElement, o: DetailOptions): { open: (entry
     root.querySelector(".close")!.addEventListener("click", close);
     root.querySelector(".add")!.addEventListener("click", () => { o.onAdd(entry); close(); });
     const img = root.querySelector("img")!;
-    o.thumbnail(entry, 320).then((url) => { if (url) img.src = url; });
+    // Real product photo when the listing has one; the rendered model is the fallback.
+    const rendered = () => o.thumbnail(entry, 320).then((url) => { if (url) img.src = url; });
+    if (product.imageUrl) { img.referrerPolicy = "no-referrer"; img.onerror = () => { img.onerror = null; void rendered(); }; img.src = product.imageUrl; }
+    else void rendered();
   };
 
   return { open, close };
