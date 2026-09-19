@@ -165,6 +165,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
   document.getElementById("dims-chip")!.textContent = `${ftIn(room.widthM)} × ${ftIn(room.depthM)} × ${ftIn(room.heightM)}`;
   const hint = document.getElementById("hint")!;
   const share = document.getElementById("share")!;
+  document.getElementById("home")!.addEventListener("click", () => { location.href = location.pathname; });
   const shared = document.getElementById("shared")!;
   const sidebar = document.getElementById("sidebar")!;
 

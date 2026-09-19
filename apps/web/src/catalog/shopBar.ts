@@ -1,7 +1,6 @@
-// Collapsible right drawer: a small "browser" for furniture. Type a search or paste a product link;
-// results show as cards you can open or add to the room. Every search runs through the shopping agent
-// (OpenAI web search → real product pages with price and size). The ★ pane adds size limits to the
-// request (typed, or measured with two clicks in the room).
+// Collapsible right drawer: the shopping agent. Describe what you want (or paste a product link), add
+// optional size limits (typed, or measured with two clicks in the room), and get real product pages
+// with price and size (OpenAI web search) as cards you can open or add to the room.
 export type ShopBarOptions = {
   /** Open the shared image/size-review flow with this product link prefilled. */
   addFromUrl: (url: string) => void;
@@ -21,22 +20,16 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): void {
   toggle.hidden = false;
   bar.hidden = false;
   document.body.classList.add("has-rightbar");
-  const setOpen = (on: boolean) => { document.body.classList.toggle("rightbar-open", on); if (on) setTimeout(() => address.focus(), 250); };
+  const setOpen = (on: boolean) => { document.body.classList.toggle("rightbar-open", on); if (on) setTimeout(() => ask.focus(), 250); };
   toggle.addEventListener("click", () => setOpen(true));
 
   bar.innerHTML = `
     <div class="head">
       <button type="button" class="collapse" title="Close">›</button>
-      <h2>Shop</h2>
-      <button type="button" class="star" title="Shopping agent" aria-label="Shopping agent">★</button>
+      <h2>Shopping Agent</h2>
     </div>
-    <form class="address"><span class="glyph">⌕</span><input type="text" placeholder="Search furniture, or paste a link" autocomplete="off" /></form>
-    <div class="pane browse">
-      <p class="empty">Try “compact desk with drawers” or paste a product page. Results open in a new tab; “Add to room” builds a 3D model from the listing.</p>
-    </div>
-    <div class="pane agent" hidden>
-      <h3>Shopping agent</h3>
-      <p class="sub">Describe what you want. It searches the web, reads the listings, and checks the fit.</p>
+    <div class="pane agent">
+      <p class="sub">Describe what you want, or paste a product link. It searches the web, reads the listings, and checks the fit.</p>
       <textarea class="ask" rows="3" placeholder="e.g. a narrow bookshelf in light wood under $120"></textarea>
       <div class="fits">
         <div class="lbl">Fits within <span class="sub">(optional, inches)</span></div>
@@ -48,18 +41,8 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): void {
       <div class="picks"></div>
     </div>`;
   const q = <T extends HTMLElement>(sel: string) => bar.querySelector<T>(sel)!;
-  const address = q<HTMLInputElement>(".address input");
-  const browse = q(".pane.browse"), agent = q(".pane.agent"), star = q<HTMLButtonElement>(".star");
+  const ask = q<HTMLTextAreaElement>(".ask");
   q(".collapse").addEventListener("click", () => setOpen(false));
-
-  // ── star: switch between the browser and the agent ─────────────────────────
-  let agentOn = false;
-  star.addEventListener("click", () => {
-    agentOn = !agentOn;
-    star.classList.toggle("on", agentOn);
-    agent.hidden = !agentOn; browse.hidden = agentOn;
-    if (agentOn) q<HTMLTextAreaElement>(".ask").focus();
-  });
 
   // ── cards ──────────────────────────────────────────────────────────────────
   const card = (h: Hit): HTMLElement => {
@@ -83,46 +66,6 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): void {
     return el;
   };
 
-  /** Fill in image / price / dimensions for a plain search hit (scrape only; no API cost). */
-  const enrich = async (h: Hit, el: HTMLElement) => {
-    try {
-      const res = await fetch(`/api/preview-product?url=${encodeURIComponent(h.url)}`);
-      if (!res.ok) return;
-      const p = (await res.json()) as Hit;
-      if (p.image) el.querySelector(".pic")!.innerHTML = `<img src="${esc(p.image)}" alt="" loading="lazy" />`;
-      if (p.price) el.querySelector(".price")!.textContent = money(p.price);
-      if (p.title) el.querySelector(".title")!.textContent = p.title;
-      if (p.dimensionsText && !h.dimensionsIn) el.querySelector(".dims")!.textContent = dimsLine(p);
-    } catch { /* leave the plain card */ }
-  };
-
-  // ── address bar: search, or a pasted link ──────────────────────────────────
-  q(".address").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const v = address.value.trim();
-    if (!v) return;
-    if (agentOn) star.click();
-    browse.innerHTML = `<p class="empty">Searching the web and reading listings…</p>`;
-    try {
-      if (/^https?:\/\//.test(v)) {
-        const res = await fetch(`/api/preview-product?url=${encodeURIComponent(v)}`);
-        const p = (await res.json()) as Hit & { error?: string };
-        if (!res.ok || p.error) throw new Error(p.error || "Couldn't read that page");
-        browse.replaceChildren(card(p));
-        return;
-      }
-      const res = await fetch(`/api/search-products?q=${encodeURIComponent(v)}`);
-      const json = (await res.json()) as { summary: string; picks: Hit[]; cost?: number; cached?: boolean; error?: string };
-      if (!res.ok || json.error) throw new Error(json.error || "Search failed");
-      if (!json.picks.length) { browse.innerHTML = `<p class="empty">${esc(json.summary || "Nothing found. Try different words.")}</p>`; return; }
-      const note = document.createElement("p"); note.className = "summary";
-      note.textContent = json.summary + (json.cached ? "" : json.cost != null ? ` (cost $${json.cost.toFixed(3)})` : "");
-      browse.replaceChildren(note, ...json.picks.map((h) => { const el = card(h); if (!h.image) void enrich(h, el); return el; }));
-    } catch (err) {
-      browse.innerHTML = `<p class="empty err">${esc((err as Error).message)}</p>`;
-    }
-  });
-
   // ── agent: measurements + find ────────────────────────────────────────────
   for (const btn of bar.querySelectorAll<HTMLButtonElement>(".measure")) {
     btn.addEventListener("click", () => {
@@ -133,8 +76,19 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): void {
   }
   const find = q<HTMLButtonElement>(".find"), status = q(".status"), picks = q(".picks");
   const run = async () => {
-    const prompt = q<HTMLTextAreaElement>(".ask").value.trim();
-    if (!prompt) { q<HTMLTextAreaElement>(".ask").focus(); return; }
+    const prompt = ask.value.trim();
+    if (!prompt) { ask.focus(); return; }
+    if (/^https?:\/\/\S+$/.test(prompt)) { // a pasted product link: preview it, no agent call
+      find.disabled = true; status.hidden = false; status.className = "status working"; status.textContent = "Reading the page…";
+      try {
+        const res = await fetch(`/api/preview-product?url=${encodeURIComponent(prompt)}`);
+        const p = (await res.json()) as Hit & { error?: string };
+        if (!res.ok || p.error) throw new Error(p.error || "Couldn't read that page");
+        status.hidden = true; picks.replaceChildren(card(p));
+      } catch (e) { status.className = "status err"; status.textContent = (e as Error).message; }
+      finally { find.disabled = false; }
+      return;
+    }
     const fitsIn: Record<string, number> = {};
     for (const inp of bar.querySelectorAll<HTMLInputElement>("input[data-dim]")) if (Number(inp.value) > 0) fitsIn[inp.dataset.dim!] = Number(inp.value);
     find.disabled = true; status.hidden = false; status.className = "status working"; status.textContent = "Searching the web…";
@@ -154,5 +108,5 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): void {
     } finally { clearInterval(tick); find.disabled = false; }
   };
   find.addEventListener("click", run);
-  q<HTMLTextAreaElement>(".ask").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); run(); } });
+  ask.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); run(); } });
 }

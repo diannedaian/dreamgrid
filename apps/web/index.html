@@ -25,7 +25,9 @@
       #dims[hidden] { display: none; }
       .card { background: var(--cream); border-radius: 22px; padding: 30px 34px 28px; box-shadow: 0 18px 50px rgba(50,60,40,0.22), inset 0 1px 0 #fff; min-width: 300px; max-width: 440px; box-sizing: border-box; }
       .card h1 { font-family: var(--serif); font-weight: 500; font-size: 34px; letter-spacing: 0.01em; margin: 0 0 2px; }
-      .card h1 span { color: var(--honey); }
+      #dims .card { background: none; box-shadow: none; padding: 0 20px; } /* front page sits straight on the sage */
+      .card h1.glass-cloud { display: inline-block; position: relative; --k: 1.5; padding: 10px 18px; margin: -6px 0 10px -18px; }
+      .card h1 span { color: #8f7fc9; }
       .card .sub { margin: 0 0 22px; color: var(--ink-soft); font-size: 14px; }
       #dims form { display: grid; gap: 12px; }
       #dims label { display: grid; grid-template-columns: 5.5em 4.4em auto 4.4em auto; align-items: center; gap: 6px; font-size: 14px; }
@@ -33,8 +35,10 @@
       .unit { color: var(--ink-soft); font-size: 13px; }
       #dims input { width: 100%; box-sizing: border-box; padding: 8px 10px; font: inherit; border: 1px solid #d9cdb8; border-radius: 9px; background: #fff; color: var(--ink); }
       #dims input:focus { outline: 2px solid var(--sage-deep); outline-offset: 1px; }
-      #dims button { margin-top: 12px; padding: 11px 16px; font: inherit; font-weight: 600; border: 0; border-radius: 999px; background: var(--honey); color: #fff; cursor: pointer; box-shadow: 0 6px 16px rgba(160,100,50,0.28); }
-      #dims button:hover { background: var(--honey-deep); }
+      #dims button { margin-top: 12px; padding: 11px 16px; font: inherit; font-weight: 600; border: 0; border-radius: 999px; background: #b3a7e0; color: #fff; cursor: pointer; box-shadow: 0 6px 16px rgba(140,120,200,0.28); }
+      #dims button:hover { background: #a396d6; }
+      #phone-link { display: block; margin: 10px auto 0; transition: text-shadow 0.18s ease; }
+      #dims #phone-link:hover { background: none; text-shadow: 0 0 6px rgba(255,255,255,0.95), 0 0 14px rgba(255,255,255,0.8), 0 0 22px rgba(143,127,201,0.55); }
       #dims button.ghost { background: transparent; color: var(--ink); box-shadow: none; margin-top: 8px; font-weight: 500; }
       #dims button.ghost:hover { background: var(--cream-2); }
       .phone-out { margin-top: 12px; text-align: center; font-size: 12px; color: var(--ink-soft); }
@@ -54,40 +58,44 @@
       #menu-toggle { position: fixed; left: 20px; top: 14px; z-index: 9; font: inherit; font-size: 22px; line-height: 1; border: 0; background: none; cursor: pointer; color: var(--ink); padding: 4px; }
       #menu-toggle:hover { color: var(--honey-deep); }
       #menu-toggle[hidden] { display: none; }
-      /* logo floats on a liquid-glass cloud: translucent, backdrop-blurred, faint iridescence, glossy highlight */
-      .chip.brand { left: 52px; top: 12px; font-family: var(--serif); font-size: 17px; padding: 10px 18px; background: none;
+      /* liquid-glass cloud behind a logo (.glass-cloud): translucent, backdrop-blurred, faint iridescence, gloss. --k scales it. */
+      .glass-cloud { isolation: isolate; --k: 1;
         --puffs:
-          radial-gradient(circle at 22% 60%, #000 0 15px, transparent 25px),
-          radial-gradient(circle at 35% 46%, #000 0 12px, transparent 21px),
-          radial-gradient(circle at 48% 40%, #000 0 22px, transparent 33px),
-          radial-gradient(circle at 63% 44%, #000 0 13px, transparent 22px),
-          radial-gradient(circle at 76% 55%, #000 0 17px, transparent 27px),
-          radial-gradient(ellipse 42% 26% at 50% 72%, #000 0 70%, transparent 100%); }
-      .chip.brand::before, .chip.brand::after { content: ""; position: absolute; inset: -12px -18px -8px; z-index: -1; -webkit-mask: var(--puffs); mask: var(--puffs); }
-      .chip.brand::before {
+          radial-gradient(circle at 22% 64%, #000 0 calc(15px * var(--k)), transparent calc(25px * var(--k))),
+          radial-gradient(circle at 35% 52%, #000 0 calc(12px * var(--k)), transparent calc(21px * var(--k))),
+          radial-gradient(circle at 48% 47%, #000 0 calc(22px * var(--k)), transparent calc(33px * var(--k))),
+          radial-gradient(circle at 63% 50%, #000 0 calc(13px * var(--k)), transparent calc(22px * var(--k))),
+          radial-gradient(circle at 76% 60%, #000 0 calc(17px * var(--k)), transparent calc(27px * var(--k))),
+          radial-gradient(ellipse 42% 24% at 50% 76%, #000 0 70%, transparent 100%); }
+      .glass-cloud::before, .glass-cloud::after { content: ""; position: absolute; inset: calc(-26px * var(--k)) calc(-18px * var(--k)) calc(-12px * var(--k)); z-index: -1; -webkit-mask: var(--puffs); mask: var(--puffs); }
+      .glass-cloud::before {
         background:
           radial-gradient(ellipse 55% 70% at 22% 45%, rgba(255,190,225,0.38), transparent 72%),
           radial-gradient(ellipse 50% 65% at 68% 30%, rgba(180,210,255,0.38), transparent 72%),
           radial-gradient(ellipse 60% 55% at 50% 85%, rgba(255,235,180,0.32), transparent 72%),
           linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.30) 55%, rgba(255,255,255,0.50));
         -webkit-backdrop-filter: blur(10px) saturate(1.6) brightness(1.08); backdrop-filter: blur(10px) saturate(1.6) brightness(1.08); }
-      .chip.brand::after {
+      .glass-cloud::after {
         background:
           radial-gradient(ellipse 42% 26% at 38% 20%, rgba(255,255,255,0.95), rgba(255,255,255,0) 70%),
           radial-gradient(ellipse 30% 18% at 74% 42%, rgba(255,255,255,0.6), rgba(255,255,255,0) 70%),
           radial-gradient(ellipse 60% 22% at 50% 96%, rgba(255,255,255,0.55), rgba(255,255,255,0) 70%);
         mix-blend-mode: screen; }
+      .chip.brand { left: 52px; top: 12px; font-family: var(--serif); font-size: 17px; padding: 10px 18px; background: none; }
       .chip.brand span { color: #8f7fc9; } /* lavender "Grid" */
       .chip.dims { right: 62px; font-variant-numeric: tabular-nums; }
       /* top-right actions: small lavender glyph, soft cream pill on hover; text stays underlined */
-      .chip.action { right: 10px; top: 42px; padding: 4px 10px; border-radius: 999px; text-decoration: none; pointer-events: auto; font-weight: 600; font-family: var(--sans); transition: background 0.18s ease, color 0.18s ease; }
-      .chip.action:hover { background: rgba(251,245,234,0.8); box-shadow: 0 2px 8px rgba(40,50,30,0.10); }
+      .chip.action { right: 10px; top: 42px; padding: 4px 10px; border-radius: 999px; text-decoration: none; pointer-events: auto; font-weight: 600; font-family: var(--sans); transition: text-shadow 0.18s ease, color 0.18s ease; }
+      .chip.action:hover { text-shadow: 0 0 6px rgba(255,255,255,0.95), 0 0 14px rgba(255,255,255,0.8), 0 0 22px rgba(143,127,201,0.55); }
+      .chip.action:hover::before { text-shadow: 0 0 8px rgba(143,127,201,0.9), 0 0 16px rgba(143,127,201,0.6); }
       .chip.action::before { display: inline-block; margin-right: 6px; color: #8f7fc9; font-weight: 500; font-size: 13px; transform: translateY(-0.5px); }
       #share::before { content: "⤴"; } #shared::before { content: "⤴"; }
       #save-design::before { content: "✦"; }
       #reset-design::before { content: "↺"; }
       #measure::before { content: "⟷"; }
-      .chip.action.on { background: rgba(251,245,234,0.9); }
+      #home::before { content: "⌂"; }
+      .chip.action.home { top: 146px; font-weight: 500; }
+      .chip.action.on { text-shadow: 0 0 6px rgba(255,255,255,0.95), 0 0 14px rgba(143,127,201,0.6); }
       .chip.action.save-design { top: 68px; }
       .chip.action.reset-design { top: 94px; color: var(--ink-soft); font-weight: 500; }
       .chip.action.reset-design.armed { color: #c8412c; }
@@ -146,13 +154,6 @@
       #rightbar h2 { flex: 1; font-family: var(--serif); font-weight: 500; font-size: 18px; margin: 0; }
       #rightbar .collapse { font: inherit; font-size: 22px; line-height: 1; border: 0; background: none; cursor: pointer; color: var(--ink); padding: 2px 6px; }
       #rightbar .collapse:hover { color: var(--honey-deep); }
-      #rightbar .star { font: inherit; font-size: 20px; line-height: 1; border: 0; background: none; cursor: pointer; color: #c9c0ad; padding: 2px 4px; transition: color 0.2s, text-shadow 0.2s, transform 0.2s; }
-      #rightbar .star:hover { color: var(--honey); transform: scale(1.12); }
-      #rightbar .star.on { color: var(--honey); text-shadow: 0 0 10px rgba(198,138,78,0.6); }
-      #rightbar .address { display: flex; align-items: center; gap: 6px; margin: 0 14px 10px; padding: 7px 12px; border-radius: 999px; background: #fff; border: 1px solid #e3d9c6; box-shadow: inset 0 1px 2px rgba(40,50,30,0.06); }
-      #rightbar .address:focus-within { border-color: var(--sage-deep); }
-      #rightbar .address .glyph { color: var(--ink-soft); font-size: 15px; }
-      #rightbar .address input { flex: 1; border: 0; background: none; font: inherit; font-size: 13px; color: var(--ink); outline: none; min-width: 0; }
       #rightbar .pane { flex: 1; overflow-y: auto; padding: 0 14px 16px; }
       #rightbar .pane[hidden] { display: none; }
       #rightbar .empty { font-size: 12.5px; color: var(--ink-soft); line-height: 1.45; margin: 4px 2px; }
@@ -339,15 +340,14 @@
       <svg class="leaf tl" viewBox="0 0 100 60" fill="none" stroke="#fbf5ea" stroke-width="2" stroke-linecap="round"><path d="M5 55 C 30 10, 70 5, 95 8 C 80 40, 40 58, 5 55 Z"/><path d="M5 55 C 35 40, 60 25, 95 8"/></svg>
       <svg class="leaf br" viewBox="0 0 100 60" fill="none" stroke="#fbf5ea" stroke-width="2" stroke-linecap="round"><path d="M5 55 C 30 10, 70 5, 95 8 C 80 40, 40 58, 5 55 Z"/><path d="M5 55 C 35 40, 60 25, 95 8"/></svg>
       <div class="card">
-        <h1>Dream<span>Grid</span></h1>
-        <p class="sub">Measure your room, then furnish it.</p>
+        <h1 class="glass-cloud">Dream<span>Grid</span></h1>
         <form id="dims-form">
           <label><span>Width</span> <input name="w-ft" type="number" min="0" step="1" value="12" required /> <span class="unit">ft</span> <input name="w-in" type="number" min="0" max="11" step="1" value="0" /> <span class="unit">in</span></label>
           <label><span>Depth</span> <input name="d-ft" type="number" min="0" step="1" value="10" required /> <span class="unit">ft</span> <input name="d-in" type="number" min="0" max="11" step="1" value="0" /> <span class="unit">in</span></label>
           <label><span>Height</span> <input name="h-ft" type="number" min="0" step="1" value="8" required /> <span class="unit">ft</span> <input name="h-in" type="number" min="0" max="11" step="1" value="0" /> <span class="unit">in</span></label>
           <button type="submit">Build room</button>
         </form>
-        <button type="button" id="phone-link" class="ghost">Measure with my phone</button>
+        <button type="button" id="phone-link" class="ghost">Measure with mobile camera →</button>
         <div id="phone-out" class="phone-out" hidden></div>
       </div>
     </div>
@@ -364,12 +364,13 @@
     <aside id="sidebar" hidden></aside>
 
     <div id="chrome" hidden>
-      <div class="chip brand">Dream<span>Grid</span></div>
+      <div class="chip brand glass-cloud">Dream<span>Grid</span></div>
       <div class="chip dims" id="dims-chip"></div>
       <button class="chip action" id="share" type="button">Share</button>
       <button class="chip action save-design" id="save-design" type="button" hidden>Save layout</button>
       <button class="chip action reset-design" id="reset-design" type="button" hidden>Reset</button>
       <button class="chip action measure" id="measure" type="button" hidden>Measure</button>
+      <button class="chip action home" id="home" type="button" title="Back to the start page">Home</button>
       <div id="measure-label" hidden></div>
       <button class="chip action" id="shared" type="button" hidden>Shared plan · Edit a copy</button>
       <div id="views" hidden>
