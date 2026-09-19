@@ -25,7 +25,8 @@ export function mountDesignsBar(bar: HTMLElement, popup: HTMLElement, o: Designs
   const list = bar.querySelector<HTMLElement>(".designs")!;
   const toggle = document.getElementById("menu-toggle") as HTMLButtonElement;
   toggle.hidden = false;
-  const saveBtn = bar.querySelector<HTMLButtonElement>(".save")!;
+  const saveBtn = document.getElementById("save-design") as HTMLButtonElement;
+  saveBtn.hidden = false;
 
   const setOpen = (open: boolean) => { document.body.classList.toggle("leftbar-open", open); toggle.textContent = open ? "✕" : "☰"; toggle.title = open ? "Close designs" : "Saved designs"; try { localStorage.setItem("dreamgrid.leftbar", open ? "1" : "0"); } catch { /* ignore */ } };
   let open = false;

@@ -35,8 +35,10 @@
       .unit { color: var(--ink-soft); font-size: 13px; }
       #dims input { width: 100%; box-sizing: border-box; padding: 8px 10px; font: inherit; border: 1px solid #d9cdb8; border-radius: 9px; background: #fff; color: var(--ink); }
       #dims input:focus { outline: 2px solid var(--sage-deep); outline-offset: 1px; }
-      #dims button { margin-top: 14px; font-weight: 700; font-size: 16px; justify-self: start; }
-      #dims button.ghost { margin-top: 10px; font-weight: 500; font-size: 14px; }
+      #dims button { margin-top: 12px; padding: 11px 16px; font: inherit; font-weight: 600; border: 0; border-radius: 999px; background: var(--honey); color: #fff; cursor: pointer; box-shadow: 0 6px 16px rgba(160,100,50,0.28); }
+      #dims button:hover { background: var(--honey-deep); }
+      #dims button.ghost { background: transparent; color: var(--ink); box-shadow: none; margin-top: 8px; font-weight: 500; }
+      #dims button.ghost:hover { background: var(--cream-2); }
       .phone-out { margin-top: 12px; text-align: center; font-size: 12px; color: var(--ink-soft); }
       .phone-out[hidden] { display: none; }
       .phone-out canvas { display: block; margin: 10px auto 4px; border-radius: 12px; }
@@ -49,8 +51,8 @@
       #chrome { position: fixed; inset: 0; bottom: var(--panel-h, 0px); left: var(--left-w, 0px); pointer-events: none; z-index: 5; transition: left 0.25s ease; }
       #chrome[hidden] { display: none; }
       .chip { position: absolute; top: 18px; padding: 0; background: none; color: var(--ink); font-size: 13px; }
-      .textbtn, .chip.action, #leftbar .save, .time-labels button, #dims button, #detail .add, #save-popup .primary, #save-popup .ghost, #menu button, #item-tools button { font: inherit; border: 0; background: none; padding: 0; color: var(--ink); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
-      .textbtn:hover, .chip.action:hover, #leftbar .save:hover, .time-labels button:hover, #dims button:hover, #detail .add:hover, #save-popup .primary:hover, #save-popup .ghost:hover, #menu button:hover, #item-tools button:hover { color: var(--honey-deep); }
+      .textbtn, .chip.action, .time-labels button, #detail .add, #item-tools button { font: inherit; border: 0; background: none; padding: 0; color: var(--ink); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+      .textbtn:hover, .chip.action:hover, .time-labels button:hover, #detail .add:hover, #item-tools button:hover { color: var(--honey-deep); }
       #menu-toggle { position: fixed; left: 20px; top: 14px; z-index: 9; font: inherit; font-size: 22px; line-height: 1; border: 0; background: none; cursor: pointer; color: var(--ink); padding: 4px; }
       #menu-toggle:hover { color: var(--honey-deep); }
       #menu-toggle[hidden] { display: none; }
@@ -59,6 +61,7 @@
       .chip.brand span { color: var(--honey); }
       .chip.dims { right: 20px; font-variant-numeric: tabular-nums; }
       .chip.action { right: 20px; top: 46px; pointer-events: auto; font-weight: 600; font-family: var(--sans); }
+      .chip.action.save-design { top: 72px; }
       .chip.action[hidden] { display: none; }
       .chip.mode { left: 20px; top: 62px; pointer-events: auto; cursor: pointer; border: 0; font-family: var(--sans); }
       body.t-midnight .chip, body.t-midnight #hint, body.t-midnight #item-tools button { color: #eef0fa; }
@@ -66,12 +69,11 @@
       .chip.mode { display: none; }
 
       /* Left drawer: saved designs -------------------------------------- */
-      #leftbar { position: fixed; top: 0; bottom: var(--panel-h, 0px); left: 0; width: 250px; z-index: 7; box-sizing: border-box; background: var(--cream); box-shadow: 8px 0 30px rgba(40,50,30,0.14); transform: translateX(-100%); transition: transform 0.25s ease; display: flex; flex-direction: column; }
+      #leftbar { position: fixed; top: 0; bottom: 0; left: 0; width: 250px; z-index: 7; box-sizing: border-box; background: var(--cream); box-shadow: 8px 0 30px rgba(40,50,30,0.14); transform: translateX(-100%); transition: transform 0.25s ease; display: flex; flex-direction: column; }
       #leftbar[hidden] { display: none; }
       body.leftbar-open #leftbar { transform: none; }
       #leftbar .head { padding: 16px 16px 10px 56px; display: flex; align-items: center; justify-content: space-between; }
       #leftbar h2 { font-family: var(--serif); font-weight: 500; font-size: 18px; margin: 0; }
-      #leftbar .save { font-size: 13px; font-weight: 600; color: var(--honey-deep); }
       #leftbar .designs { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
       #leftbar .design { display: grid; grid-template-columns: 64px 1fr 22px; gap: 8px; align-items: center; padding: 8px; border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(40,50,30,0.12); margin-bottom: 8px; cursor: pointer; }
       #leftbar .design:hover { box-shadow: 0 4px 12px rgba(40,50,30,0.18); }
@@ -93,9 +95,8 @@
       #save-popup label { display: block; font-size: 13px; color: var(--ink-soft); }
       #save-popup .name { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 10px 12px; font: inherit; font-size: 16px; border: 1px solid #d9cdb8; border-radius: 10px; background: #fff; color: var(--ink); }
       #save-popup .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-      #save-popup .actions { gap: 18px; }
-      #save-popup .primary { font-weight: 700; }
-      #save-popup .ghost { color: var(--ink-soft); }
+      #save-popup .primary { padding: 10px 16px; font: inherit; font-weight: 600; border: 0; border-radius: 999px; background: var(--honey); color: #fff; cursor: pointer; }
+      #save-popup .ghost { padding: 10px 14px; font: inherit; border: 0; border-radius: 999px; background: transparent; color: var(--ink); cursor: pointer; } #save-popup .ghost:hover { background: var(--cream-2); }
       #save-popup .ok { color: #3f7d4e; font-weight: 600; margin: 8px 0 0; }
       #save-popup .sub { font-size: 12.5px; color: var(--ink-soft); margin: 0 0 8px; }
       #save-popup .dims { display: grid; gap: 8px; }
@@ -105,7 +106,7 @@
       body.t-midnight #save-popup .sheet { background: #2c3242; color: #eef0fa; }
 
       /* Bottom panel --------------------------------------------------- */
-      #sidebar { position: fixed; left: 0; right: 0; bottom: 0; height: 236px; z-index: 6; box-sizing: border-box; padding: 12px 18px 14px; display: flex; gap: 26px; align-items: stretch; overflow-x: auto; overflow-y: hidden; background: var(--cream); box-shadow: 0 -8px 30px rgba(40,50,30,0.18); }
+      #sidebar { position: fixed; left: var(--left-w, 0px); right: 0; bottom: 0; height: 236px; z-index: 6; transition: left 0.25s ease; box-sizing: border-box; padding: 12px 18px 14px; display: flex; gap: 26px; align-items: stretch; overflow-x: auto; overflow-y: hidden; background: var(--cream); box-shadow: 0 -8px 30px rgba(40,50,30,0.18); }
       #sidebar[hidden] { display: none; }
       #sidebar .col { flex: 0 0 auto; display: flex; flex-direction: column; min-width: 0; }
       #sidebar h2 { font-family: var(--serif); font-weight: 500; font-size: 18px; margin: 0 0 8px; }
@@ -178,8 +179,8 @@
       #item-tools #tool-delete { color: #c8412c; }
 
       #menu { position: fixed; z-index: 20; display: grid; background: var(--cream); border: 0; border-radius: 12px; box-shadow: 0 10px 30px rgba(40,50,30,0.25); overflow: hidden; }
-      #menu { padding: 10px 14px; gap: 8px; }
-      #menu button { text-align: left; }
+      #menu button { padding: 10px 16px; font: inherit; border: 0; background: none; color: var(--ink); text-align: left; cursor: pointer; }
+      #menu button:hover { background: var(--cream-2); }
       #menu button[hidden] { display: none; }
       #menu [data-remove] { color: #c8412c; }
       #menu [data-remove]:hover { color: #a83322; }
@@ -207,7 +208,7 @@
     <div id="stage"></div>
     <button type="button" id="menu-toggle" title="Saved designs" hidden>☰</button>
     <aside id="leftbar" hidden>
-      <div class="head"><h2>Designs</h2><button type="button" class="save">Save design</button></div>
+      <div class="head"><h2>Designs</h2></div>
       <div class="designs"></div>
     </aside>
     <div id="save-popup" hidden></div>
@@ -217,6 +218,7 @@
       <div class="chip brand">Dream<span>Grid</span></div>
       <div class="chip dims" id="dims-chip"></div>
       <button class="chip action" id="share" type="button">Share</button>
+      <button class="chip action save-design" id="save-design" type="button" hidden>Save design</button>
       <button class="chip action" id="shared" type="button" hidden>Shared plan · Edit a copy</button>
       <div id="hint">Drag furniture in from the right, or click a wall to add a window or door</div>
       <div id="warn" hidden></div>
