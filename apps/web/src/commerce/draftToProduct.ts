@@ -1,0 +1,123 @@
+import {
+  assertValidContract,
+  validateProduct,
+  type Product,
+  type ProductCategory,
+} from "@dreamgrid/contracts";
+
+import { manualDraft, merchantFromUrl, type ProductDraft } from "../lib/commerce/productSourcing";
+import { roundUsd } from "./budget";
+import { fromMeters, toMeters, type LengthUnit } from "./units";
+
+export const PRODUCT_CATEGORIES: readonly ProductCategory[] = [
+  "bed",
+  "desk",
+  "chair",
+  "shelf",
+  "lamp",
+  "decor",
+];
+
+/** Everything the import form edits, as strings so inputs stay controlled. */
+export type ProductFormFields = {
+  title: string;
+  priceUsd: string;
+  category: ProductCategory;
+  width: string;
+  height: string;
+  depth: string;
+  unit: LengthUnit;
+  imageUrl: string;
+  sourceUrl: string;
+  merchant: string;
+  styleTags: string;
+  colorTags: string;
+};
+
+export const PLACEHOLDER_IMAGE_URL = "/demo-assets/previews/placeholder.webp";
+
+function formatLength(meters: number | undefined, unit: LengthUnit): string {
+  return meters === undefined ? "" : String(fromMeters(meters, unit));
+}
+
+/** Prefill the form from a draft; missing fields become empty strings. */
+export function fieldsFromDraft(
+  draft: ProductDraft = manualDraft("", ""),
+  unit: LengthUnit = "in",
+): ProductFormFields {
+  const [w, h, d] = draft.dimensionsM ?? [undefined, undefined, undefined];
+  return {
+    title: draft.title ?? "",
+    priceUsd: draft.priceUsd === undefined ? "" : String(draft.priceUsd),
+    category: draft.category ?? "decor",
+    width: formatLength(w, unit),
+    height: formatLength(h, unit),
+    depth: formatLength(d, unit),
+    unit,
+    imageUrl: draft.imageUrl ?? "",
+    sourceUrl: draft.sourceUrl,
+    merchant: draft.merchant ?? (draft.sourceUrl ? merchantFromUrl(draft.sourceUrl) : ""),
+    styleTags: draft.styleTags.join(", "),
+    colorTags: draft.colorTags.join(", "),
+  };
+}
+
+export type FieldErrors = Partial<Record<keyof ProductFormFields, string>>;
+
+function parseTags(raw: string): string[] {
+  // The schema requires unique, non-empty tags.
+  const tags = raw.split(/[,\n]/).map((tag) => tag.trim().toLowerCase()).filter(Boolean);
+  return [...new Set(tags)];
+}
+
+/** The schema requires strictly positive dimensions; never let rounding hit 0. */
+function lengthToMeters(raw: string, unit: LengthUnit): number {
+  return Math.max(0.001, toMeters(Number(raw), unit));
+}
+
+function positiveNumber(raw: string): number | undefined {
+  const value = Number(raw);
+  return raw.trim() !== "" && Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+export function validateFields(fields: ProductFormFields): FieldErrors {
+  const errors: FieldErrors = {};
+  if (!fields.title.trim()) errors.title = "Enter a title.";
+  const price = Number(fields.priceUsd);
+  if (fields.priceUsd.trim() === "" || !Number.isFinite(price) || price < 0) {
+    errors.priceUsd = "Enter a price of 0 or more (0 marks it unpriced).";
+  }
+  if (!positiveNumber(fields.width)) errors.width = "Enter a width.";
+  if (!positiveNumber(fields.height)) errors.height = "Enter a height.";
+  if (!positiveNumber(fields.depth)) errors.depth = "Enter a depth.";
+  return errors;
+}
+
+/**
+ * Turn confirmed form fields into a contract-valid `Product`. Throws
+ * `ContractValidationError` if the result would not pass the shared schema,
+ * so a bad product never reaches the catalog or the budget.
+ */
+export function buildProduct(
+  fields: ProductFormFields,
+  id: string = `product-import-${crypto.randomUUID()}`,
+): Product {
+  const candidate = {
+    id,
+    title: fields.title.trim(),
+    category: fields.category,
+    priceUsd: roundUsd(Number(fields.priceUsd)),
+    merchant: fields.merchant.trim() || (fields.sourceUrl ? merchantFromUrl(fields.sourceUrl) : "Manual entry"),
+    sourceUrl: fields.sourceUrl.trim() || "https://example.com/manual-entry",
+    imageUrl: fields.imageUrl.trim() || PLACEHOLDER_IMAGE_URL,
+    dimensionsM: [
+      lengthToMeters(fields.width, fields.unit),
+      lengthToMeters(fields.height, fields.unit),
+      lengthToMeters(fields.depth, fields.unit),
+    ],
+    styleTags: parseTags(fields.styleTags),
+    colorTags: parseTags(fields.colorTags),
+  };
+  assertValidContract("Product", validateProduct, candidate);
+  return candidate;
+}
