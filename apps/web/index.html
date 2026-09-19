@@ -61,13 +61,16 @@
       /* liquid-glass cloud behind a logo (.glass-cloud): translucent, backdrop-blurred, faint iridescence, gloss. --k scales it. */
       .glass-cloud { isolation: isolate; --k: 1;
         --puffs:
-          radial-gradient(circle at 22% 64%, #000 0 calc(15px * var(--k)), transparent calc(25px * var(--k))),
-          radial-gradient(circle at 35% 52%, #000 0 calc(12px * var(--k)), transparent calc(21px * var(--k))),
-          radial-gradient(circle at 48% 47%, #000 0 calc(22px * var(--k)), transparent calc(33px * var(--k))),
-          radial-gradient(circle at 63% 50%, #000 0 calc(13px * var(--k)), transparent calc(22px * var(--k))),
-          radial-gradient(circle at 76% 60%, #000 0 calc(17px * var(--k)), transparent calc(27px * var(--k))),
-          radial-gradient(ellipse 42% 24% at 50% 76%, #000 0 70%, transparent 100%); }
-      .glass-cloud::before, .glass-cloud::after { content: ""; position: absolute; inset: calc(-26px * var(--k)) calc(-18px * var(--k)) calc(-12px * var(--k)); z-index: -1; -webkit-mask: var(--puffs); mask: var(--puffs); }
+          radial-gradient(ellipse 17% 6% at 49% 16%, #000 0 58%, transparent 100%),
+          radial-gradient(ellipse 25% 7% at 53% 27%, #000 0 58%, transparent 100%),
+          radial-gradient(ellipse 34% 9% at 46% 39%, #000 0 58%, transparent 100%),
+          radial-gradient(ellipse 41% 10% at 55% 51%, #000 0 58%, transparent 100%),
+          radial-gradient(ellipse 31% 8% at 42% 63%, #000 0 58%, transparent 100%),
+          radial-gradient(ellipse 22% 7% at 63% 71%, #000 0 58%, transparent 100%),
+          radial-gradient(ellipse 20% 4% at 19% 58%, #000 0 45%, transparent 100%),
+          radial-gradient(ellipse 22% 4% at 81% 45%, #000 0 45%, transparent 100%),
+          radial-gradient(ellipse 13% 3% at 14% 69%, #000 0 45%, transparent 100%); }
+      .glass-cloud::before, .glass-cloud::after { content: ""; position: absolute; inset: calc(-22px * var(--k)) calc(-48px * var(--k)) calc(-10px * var(--k)); z-index: -1; -webkit-mask: var(--puffs); mask: var(--puffs); }
       .glass-cloud::before {
         background:
           radial-gradient(ellipse 55% 70% at 22% 45%, rgba(255,190,225,0.38), transparent 72%),
@@ -81,7 +84,8 @@
           radial-gradient(ellipse 30% 18% at 74% 42%, rgba(255,255,255,0.6), rgba(255,255,255,0) 70%),
           radial-gradient(ellipse 60% 22% at 50% 96%, rgba(255,255,255,0.55), rgba(255,255,255,0) 70%);
         mix-blend-mode: screen; }
-      .chip.brand { left: 52px; top: 12px; font-family: var(--serif); font-size: 17px; padding: 10px 18px; background: none; }
+      .chip.brand { left: 52px; top: 16px; font-family: var(--serif); font-size: 17px; padding: 8px 16px; background: none; }
+      .chip.brand::before, .chip.brand::after { inset: -14px -34px -6px; } /* small logo: keep the cloud inside the top bar */
       .chip.brand span { color: #8f7fc9; } /* lavender "Grid" */
       .chip.dims { right: 62px; font-variant-numeric: tabular-nums; }
       /* top-right actions: small lavender glyph, soft cream pill on hover; text stays underlined */
@@ -115,10 +119,10 @@
       #leftbar .head { padding: 16px 16px 10px 56px; display: flex; align-items: center; justify-content: space-between; }
       #leftbar h2 { font-family: var(--serif); font-weight: 500; font-size: 18px; margin: 0; }
       #leftbar .designs { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
-      #leftbar .design { display: grid; grid-template-columns: 64px 1fr 22px; gap: 8px; align-items: center; padding: 8px; border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(40,50,30,0.12); margin-bottom: 8px; cursor: pointer; }
+      #leftbar .design { display: grid; grid-template-columns: 64px 1fr 22px; gap: 8px; align-items: center; padding: 8px; border-radius: 3px; background: #fff; box-shadow: 0 1px 3px rgba(40,50,30,0.12); margin-bottom: 8px; cursor: pointer; }
       #leftbar .design:hover { box-shadow: 0 4px 12px rgba(40,50,30,0.18); }
       #leftbar .design.current { outline: 2px solid var(--honey); }
-      #leftbar .thumb { width: 64px; height: 40px; border-radius: 8px; background: var(--sage); overflow: hidden; } #leftbar .thumb img { width: 100%; height: 100%; object-fit: cover; }
+      #leftbar .thumb { width: 64px; height: 40px; border-radius: 2px; background: var(--sage); overflow: hidden; } #leftbar .thumb img { width: 100%; height: 100%; object-fit: cover; }
       #leftbar .name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       #leftbar .sub { font-size: 10.5px; color: var(--ink-soft); }
       #leftbar .del { border: 0; background: none; color: var(--ink-soft); cursor: pointer; font-size: 12px; } #leftbar .del:hover { color: #c8412c; }
@@ -158,8 +162,8 @@
       #rightbar .pane[hidden] { display: none; }
       #rightbar .empty { font-size: 12.5px; color: var(--ink-soft); line-height: 1.45; margin: 4px 2px; }
       #rightbar .empty.err { color: #c8412c; }
-      #rightbar .hit { display: grid; grid-template-columns: 76px 1fr; gap: 10px; padding: 8px; border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(40,50,30,0.12); margin-bottom: 8px; }
-      #rightbar .hit .pic { width: 76px; height: 76px; border-radius: 8px; background: var(--cream-2); overflow: hidden; display: block; }
+      #rightbar .hit { display: grid; grid-template-columns: 76px 1fr; gap: 10px; padding: 8px; border-radius: 3px; background: #fff; box-shadow: 0 1px 3px rgba(40,50,30,0.12); margin-bottom: 8px; }
+      #rightbar .hit .pic { width: 76px; height: 76px; border-radius: 2px; background: var(--cream-2); overflow: hidden; display: block; }
       #rightbar .hit .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
       #rightbar .hit .info { min-width: 0; font-size: 12px; }
       #rightbar .hit .title { display: block; font-weight: 600; color: var(--ink); text-decoration: none; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
@@ -200,11 +204,11 @@
       #sidebar .section { flex: 1 1 auto; min-height: 0; }
       .col.catalog .section { display: flex; gap: 10px; overflow-x: auto; overflow-y: hidden; padding-bottom: 4px; }
       .col.catalog .group { flex: 0 0 auto; width: 176px; display: flex; flex-direction: column; overflow-y: auto; }
-      .item-card { position: relative; display: grid; grid-template-columns: 34px 1fr; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 10px; background: #fff; box-shadow: 0 1px 3px rgba(40,50,30,0.12); margin-bottom: 6px; cursor: grab; user-select: none; touch-action: none; }
+      .item-card { position: relative; display: grid; grid-template-columns: 34px 1fr; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 3px; background: #fff; box-shadow: 0 1px 3px rgba(40,50,30,0.12); margin-bottom: 6px; cursor: grab; user-select: none; touch-action: none; }
       .item-card:hover { box-shadow: 0 4px 12px rgba(40,50,30,0.18); }
       .item-card.dragging { opacity: 0.6; cursor: grabbing; }
       .item-card.pending { opacity: 0.5; cursor: default; }
-      .item-card .swatch { width: 34px; height: 34px; border-radius: 8px; overflow: hidden; }
+      .item-card .swatch { width: 34px; height: 34px; border-radius: 2px; overflow: hidden; }
       .item-card .swatch img { width: 100%; height: 100%; object-fit: cover; }
       .item-card .name { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .item-card .sub { font-size: 10px; color: var(--ink-soft); white-space: nowrap; }
