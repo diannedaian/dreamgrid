@@ -1,0 +1,15 @@
+{
+  "id": "asset-dorm-desk",
+  "productId": "product-dorm-desk",
+  "glbUrl": "/demo-assets/dorm-desk.glb",
+  "dimensionsM": [
+    1.0668,
+    0.762,
+    0.6096
+  ],
+  "pivot": "bottom-center",
+  "forwardAxis": "+Z",
+  "generationMethod": "gpt-blender",
+  "status": "ready",
+  "disclosure": "Original Codex-authored FurnitureSpec built offline in Blender. User approved the comparable Lehigh 42 x 24 x 30 inch dorm-desk envelope and right-side drawers. Shape follows supplied photographs; drawer/tray/panel details are visual estimates, not a verified manufacturer SKU or live API result."
+}

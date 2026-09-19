@@ -1,0 +1,702 @@
+{
+  "schemaVersion": "1.0",
+  "name": "Campus 2 inspired college chair",
+  "category": "chair",
+  "dimensionsM": [
+    0.48895,
+    0.8382,
+    0.5588
+  ],
+  "materials": [
+    {
+      "id": "wood",
+      "name": "Natural warm beech",
+      "baseColorHex": "#C79A65",
+      "roughness": 0.57,
+      "metallic": 0
+    },
+    {
+      "id": "seat",
+      "name": "Slate-blue seat upholstery",
+      "baseColorHex": "#526682",
+      "roughness": 0.87,
+      "metallic": 0
+    },
+    {
+      "id": "back",
+      "name": "Denim-blue back upholstery",
+      "baseColorHex": "#396A88",
+      "roughness": 0.87,
+      "metallic": 0
+    },
+    {
+      "id": "brass",
+      "name": "Satin brass hardware",
+      "baseColorHex": "#C8AD6B",
+      "roughness": 0.32,
+      "metallic": 0.65
+    }
+  ],
+  "parts": [
+    {
+      "id": "left-flat-runner",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.034,
+        0.031,
+        0.4014
+      ],
+      "positionM": [
+        -0.22497499999999998,
+        0.0155,
+        0.0787
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "left-rear-rocker",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.034,
+        0.14504137340772807,
+        0.033
+      ],
+      "positionM": [
+        -0.22497499999999998,
+        0.034,
+        -0.1905
+      ],
+      "rotationDeg": [
+        -76.44280707046435,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "left-rear-tip",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.034,
+        0.029,
+        0.033
+      ],
+      "positionM": [
+        -0.22497499999999998,
+        0.052,
+        -0.26289999999999997
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "left-front-leg",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.034,
+        0.3722928954465825,
+        0.033
+      ],
+      "positionM": [
+        -0.22497499999999998,
+        0.20550000000000002,
+        0.2395
+      ],
+      "rotationDeg": [
+        -4.7764223685229155,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "left-rear-leg",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.034,
+        0.3601360853899537,
+        0.033
+      ],
+      "positionM": [
+        -0.22497499999999998,
+        0.2245,
+        -0.1965
+      ],
+      "rotationDeg": [
+        20.64914845176328,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "left-front-knee",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.034,
+        0.038209946349085575,
+        0.033
+      ],
+      "positionM": [
+        -0.22497499999999998,
+        0.402,
+        0.21000000000000002
+      ],
+      "rotationDeg": [
+        -47.121096396661486,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "left-seat-rail",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.034,
+        0.032,
+        0.365
+      ],
+      "positionM": [
+        -0.22497499999999998,
+        0.413,
+        0.0235
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.007
+    },
+    {
+      "id": "left-back-lower",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.034,
+        0.0652533524043018,
+        0.033
+      ],
+      "positionM": [
+        -0.196,
+        0.4595,
+        -0.17049999999999998
+      ],
+      "rotationDeg": [
+        -15.101098161385426,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "left-back-upright",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.033,
+        0.31171300903234694,
+        0.026
+      ],
+      "positionM": [
+        -0.196,
+        0.6385000000000001,
+        -0.20600000000000002
+      ],
+      "rotationDeg": [
+        -9.976036422751456,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "left-back-bolt-0.565",
+      "primitive": "cylinder",
+      "role": "accent",
+      "dimensionsM": [
+        0.011,
+        0.003,
+        0.011
+      ],
+      "positionM": [
+        -0.196,
+        0.565,
+        -0.207571661237785
+      ],
+      "rotationDeg": [
+        90,
+        0,
+        0
+      ],
+      "materialId": "brass",
+      "cornerRadiusM": 0.0008
+    },
+    {
+      "id": "left-back-bolt-0.745",
+      "primitive": "cylinder",
+      "role": "accent",
+      "dimensionsM": [
+        0.011,
+        0.003,
+        0.011
+      ],
+      "positionM": [
+        -0.196,
+        0.745,
+        -0.23923289902280132
+      ],
+      "rotationDeg": [
+        90,
+        0,
+        0
+      ],
+      "materialId": "brass",
+      "cornerRadiusM": 0.0008
+    },
+    {
+      "id": "left-rear-frame-bolt",
+      "primitive": "cylinder",
+      "role": "accent",
+      "dimensionsM": [
+        0.01,
+        0.003,
+        0.01
+      ],
+      "positionM": [
+        -0.24297499999999997,
+        0.347,
+        -0.1503353115727003
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        90
+      ],
+      "materialId": "brass",
+      "cornerRadiusM": 0.0006
+    },
+    {
+      "id": "left-frame-bolt-0.224",
+      "primitive": "cylinder",
+      "role": "accent",
+      "dimensionsM": [
+        0.01,
+        0.003,
+        0.01
+      ],
+      "positionM": [
+        -0.24297499999999997,
+        0.347,
+        0.224
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        90
+      ],
+      "materialId": "brass",
+      "cornerRadiusM": 0.0006
+    },
+    {
+      "id": "right-flat-runner",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.034,
+        0.031,
+        0.4014
+      ],
+      "positionM": [
+        0.22497499999999998,
+        0.0155,
+        0.0787
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "right-rear-rocker",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.034,
+        0.14504137340772807,
+        0.033
+      ],
+      "positionM": [
+        0.22497499999999998,
+        0.034,
+        -0.1905
+      ],
+      "rotationDeg": [
+        -76.44280707046435,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "right-rear-tip",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.034,
+        0.029,
+        0.033
+      ],
+      "positionM": [
+        0.22497499999999998,
+        0.052,
+        -0.26289999999999997
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "right-front-leg",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.034,
+        0.3722928954465825,
+        0.033
+      ],
+      "positionM": [
+        0.22497499999999998,
+        0.20550000000000002,
+        0.2395
+      ],
+      "rotationDeg": [
+        -4.7764223685229155,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "right-rear-leg",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.034,
+        0.3601360853899537,
+        0.033
+      ],
+      "positionM": [
+        0.22497499999999998,
+        0.2245,
+        -0.1965
+      ],
+      "rotationDeg": [
+        20.64914845176328,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "right-front-knee",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.034,
+        0.038209946349085575,
+        0.033
+      ],
+      "positionM": [
+        0.22497499999999998,
+        0.402,
+        0.21000000000000002
+      ],
+      "rotationDeg": [
+        -47.121096396661486,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "right-seat-rail",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.034,
+        0.032,
+        0.365
+      ],
+      "positionM": [
+        0.22497499999999998,
+        0.413,
+        0.0235
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.007
+    },
+    {
+      "id": "right-back-lower",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.034,
+        0.0652533524043018,
+        0.033
+      ],
+      "positionM": [
+        0.196,
+        0.4595,
+        -0.17049999999999998
+      ],
+      "rotationDeg": [
+        -15.101098161385426,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "right-back-upright",
+      "primitive": "rounded-box",
+      "role": "leg",
+      "dimensionsM": [
+        0.033,
+        0.31171300903234694,
+        0.026
+      ],
+      "positionM": [
+        0.196,
+        0.6385000000000001,
+        -0.20600000000000002
+      ],
+      "rotationDeg": [
+        -9.976036422751456,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "right-back-bolt-0.565",
+      "primitive": "cylinder",
+      "role": "accent",
+      "dimensionsM": [
+        0.011,
+        0.003,
+        0.011
+      ],
+      "positionM": [
+        0.196,
+        0.565,
+        -0.207571661237785
+      ],
+      "rotationDeg": [
+        90,
+        0,
+        0
+      ],
+      "materialId": "brass",
+      "cornerRadiusM": 0.0008
+    },
+    {
+      "id": "right-back-bolt-0.745",
+      "primitive": "cylinder",
+      "role": "accent",
+      "dimensionsM": [
+        0.011,
+        0.003,
+        0.011
+      ],
+      "positionM": [
+        0.196,
+        0.745,
+        -0.23923289902280132
+      ],
+      "rotationDeg": [
+        90,
+        0,
+        0
+      ],
+      "materialId": "brass",
+      "cornerRadiusM": 0.0008
+    },
+    {
+      "id": "right-rear-frame-bolt",
+      "primitive": "cylinder",
+      "role": "accent",
+      "dimensionsM": [
+        0.01,
+        0.003,
+        0.01
+      ],
+      "positionM": [
+        0.24297499999999997,
+        0.347,
+        -0.1503353115727003
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        90
+      ],
+      "materialId": "brass",
+      "cornerRadiusM": 0.0006
+    },
+    {
+      "id": "right-frame-bolt-0.224",
+      "primitive": "cylinder",
+      "role": "accent",
+      "dimensionsM": [
+        0.01,
+        0.003,
+        0.01
+      ],
+      "positionM": [
+        0.24297499999999997,
+        0.347,
+        0.224
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        90
+      ],
+      "materialId": "brass",
+      "cornerRadiusM": 0.0006
+    },
+    {
+      "id": "rear-crossbrace",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.42095,
+        0.06,
+        0.027
+      ],
+      "positionM": [
+        0,
+        0.344,
+        -0.137
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.006
+    },
+    {
+      "id": "front-crossbrace",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.42095,
+        0.041,
+        0.027
+      ],
+      "positionM": [
+        0,
+        0.386,
+        0.205
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": 0.006
+    },
+    {
+      "id": "seat-cushion",
+      "primitive": "rounded-box",
+      "role": "body",
+      "dimensionsM": [
+        0.4445,
+        0.06,
+        0.4445
+      ],
+      "positionM": [
+        0,
+        0.43989999999999996,
+        0.012
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "seat",
+      "cornerRadiusM": 0.029
+    },
+    {
+      "id": "back-cushion",
+      "primitive": "rounded-box",
+      "role": "body",
+      "dimensionsM": [
+        0.4445,
+        0.31,
+        0.052
+      ],
+      "positionM": [
+        0,
+        0.6850962614187459,
+        -0.212
+      ],
+      "rotationDeg": [
+        -10,
+        0,
+        0
+      ],
+      "materialId": "back",
+      "cornerRadiusM": 0.025
+    }
+  ]
+}

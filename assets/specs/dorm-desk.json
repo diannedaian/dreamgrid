@@ -1,0 +1,489 @@
+{
+  "schemaVersion": "1.0",
+  "name": "College dorm desk — right pedestal",
+  "category": "desk",
+  "dimensionsM": [
+    1.0668,
+    0.762,
+    0.6096
+  ],
+  "materials": [
+    {
+      "id": "oak",
+      "name": "Honey oak",
+      "baseColorHex": "#C79A65",
+      "roughness": 0.57,
+      "metallic": 0
+    },
+    {
+      "id": "oak-light",
+      "name": "Light oak top",
+      "baseColorHex": "#D1A675",
+      "roughness": 0.55,
+      "metallic": 0
+    },
+    {
+      "id": "oak-dark",
+      "name": "Recessed oak",
+      "baseColorHex": "#99714C",
+      "roughness": 0.68,
+      "metallic": 0
+    },
+    {
+      "id": "shadow",
+      "name": "Recess shadow",
+      "baseColorHex": "#6C513A",
+      "roughness": 0.8,
+      "metallic": 0
+    },
+    {
+      "id": "hardware",
+      "name": "Dark drawer runners",
+      "baseColorHex": "#494D52",
+      "roughness": 0.4,
+      "metallic": 0.35
+    }
+  ],
+  "parts": [
+    {
+      "id": "desktop",
+      "primitive": "rounded-box",
+      "role": "top",
+      "dimensionsM": [
+        1.0668,
+        0.029,
+        0.6096
+      ],
+      "positionM": [
+        0,
+        0.7475,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak-light",
+      "cornerRadiusM": 0.009
+    },
+    {
+      "id": "left-side-panel",
+      "primitive": "rounded-box",
+      "role": "body",
+      "dimensionsM": [
+        0.027,
+        0.733,
+        0.5676
+      ],
+      "positionM": [
+        -0.4969,
+        0.3665,
+        -0.005
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.006
+    },
+    {
+      "id": "right-side-panel",
+      "primitive": "rounded-box",
+      "role": "body",
+      "dimensionsM": [
+        0.027,
+        0.733,
+        0.5676
+      ],
+      "positionM": [
+        0.4969,
+        0.3665,
+        -0.005
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.006
+    },
+    {
+      "id": "pedestal-divider",
+      "primitive": "rounded-box",
+      "role": "body",
+      "dimensionsM": [
+        0.023,
+        0.733,
+        0.551
+      ],
+      "positionM": [
+        0.127,
+        0.3665,
+        -0.007
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.004
+    },
+    {
+      "id": "back-modesty-panel",
+      "primitive": "rounded-box",
+      "role": "body",
+      "dimensionsM": [
+        0.9848,
+        0.439,
+        0.02
+      ],
+      "positionM": [
+        0,
+        0.5135,
+        -0.2688
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.003
+    },
+    {
+      "id": "pedestal-interior",
+      "primitive": "rounded-box",
+      "role": "body",
+      "dimensionsM": [
+        0.343,
+        0.647,
+        0.496
+      ],
+      "positionM": [
+        0.309,
+        0.37,
+        -0.012
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak-dark",
+      "cornerRadiusM": 0.003
+    },
+    {
+      "id": "pedestal-bottom-plinth",
+      "primitive": "rounded-box",
+      "role": "body",
+      "dimensionsM": [
+        0.358,
+        0.068,
+        0.52
+      ],
+      "positionM": [
+        0.308,
+        0.034,
+        -0.012
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak-dark",
+      "cornerRadiusM": 0.003
+    },
+    {
+      "id": "bottom-drawer-front",
+      "primitive": "rounded-box",
+      "role": "body",
+      "dimensionsM": [
+        0.349,
+        0.27,
+        0.022
+      ],
+      "positionM": [
+        0.309,
+        0.2,
+        0.271
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "bottom-recessed-pull",
+      "primitive": "rounded-box",
+      "role": "accent",
+      "dimensionsM": [
+        0.302,
+        0.008,
+        0.005
+      ],
+      "positionM": [
+        0.309,
+        0.317,
+        0.283
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "shadow",
+      "cornerRadiusM": 0.002
+    },
+    {
+      "id": "bottom-pull-lip",
+      "primitive": "rounded-box",
+      "role": "accent",
+      "dimensionsM": [
+        0.32,
+        0.01,
+        0.008
+      ],
+      "positionM": [
+        0.309,
+        0.308,
+        0.283
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak-light",
+      "cornerRadiusM": 0.003
+    },
+    {
+      "id": "middle-drawer-front",
+      "primitive": "rounded-box",
+      "role": "body",
+      "dimensionsM": [
+        0.349,
+        0.17800000000000005,
+        0.022
+      ],
+      "positionM": [
+        0.309,
+        0.44,
+        0.271
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "middle-recessed-pull",
+      "primitive": "rounded-box",
+      "role": "accent",
+      "dimensionsM": [
+        0.302,
+        0.008,
+        0.005
+      ],
+      "positionM": [
+        0.309,
+        0.511,
+        0.283
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "shadow",
+      "cornerRadiusM": 0.002
+    },
+    {
+      "id": "middle-pull-lip",
+      "primitive": "rounded-box",
+      "role": "accent",
+      "dimensionsM": [
+        0.32,
+        0.01,
+        0.008
+      ],
+      "positionM": [
+        0.309,
+        0.502,
+        0.283
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak-light",
+      "cornerRadiusM": 0.003
+    },
+    {
+      "id": "top-drawer-front",
+      "primitive": "rounded-box",
+      "role": "body",
+      "dimensionsM": [
+        0.349,
+        0.17099999999999993,
+        0.022
+      ],
+      "positionM": [
+        0.309,
+        0.6305000000000001,
+        0.271
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.005
+    },
+    {
+      "id": "top-recessed-pull",
+      "primitive": "rounded-box",
+      "role": "accent",
+      "dimensionsM": [
+        0.302,
+        0.008,
+        0.005
+      ],
+      "positionM": [
+        0.309,
+        0.698,
+        0.283
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "shadow",
+      "cornerRadiusM": 0.002
+    },
+    {
+      "id": "top-pull-lip",
+      "primitive": "rounded-box",
+      "role": "accent",
+      "dimensionsM": [
+        0.32,
+        0.01,
+        0.008
+      ],
+      "positionM": [
+        0.309,
+        0.689,
+        0.283
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak-light",
+      "cornerRadiusM": 0.003
+    },
+    {
+      "id": "keyboard-tray",
+      "primitive": "rounded-box",
+      "role": "shelf",
+      "dimensionsM": [
+        0.569,
+        0.019,
+        0.459
+      ],
+      "positionM": [
+        -0.183,
+        0.656,
+        0.037
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak-light",
+      "cornerRadiusM": 0.004
+    },
+    {
+      "id": "keyboard-tray-front-edge",
+      "primitive": "rounded-box",
+      "role": "accent",
+      "dimensionsM": [
+        0.569,
+        0.027,
+        0.014
+      ],
+      "positionM": [
+        -0.183,
+        0.659,
+        0.273
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "oak",
+      "cornerRadiusM": 0.004
+    },
+    {
+      "id": "left-tray-runner",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.012,
+        0.021,
+        0.433
+      ],
+      "positionM": [
+        -0.469,
+        0.662,
+        0.012
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "hardware",
+      "cornerRadiusM": 0.002
+    },
+    {
+      "id": "right-tray-runner",
+      "primitive": "rounded-box",
+      "role": "support",
+      "dimensionsM": [
+        0.012,
+        0.021,
+        0.433
+      ],
+      "positionM": [
+        0.107,
+        0.662,
+        0.012
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "hardware",
+      "cornerRadiusM": 0.002
+    }
+  ]
+}

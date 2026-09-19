@@ -1,0 +1,194 @@
+{
+  "keepFixtures": true,
+  "products": [
+    {
+      "id": "college-chair",
+      "title": "College chair",
+      "category": "chair",
+      "priceUsd": 89,
+      "merchant": "DreamGrid Demo Catalog",
+      "sourceUrl": "",
+      "imageUrl": "",
+      "dimensionsM": [
+        0.48895,
+        0.8382,
+        0.5588
+      ],
+      "styleTags": [
+        "upholstered",
+        "study"
+      ],
+      "colorTags": [
+        "blue"
+      ],
+      "modelAssetId": "asset-college-chair"
+    },
+    {
+      "id": "college-bed",
+      "title": "College bed",
+      "category": "bed",
+      "priceUsd": 249,
+      "merchant": "DreamGrid Demo Catalog",
+      "sourceUrl": "",
+      "imageUrl": "",
+      "dimensionsM": [
+        0.9652,
+        0.9398,
+        2.1717
+      ],
+      "styleTags": [
+        "dorm",
+        "twin-xl"
+      ],
+      "colorTags": [
+        "oak",
+        "navy"
+      ],
+      "modelAssetId": "asset-college-bed"
+    },
+    {
+      "id": "college-desk",
+      "title": "College desk",
+      "category": "desk",
+      "priceUsd": 159,
+      "merchant": "DreamGrid Demo Catalog",
+      "sourceUrl": "",
+      "imageUrl": "",
+      "dimensionsM": [
+        1.0668,
+        0.762,
+        0.6096
+      ],
+      "styleTags": [
+        "dorm",
+        "study"
+      ],
+      "colorTags": [
+        "oak"
+      ],
+      "modelAssetId": "asset-college-desk"
+    },
+    {
+      "id": "monstera-plant",
+      "title": "Monstera plant",
+      "category": "decor",
+      "priceUsd": 68,
+      "merchant": "DreamGrid Demo Catalog",
+      "sourceUrl": "",
+      "imageUrl": "",
+      "dimensionsM": [
+        1.15,
+        1.75,
+        0.95
+      ],
+      "styleTags": [
+        "plant",
+        "boho"
+      ],
+      "colorTags": [
+        "green",
+        "white"
+      ],
+      "modelAssetId": "asset-monstera-plant"
+    },
+    {
+      "id": "imp-6f6f5196e5911cb8",
+      "title": "LACK Side table - white",
+      "category": "misc",
+      "priceUsd": 17,
+      "merchant": "ikea.com",
+      "sourceUrl": "https://www.ikea.com/us/en/p/lack-side-table-white-30449908/",
+      "imageUrl": "https://www.ikea.com/us/en/images/products/lack-side-table-white__0702210_pe724345_s5.jpg",
+      "dimensionsM": [
+        0.55,
+        0.45,
+        0.55
+      ],
+      "styleTags": [
+        "modern",
+        "minimalist"
+      ],
+      "colorTags": [
+        "white"
+      ],
+      "modelAssetId": "asset-imp-6f6f5196e5911cb8"
+    }
+  ],
+  "assets": [
+    {
+      "id": "asset-college-chair",
+      "productId": "college-chair",
+      "glbUrl": "/demo-assets/college-chair.glb",
+      "dimensionsM": [
+        0.48895,
+        0.8382,
+        0.5588
+      ],
+      "pivot": "bottom-center",
+      "forwardAxis": "+Z",
+      "generationMethod": "gpt-blender",
+      "status": "ready",
+      "disclosure": "Dianne's original offline Blender reconstruction inspired by the MityLite/Holsag Campus 2 chair (PR #3, campus-chair.glb). Dimensions follow the manufacturer brochure; details are visual estimates. Not an official manufacturer mesh."
+    },
+    {
+      "id": "asset-college-bed",
+      "productId": "college-bed",
+      "glbUrl": "/demo-assets/college-bed.glb",
+      "dimensionsM": [
+        0.9652,
+        0.9398,
+        2.1717
+      ],
+      "pivot": "bottom-center",
+      "forwardAxis": "+Z",
+      "generationMethod": "gpt-blender",
+      "status": "ready",
+      "disclosure": "Dianne's original FurnitureSpec built offline with the trusted Blender interpreter (PR #3, college-bed.glb). Envelope follows Gonzaga's published bed diagram; mattress and hardware are visual estimates."
+    },
+    {
+      "id": "asset-college-desk",
+      "productId": "college-desk",
+      "glbUrl": "/demo-assets/college-desk.glb",
+      "dimensionsM": [
+        1.0668,
+        0.762,
+        0.6096
+      ],
+      "pivot": "bottom-center",
+      "forwardAxis": "+Z",
+      "generationMethod": "gpt-blender",
+      "status": "ready",
+      "disclosure": "Dianne's original FurnitureSpec built offline in Blender (PR #3, dorm-desk.glb). 42 x 24 x 30 inch dorm-desk envelope with right-side drawers; details are visual estimates."
+    },
+    {
+      "id": "asset-monstera-plant",
+      "productId": "monstera-plant",
+      "glbUrl": "/demo-assets/monstera-plant.glb",
+      "dimensionsM": [
+        1.15,
+        1.75,
+        0.95
+      ],
+      "pivot": "bottom-center",
+      "forwardAxis": "+Z",
+      "generationMethod": "gpt-blender",
+      "status": "ready",
+      "disclosure": "Monstera plant with ceramic pot, modeled in Blender from a reference photograph (17 individually modeled leaves). Compressed with gltf-transform (meshopt). Not a manufacturer model."
+    },
+    {
+      "id": "asset-imp-6f6f5196e5911cb8",
+      "productId": "imp-6f6f5196e5911cb8",
+      "glbUrl": "spec:/demo-assets/generated/imp-6f6f5196e5911cb8.spec.json",
+      "dimensionsM": [
+        0.55,
+        0.45,
+        0.55
+      ],
+      "pivot": "bottom-center",
+      "forwardAxis": "+Z",
+      "generationMethod": "gpt-blender",
+      "status": "ready",
+      "disclosure": "FurnitureSpec generated by OpenAI gpt-4o-mini from ikea.com (1 product image(s) + page text), interpreted by DreamGrid's constrained builder. Dimensions from the listing. Not a manufacturer model."
+    }
+  ]
+}

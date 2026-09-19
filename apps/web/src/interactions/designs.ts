@@ -1,0 +1,51 @@
+// Saved designs: named plans kept in the browser (localStorage). Cindy owns this (interactions).
+import type { Plan } from "./share";
+
+export type SavedDesign = {
+  id: string;
+  name: string;
+  plan: Plan;
+  /** Small JPEG data URL captured from the canvas, if available. */
+  thumb?: string;
+  savedAt: number;
+};
+
+const KEY = "dreamgrid.designs.v1";
+
+export type DesignStore = {
+  list(): SavedDesign[];
+  get(id: string): SavedDesign | undefined;
+  save(d: Omit<SavedDesign, "id" | "savedAt"> & { id?: string }): SavedDesign;
+  remove(id: string): void;
+};
+
+/** Store backed by any Storage-like object (localStorage in the app, a Map in tests). */
+export function createDesignStore(storage: Pick<Storage, "getItem" | "setItem"> = safeLocalStorage()): DesignStore {
+  const read = (): SavedDesign[] => {
+    try {
+      const raw = storage.getItem(KEY);
+      const arr = raw ? (JSON.parse(raw) as SavedDesign[]) : [];
+      return Array.isArray(arr) ? arr.filter((d) => d && typeof d.id === "string" && d.plan) : [];
+    } catch { return []; }
+  };
+  const write = (arr: SavedDesign[]) => { try { storage.setItem(KEY, JSON.stringify(arr)); } catch { /* quota or private mode */ } };
+  return {
+    list: () => read().sort((a, b) => b.savedAt - a.savedAt),
+    get: (id) => read().find((d) => d.id === id),
+    save: (d) => {
+      const arr = read();
+      const id = d.id ?? `d${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
+      const latest = arr.reduce((m, x) => Math.max(m, x.savedAt || 0), 0);
+      const next: SavedDesign = { id, name: d.name.trim() || "Untitled design", plan: d.plan, thumb: d.thumb, savedAt: Math.max(Date.now(), latest + 1) };
+      const i = arr.findIndex((x) => x.id === id);
+      if (i >= 0) arr[i] = next; else arr.push(next);
+      write(arr);
+      return next;
+    },
+    remove: (id) => write(read().filter((d) => d.id !== id)),
+  };
+}
+
+function safeLocalStorage(): Pick<Storage, "getItem" | "setItem"> {
+  try { return window.localStorage; } catch { const m = new Map<string, string>(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v) }; }
+}
