@@ -26,12 +26,6 @@ export function mountSharePopup(root: HTMLElement, o: SharePopupOptions): { open
         <p class="status ${copied ? "ok" : "warn"}">${copied ? "✓ Link copied to your clipboard" : "Copy the link below"}</p>
         <code class="link">${esc(link)}</code>
         <div class="actions"><button type="button" class="primary copy">${copied ? "Copy again" : "Copy link"}</button></div>
-        <h3>Send it to friends</h3>
-        <ol class="steps">
-          <li>Paste the link in a text or group chat.</li>
-          <li>They open it in any browser and can spin the room around, change the time of day, and see how it fits together.</li>
-          <li>They can't change your room. If they want to try their own version, they click <b>Edit a copy</b>.</li>
-        </ol>
         <h3>Shopping list</h3>
         <p class="sub">Everything in the room with real store links, prices and product photos. Its link is shareable too.</p>
         <div class="actions"><a class="primary list" href="${esc(list)}" target="_blank" rel="noopener">Open shopping list ↗</a><button type="button" class="ghost copy-list">Copy list link</button></div>
