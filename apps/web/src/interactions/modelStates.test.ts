@@ -11,7 +11,7 @@ afterEach(() => vi.unstubAllGlobals());
 describe("hinged mini fridge", () => {
   it("opens only the door, keeps the cabinet fixed, and closes exactly", async () => {
     const bytes = readFileSync(new URL("../../public/demo-assets/mini-fridge.glb", import.meta.url));
-    vi.stubGlobal("fetch", vi.fn(async () => ({ arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) })));
     const product = catalog.products.find((p) => p.id === "p-mini-fridge") as Product;
     const asset = catalog.assets.find((a) => a.id === product.modelAssetId) as ModelAsset;
     const fridge = await loadModel(product, asset);

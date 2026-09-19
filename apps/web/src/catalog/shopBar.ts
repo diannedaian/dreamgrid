@@ -2,11 +2,9 @@
 // results show as cards you can open or add to the room. Every search runs through the shopping agent
 // (OpenAI web search → real product pages with price and size). The ★ pane adds size limits to the
 // request (typed, or measured with two clicks in the room).
-import { importProductUrl } from "./importer";
-
 export type ShopBarOptions = {
-  /** Import a product page into the catalog (opens its detail sheet on success). */
-  addFromUrl: (url: string) => Promise<{ title: string }>;
+  /** Open the shared image/size-review flow with this product link prefilled. */
+  addFromUrl: (url: string) => void;
   /** Start a one-shot two-point measurement; resolves with meters. */
   measure: (cb: (meters: number) => void) => void;
 };
@@ -78,10 +76,9 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): void {
         <div class="actions"><button type="button" class="add">Add to room</button><span class="st"></span></div>
       </div>`;
     const add = el.querySelector<HTMLButtonElement>(".add")!, st = el.querySelector<HTMLElement>(".st")!;
-    add.addEventListener("click", async () => {
-      add.disabled = true; st.className = "st working"; st.textContent = "Building model…";
-      try { const r = await o.addFromUrl(h.url); st.className = "st ok"; st.textContent = `Added “${r.title}”`; }
-      catch (e) { st.className = "st err"; st.textContent = (e as Error).message; add.disabled = false; }
+    add.addEventListener("click", () => {
+      o.addFromUrl(h.url);
+      st.className = "st"; st.textContent = "Upload an image and confirm size in the import panel.";
     });
     return el;
   };

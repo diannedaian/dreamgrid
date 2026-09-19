@@ -1,6 +1,7 @@
 import furnitureSpecSchema from "../schemas/furniture-spec.schema.json" with {
   type: "json",
 };
+import modelPipelineSchema from "../schemas/model-pipeline.schema.json" with { type: "json" };
 import modelAssetSchema from "../schemas/model-asset.schema.json" with {
   type: "json",
 };
@@ -17,6 +18,7 @@ import sceneItemSchema from "../schemas/scene-item.schema.json" with {
 
 export {
   furnitureSpecSchema,
+  modelPipelineSchema,
   modelAssetSchema,
   productSchema,
   roomSpecSchema,
@@ -31,4 +33,5 @@ export const contractSchemas = [
   sceneItemSchema,
   roomStateSchema,
   furnitureSpecSchema,
+  modelPipelineSchema,
 ] as const;

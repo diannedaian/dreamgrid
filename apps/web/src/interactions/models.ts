@@ -12,7 +12,13 @@ const cache = new Map<string, Promise<Object3D>>();
 
 export async function loadModel(product: Product, asset?: ModelAsset): Promise<Object3D> {
   const key = asset?.glbUrl ?? `box:${product.id}`;
-  if (!cache.has(key)) cache.set(key, build(product, asset).catch(() => fixture("box", product.dimensionsM)));
+  if (!cache.has(key)) cache.set(key, build(product, asset).catch((error) => {
+    cache.delete(key); // A failed live download must be retryable, not a permanent fake box.
+    if (asset?.glbUrl.startsWith("/api/v1/models/assets/")) {
+      throw new Error(`Could not load the generated GLB. Keep the backend running and retry. ${error instanceof Error ? error.message : ""}`);
+    }
+    return fixture("box", product.dimensionsM);
+  }));
   const proto = await cache.get(key)!;
   const obj = proto.clone(true);
   obj.traverse((o) => { const m = o as Mesh; if (m.isMesh) m.material = Array.isArray(m.material) ? m.material.map((x) => x.clone()) : m.material.clone(); });
@@ -40,6 +46,7 @@ async function build(product: Product, asset?: ModelAsset): Promise<Object3D> {
       obj.userData.dreamgridLighting = o.userData.dreamgridLighting;
     }
   });
+  if (asset.lighting) obj.userData.dreamgridLighting = asset.lighting;
   obj.traverse((o) => { const m = o as Mesh; if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
   // The supplied brushed-metal material has no UV/tangent frame. Its anisotropy
   // produces invalid pixels that spread through bloom; use isotropic metal here.
@@ -60,7 +67,9 @@ async function build(product: Product, asset?: ModelAsset): Promise<Object3D> {
  * the contract string "bottom-center" there, which the loader turns into NaN transforms.
  */
 async function fetchGlbSanitized(url: string): Promise<ArrayBuffer> {
-  const buf = await (await fetch(url)).arrayBuffer();
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Model download failed (${response.status}).`);
+  const buf = await response.arrayBuffer();
   const dv = new DataView(buf);
   if (buf.byteLength < 20 || dv.getUint32(0, true) !== 0x46546c67) return buf; // not a binary glTF; let the loader complain
   const jsonLen = dv.getUint32(12, true);

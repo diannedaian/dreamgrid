@@ -200,7 +200,7 @@ function card(entry: CatalogEntry, o: SidebarOptions): HTMLElement {
     <div class="swatch" style="background:${SWATCH[product.category] ?? SWATCH.misc}"><img alt="" hidden></div>
     <div class="meta">
       <div class="name">${escapeHtml(product.title)}</div>
-      <div class="sub">${w}″ × ${d}″ × ${h}″ tall · $${product.priceUsd}</div>
+      <div class="sub">${w}″ × ${d}″ × ${h}″ tall · ${product.styleTags.includes("price-not-provided") ? "Price not provided" : `$${product.priceUsd}`}</div>
       ${asset && asset.status !== "ready" ? `<div class="sub status">${asset.status}…</div>` : ""}
     </div>`;
   el.title = "Drag into the room · click for details";

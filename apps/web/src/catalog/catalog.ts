@@ -1,6 +1,7 @@
 // Catalog store: products plus their model assets, grouped by category.
 import type { ModelAsset, Product } from "@contracts";
 import { FIXTURE_ASSETS, FIXTURE_PRODUCTS } from "./fixtures";
+import { readGeneratedEntries } from "./generatedCatalog";
 
 export type CatalogEntry = { product: Product; asset?: ModelAsset };
 
@@ -57,6 +58,11 @@ export class Catalog {
    */
   static async load(): Promise<Catalog> {
     const c = new Catalog();
+    const generated = () => {
+      // localStorage is optional (unit tests / blocked storage / private mode).
+      try { for (const row of readGeneratedEntries()) c.add([row.product], [row.asset]); } catch { /* cached demo still works */ }
+      return c;
+    };
     try {
       const r = await fetch("/demo-assets/catalog.json", { cache: "no-store" });
       if (r.ok) {
@@ -65,11 +71,11 @@ export class Catalog {
           if (j.keepFixtures) c.add(FIXTURE_PRODUCTS, FIXTURE_ASSETS);
           c.add(j.products, j.assets ?? []);
           c.hiddenProductIds = new Set(j.hiddenProductIds ?? []);
-          return c;
+          return generated();
         }
       }
     } catch { /* fall back to fixtures */ }
     c.add(FIXTURE_PRODUCTS, FIXTURE_ASSETS);
-    return c;
+    return generated();
   }
 }
