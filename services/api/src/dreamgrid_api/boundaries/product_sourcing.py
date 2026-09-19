@@ -16,6 +16,10 @@ ProductCategory = Literal["bed", "desk", "chair", "shelf", "lamp", "decor"]
 
 PRODUCT_CATEGORIES: tuple[ProductCategory, ...] = ("bed", "desk", "chair", "shelf", "lamp", "decor")
 
+Region = Literal["us", "ca", "uk", "eu", "au"]
+
+REGIONS: tuple[Region, ...] = ("us", "ca", "uk", "eu", "au")
+
 DRAFT_FIELDS: tuple[str, ...] = ("title", "priceUsd", "imageUrl", "dimensionsM", "category")
 
 
@@ -47,6 +51,7 @@ class ProductQuery:
     target_dimensions_m: tuple[float, float, float] | None = None
     max_price_usd: Decimal | None = None
     style_tags: tuple[str, ...] = ()
+    region: Region = "us"
 
 
 @dataclass(frozen=True)

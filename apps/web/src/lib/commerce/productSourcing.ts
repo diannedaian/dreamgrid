@@ -28,12 +28,24 @@ export type ProductDraft = {
   note?: string;
 };
 
+/** Where to shop. Prices outside the US are converted to USD by the search provider. */
+export type Region = "us" | "ca" | "uk" | "eu" | "au";
+
+export const REGIONS: readonly { value: Region; label: string }[] = [
+  { value: "us", label: "United States" },
+  { value: "ca", label: "Canada" },
+  { value: "uk", label: "United Kingdom" },
+  { value: "eu", label: "European Union" },
+  { value: "au", label: "Australia" },
+];
+
 export type ProductSearchQuery = {
   category: ProductCategory;
   keywords?: string;
   targetDimensionsM?: DimensionsM;
   maxPriceUsd?: number;
   styleTags?: string[];
+  region?: Region;
   limit?: number;
 };
 

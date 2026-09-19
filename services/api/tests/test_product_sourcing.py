@@ -325,6 +325,22 @@ async def test_openai_search_maps_hits_and_skips_bad_urls() -> None:
     assert model.calls[0]["tools"] == ({"type": "web_search"},)
     assert "120 cm wide" in model.calls[0]["input"]
     assert "$150" in model.calls[0]["input"]
+    assert outcome.note is None
+
+
+@pytest.mark.anyio
+async def test_openai_search_prompts_per_region_and_flags_conversion() -> None:
+    from dreamgrid_api.adapters.commerce.search_provider import search_instructions
+
+    assert "United States" in search_instructions("us")
+    assert "converted" not in search_instructions("us")
+    assert "United Kingdom" in search_instructions("uk")
+    assert "pounds sterling" in search_instructions("uk")
+    assert "converted" in search_instructions("uk")
+
+    provider = OpenAIWebSearchProvider(FakeModel(json.dumps({"results": []})))
+    outcome = await provider.search(ProductQuery(category="lamp", region="au"), limit=3)
+    assert outcome.note is not None and "converted" in outcome.note
 
 
 @pytest.mark.anyio
@@ -520,6 +536,7 @@ class FakeGateway:
     async def search(self, query: ProductQuery, *, limit: int = 8) -> SearchOutcome:
         assert query.max_price_usd == Decimal("43")
         assert query.style_tags == ("cozy",)
+        assert query.region == "uk"
         return SearchOutcome(
             results=(
                 ProductDraft(
@@ -562,7 +579,13 @@ def test_import_route_rejects_empty_url(client: TestClient) -> None:
 def test_search_route_translates_query_and_results(client: TestClient) -> None:
     response = client.post(
         "/api/v1/products/search",
-        json={"category": "lamp", "maxPriceUsd": 43, "styleTags": [" Cozy "], "limit": 3},
+        json={
+            "category": "lamp",
+            "maxPriceUsd": 43,
+            "styleTags": [" Cozy "],
+            "region": "uk",
+            "limit": 3,
+        },
     )
 
     assert response.status_code == 200
@@ -575,6 +598,11 @@ def test_search_route_translates_query_and_results(client: TestClient) -> None:
 
 def test_search_route_rejects_unknown_category(client: TestClient) -> None:
     assert client.post("/api/v1/products/search", json={"category": "sofa"}).status_code == 422
+
+
+def test_search_route_rejects_unknown_region(client: TestClient) -> None:
+    body = {"category": "lamp", "region": "mars"}
+    assert client.post("/api/v1/products/search", json=body).status_code == 422
 
 
 def test_openapi_lists_product_routes(client: TestClient) -> None:

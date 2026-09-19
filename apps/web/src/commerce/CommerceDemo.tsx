@@ -118,6 +118,12 @@ export function CommerceDemo({
         </ul>
       </section>
 
+      <ImportProductForm draft={pickedDraft} onProductCreated={handleProductCreated} />
+      <ProductSearchForm
+        defaultMaxPriceUsd={summary.remainingUsd}
+        onPickResult={setPickedDraft}
+      />
+
       <section className="commerce-demo__items" aria-labelledby="commerce-demo-items-title">
         <h2 id="commerce-demo-items-title">Placed items</h2>
         <ul>
@@ -154,12 +160,6 @@ export function CommerceDemo({
       >
         Review shopping plan
       </button>
-
-      <ProductSearchForm
-        defaultMaxPriceUsd={summary.remainingUsd}
-        onPickResult={setPickedDraft}
-      />
-      <ImportProductForm draft={pickedDraft} onProductCreated={handleProductCreated} />
     </div>
   );
 }

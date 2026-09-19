@@ -2,10 +2,12 @@ import type { ProductCategory } from "@dreamgrid/contracts";
 import { useState, type FormEvent } from "react";
 
 import {
+  REGIONS,
   searchProducts,
   type ProductDraft,
   type ProductSearchQuery,
   type ProductSearchResult,
+  type Region,
 } from "../lib/commerce/productSourcing";
 import { PRODUCT_CATEGORIES } from "./draftToProduct";
 import { formatUsd } from "./format";
@@ -46,6 +48,7 @@ export function ProductSearchForm({
     defaultMaxPriceUsd !== undefined && defaultMaxPriceUsd > 0 ? String(defaultMaxPriceUsd) : "",
   );
   const [styleTags, setStyleTags] = useState("");
+  const [region, setRegion] = useState<Region>("us");
   const [searching, setSearching] = useState(false);
   const [outcome, setOutcome] = useState<{ result: ProductSearchResult; ranked: RankedResult[] }>();
 
@@ -63,6 +66,7 @@ export function ProductSearchForm({
         .split(",")
         .map((t) => t.trim().toLowerCase())
         .filter(Boolean),
+      region,
     };
     setSearching(true);
     try {
@@ -121,6 +125,16 @@ export function ProductSearchForm({
         <label>
           Style (comma separated)
           <input value={styleTags} onChange={(e) => setStyleTags(e.target.value)} placeholder="minimal, cozy" />
+        </label>
+        <label>
+          Shop in
+          <select value={region} onChange={(e) => setRegion(e.target.value as Region)}>
+            {REGIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </label>
         <button type="submit" disabled={searching}>
           {searching ? "Searching…" : "Search"}

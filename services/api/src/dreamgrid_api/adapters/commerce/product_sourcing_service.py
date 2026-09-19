@@ -110,6 +110,7 @@ class ProductSourcingService:
             query.target_dimensions_m,
             query.max_price_usd,
             query.style_tags,
+            query.region,
             limit,
         )
         cached = self._search_cache.get(key)

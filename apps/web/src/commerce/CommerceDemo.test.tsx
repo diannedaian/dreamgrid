@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { CommerceDemo } from "./CommerceDemo";
@@ -78,16 +78,14 @@ describe("CommerceDemo product sourcing", () => {
   it("adds a hand-entered product to the catalog and lets it be placed", () => {
     render(<CommerceDemo />);
 
-    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Thrifted Stool" } });
-    fireEvent.change(screen.getByLabelText("Price (USD)"), { target: { value: "12" } });
-    fireEvent.change(screen.getByLabelText("Category"), { target: { value: "chair" } });
-    const dims = screen.getAllByLabelText("Width");
-    fireEvent.change(dims[dims.length - 1], { target: { value: "14" } });
-    const heights = screen.getAllByLabelText("Height");
-    fireEvent.change(heights[heights.length - 1], { target: { value: "18" } });
-    const depths = screen.getAllByLabelText("Depth");
-    fireEvent.change(depths[depths.length - 1], { target: { value: "14" } });
-    fireEvent.click(screen.getByRole("button", { name: "Add to catalog" }));
+    const form = within(screen.getByRole("form", { name: "Add a product" }));
+    fireEvent.change(form.getByLabelText("Title"), { target: { value: "Thrifted Stool" } });
+    fireEvent.change(form.getByLabelText("Price (USD)"), { target: { value: "12" } });
+    fireEvent.change(form.getByLabelText("Category"), { target: { value: "chair" } });
+    fireEvent.change(form.getByLabelText("Width"), { target: { value: "14" } });
+    fireEvent.change(form.getByLabelText("Height"), { target: { value: "18" } });
+    fireEvent.change(form.getByLabelText("Depth"), { target: { value: "14" } });
+    fireEvent.click(form.getByRole("button", { name: "Add to catalog" }));
 
     fireEvent.click(screen.getByRole("button", { name: "Add Thrifted Stool" }));
 

@@ -40,6 +40,7 @@ describe("ProductSearchForm", () => {
         category: "desk",
         maxPriceUsd: 43,
         targetDimensionsM: [1.2, 0.75, 0.6],
+        region: "us",
       }),
     );
     const items = screen.getAllByRole("listitem").filter((li) => li.querySelector("strong"));
@@ -48,6 +49,17 @@ describe("ProductSearchForm", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Use this" })[0]);
     expect(onPickResult).toHaveBeenCalledWith(cheap);
+  });
+
+  it("sends the selected region", async () => {
+    const search = vi.fn().mockResolvedValue({ results: [], source: "fixture" } satisfies ProductSearchResult);
+    render(<ProductSearchForm onPickResult={vi.fn()} search={search} />);
+
+    expect(screen.getByLabelText("Shop in")).toHaveValue("us");
+    fireEvent.change(screen.getByLabelText("Shop in"), { target: { value: "uk" } });
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+
+    await waitFor(() => expect(search).toHaveBeenCalledWith(expect.objectContaining({ region: "uk" })));
   });
 
   it("explains an offline search instead of failing", async () => {

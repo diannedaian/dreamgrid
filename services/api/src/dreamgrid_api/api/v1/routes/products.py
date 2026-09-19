@@ -17,6 +17,7 @@ from dreamgrid_api.boundaries.product_sourcing import (
     ProductDraft,
     ProductQuery,
     ProductSourcingGateway,
+    Region,
 )
 from dreamgrid_api.dependencies import product_sourcing
 
@@ -71,6 +72,7 @@ class SearchProductsRequest(CamelModel):
     target_dimensions_m: tuple[float, float, float] | None = None
     max_price_usd: float | None = Field(default=None, ge=0)
     style_tags: list[str] = Field(default_factory=list, max_length=10)
+    region: Region = "us"
     limit: int = Field(default=8, ge=1, le=20)
 
 
@@ -106,6 +108,7 @@ async def search_products(
             Decimal(str(request.max_price_usd)) if request.max_price_usd is not None else None
         ),
         style_tags=tuple(tag.strip().lower() for tag in request.style_tags if tag.strip()),
+        region=request.region,
     )
     outcome = await gateway.search(query, limit=request.limit)
     return SearchProductsResponse(
