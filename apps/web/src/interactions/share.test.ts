@@ -43,6 +43,15 @@ describe("share plan", () => {
     expect(windowsFromPlan(back).map((w) => w.shape)).toEqual(["arch", "oval"]);
   });
 
+  it("preserves open fridge IDs without changing SceneItem or breaking old plans", () => {
+    const item = { id: "fridge1", productId: "p-mini-fridge", modelAssetId: "m-mini-fridge", positionM: [0, 0, 0] as [number, number, number], rotationYDeg: 0 as const };
+    const plan = planFromState(room, [], [item], { openItems: ["fridge1", "missing", "fridge1"] });
+    expect(decodePlan(encodePlan(plan))?.openItems).toEqual(["fridge1"]);
+    expect(decodePlan(encodePlan(plan))?.items[0]).toEqual(item);
+    expect(decodePlan(encodePlan(planFromState(room, [], [item])))?.openItems).toBeUndefined();
+    expect(decodePlan(encodePlan({ ...plan, openItems: ["missing", "fridge1", "fridge1"] }))?.openItems).toEqual(["fridge1"]);
+  });
+
   it("uses only URL-safe characters", () => {
     const plan: Plan = { v: 1, w: 200, d: 199, h: 97, win: [{ s: "l", u: 7, v: 3, w: 63, h: 62 }], items: [] };
     expect(encodePlan(plan)).toMatch(/^[A-Za-z0-9_-]+$/);

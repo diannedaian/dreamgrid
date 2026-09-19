@@ -235,6 +235,8 @@
       #item-tools button:hover { text-decoration: underline; }
       #item-tools button:disabled { opacity: 0.35; cursor: not-allowed; text-decoration: none; }
       #item-tools #tool-delete { color: #c8412c; }
+      #item-tools #tool-state { font-size: 13px; white-space: nowrap; border-radius: 8px; padding: 5px 8px; background: var(--paper, #fbf5ea); }
+      #item-tools #tool-state[hidden] { display: none; }
 
       /* Add furniture (import) */
       .add-furniture { margin-left: 12px; font: inherit; font-size: 12px; font-weight: 600; border: 0; background: none; color: var(--honey-deep); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; vertical-align: middle; }
@@ -315,6 +317,7 @@
       <div id="hint">Drag furniture in from the right, or click a wall to add a window or door</div>
       <div id="warn" hidden></div>
       <div id="item-tools" hidden>
+        <button type="button" id="tool-state" hidden aria-pressed="false">Open fridge</button>
         <button type="button" id="tool-rotate" title="Rotate 90° (R)">⟳</button>
         <button type="button" id="tool-up" title="Move up the wall">▲</button>
         <button type="button" id="tool-down" title="Move down the wall">▼</button>
