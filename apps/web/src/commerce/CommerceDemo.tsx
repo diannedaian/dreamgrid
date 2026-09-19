@@ -121,7 +121,8 @@ export function CommerceDemo({
       <ImportProductForm draft={pickedDraft} onProductCreated={handleProductCreated} />
       <ProductSearchForm
         defaultMaxPriceUsd={summary.remainingUsd}
-        onPickResult={setPickedDraft}
+        onProductCreated={handleProductCreated}
+        onNeedsDetails={setPickedDraft}
       />
 
       <section className="commerce-demo__items" aria-labelledby="commerce-demo-items-title">

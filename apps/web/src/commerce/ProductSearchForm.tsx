@@ -1,15 +1,16 @@
-import type { ProductCategory } from "@dreamgrid/contracts";
+import type { Product, ProductCategory } from "@dreamgrid/contracts";
 import { useState, type FormEvent } from "react";
 
 import {
   REGIONS,
+  importProductFromUrl,
   searchProducts,
   type ProductDraft,
   type ProductSearchQuery,
   type ProductSearchResult,
   type Region,
 } from "../lib/commerce/productSourcing";
-import { PRODUCT_CATEGORIES } from "./draftToProduct";
+import { PRODUCT_CATEGORIES, mergeDrafts, productFromCompleteDraft } from "./draftToProduct";
 import { formatUsd } from "./format";
 import { rankSearchResults, type RankedResult } from "./productSearch";
 import { LENGTH_UNITS, toMeters, type LengthUnit } from "./units";
@@ -17,11 +18,16 @@ import { LENGTH_UNITS, toMeters, type LengthUnit } from "./units";
 export type ProductSearchFormProps = {
   /** Prefills the price limit; typically the remaining budget. */
   defaultMaxPriceUsd?: number;
-  /** The user picked a result; the parent opens it in the import form. */
-  onPickResult: (draft: ProductDraft) => void;
-  /** Injected for tests; defaults to the real API adapter. */
+  /** A result had everything the contract needs and became a Product. */
+  onProductCreated: (product: Product) => void;
+  /** A result still lacks something (usually dimensions); open it in the import form. */
+  onNeedsDetails: (draft: ProductDraft) => void;
+  /** Injected for tests; default to the real API adapters. */
   search?: (query: ProductSearchQuery) => Promise<ProductSearchResult>;
+  fetchDraft?: (url: string, options: { titleHint?: string }) => Promise<ProductDraft>;
 };
+
+type AddState = { status: "adding" } | { status: "added" } | { status: "needs-details"; note: string };
 
 const SOURCE_LABEL = {
   live: "Results from AI web search. Confirm price and size on the store page.",
@@ -42,8 +48,10 @@ function sourceLabel(result: ProductSearchResult): string {
  */
 export function ProductSearchForm({
   defaultMaxPriceUsd,
-  onPickResult,
+  onProductCreated,
+  onNeedsDetails,
   search = searchProducts,
+  fetchDraft = importProductFromUrl,
 }: ProductSearchFormProps) {
   const [category, setCategory] = useState<ProductCategory>("desk");
   const [keywords, setKeywords] = useState("");
@@ -58,6 +66,37 @@ export function ProductSearchForm({
   const [region, setRegion] = useState<Region>("us");
   const [searching, setSearching] = useState(false);
   const [outcome, setOutcome] = useState<{ result: ProductSearchResult; ranked: RankedResult[] }>();
+  const [addStates, setAddStates] = useState<Record<string, AddState>>({});
+
+  /**
+   * Add a listing to the catalog. Listings rarely state dimensions, so the
+   * link is read first (page data or AI lookup). If the merged draft is
+   * complete it becomes a Product here; otherwise the import form takes over.
+   */
+  async function handleAdd(draft: ProductDraft) {
+    const key = draft.sourceUrl;
+    setAddStates((s) => ({ ...s, [key]: { status: "adding" } }));
+    let merged = draft;
+    if (draft.missing.length > 0) {
+      const fetched = await fetchDraft(draft.sourceUrl, { titleHint: draft.title });
+      merged = mergeDrafts(draft, fetched);
+    }
+    const product = productFromCompleteDraft(merged);
+    if (product) {
+      onProductCreated(product);
+      setAddStates((s) => ({ ...s, [key]: { status: "added" } }));
+      return;
+    }
+    const stillMissing = merged.missing.filter((m) => m !== "imageUrl");
+    onNeedsDetails(merged);
+    setAddStates((s) => ({
+      ...s,
+      [key]: {
+        status: "needs-details",
+        note: `Still needed: ${stillMissing.join(", ") || "a check"}. Finish it in the form below.`,
+      },
+    }));
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -178,9 +217,22 @@ export function ProductSearchForm({
                   <a href={draft.sourceUrl} target="_blank" rel="noreferrer">
                     Open store page
                   </a>{" "}
-                  <button type="button" onClick={() => onPickResult(draft)}>
-                    Use this
+                  <button
+                    type="button"
+                    onClick={() => handleAdd(draft)}
+                    disabled={addStates[draft.sourceUrl]?.status === "adding" || addStates[draft.sourceUrl]?.status === "added"}
+                  >
+                    {addStates[draft.sourceUrl]?.status === "adding"
+                      ? "Adding…"
+                      : addStates[draft.sourceUrl]?.status === "added"
+                        ? "Added to catalog"
+                        : "Add to catalog"}
                   </button>
+                  {addStates[draft.sourceUrl]?.status === "needs-details" && (
+                    <p className="commerce-search__needs-details" role="status">
+                      {(addStates[draft.sourceUrl] as { note: string }).note}
+                    </p>
+                  )}
                 </li>
               ))}
             </ol>

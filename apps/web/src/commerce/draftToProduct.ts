@@ -121,3 +121,40 @@ export function buildProduct(
   assertValidContract("Product", validateProduct, candidate);
   return candidate;
 }
+
+/** Fill a listing's gaps from a fetched draft; what the listing already states wins. */
+export function mergeDrafts(base: ProductDraft, extra: ProductDraft): ProductDraft {
+  const merged = {
+    title: base.title ?? extra.title,
+    priceUsd: base.priceUsd ?? extra.priceUsd,
+    merchant: base.merchant ?? extra.merchant,
+    imageUrl: base.imageUrl ?? extra.imageUrl,
+    dimensionsM: base.dimensionsM ?? extra.dimensionsM,
+    category: base.category ?? extra.category,
+  };
+  const required = ["title", "priceUsd", "imageUrl", "dimensionsM", "category"] as const;
+  return {
+    ...base,
+    ...merged,
+    styleTags: base.styleTags.length ? base.styleTags : extra.styleTags,
+    colorTags: base.colorTags.length ? base.colorTags : extra.colorTags,
+    confidence: Math.max(base.confidence, extra.confidence),
+    extractionMethod: base.dimensionsM ? base.extractionMethod : extra.extractionMethod,
+    missing: required.filter((key) => merged[key] === undefined),
+    note: [base.note, extra.note].filter(Boolean).join(" ") || undefined,
+  };
+}
+
+/**
+ * A draft becomes a Product without user input only when everything the
+ * contract needs is present. Returns null when the form is still required.
+ */
+export function productFromCompleteDraft(draft: ProductDraft): Product | null {
+  const fields = fieldsFromDraft(draft, "cm");
+  if (Object.keys(validateFields(fields)).length > 0) return null;
+  try {
+    return buildProduct(fields);
+  } catch {
+    return null;
+  }
+}

@@ -116,8 +116,10 @@ result, so the manual form always works.
   details, or type them. Shows how each field was obtained (structured data /
   page text / AI / fixture / by hand).
 - `ProductSearchForm` props: `defaultMaxPriceUsd` (pass
-  `summary.remainingUsd`), `onPickResult` (hand the draft to the import form),
-  `search?` (test injection).
+  `summary.remainingUsd`), `onProductCreated` (a result had everything and
+  became a `Product`), `onNeedsDetails` (a result still lacks dimensions;
+  open it in the import form), `search?` / `fetchDraft?` (test injection).
+  "Add to catalog" reads the link first when the listing lacks dimensions.
 
 API contract (see `services/api/.../routes/products.py`): `POST
 /api/v1/products/import { url }` and `POST /api/v1/products/search
