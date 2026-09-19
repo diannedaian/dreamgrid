@@ -29,6 +29,7 @@ jobs:
       - run: pnpm -r --if-present lint
       - run: pnpm -r --if-present typecheck
       - run: pnpm -r --if-present test
+      - run: pnpm test:models
       - run: pnpm -r --if-present build
 
   api:

@@ -17,3 +17,14 @@ files here.
 real model loader. It has a bottom-center pivot, embedded geometry, and no remote
 resources. It is a technical test asset, not AI-generated furniture. The catalog
 fixture URLs remain placeholders until Dianne supplies the corresponding assets.
+
+## College bed
+
+`college-bed.glb` is Dianne's first original Blender generation test: beveled oak
+frame and navy Twin XL mattress. It is 0.9652 m wide, 0.9398 m high, and 2.1717 m
+long, with a bottom-center origin, glTF Y-up, and foot toward +Z.
+
+See [`assets/specs/README.md`](../../../../../assets/specs/README.md) for exact
+sources, measurement assumptions, generation disclosure, and reproduction steps.
+The model is self-contained; the preview studio is excluded. This does not
+replace the compact-platform-bed fixture or implement the live generation API.

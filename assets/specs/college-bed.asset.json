@@ -1,0 +1,11 @@
+{
+  "id": "asset-college-bed-oak-navy",
+  "productId": "product-college-bed-oak-navy",
+  "glbUrl": "/demo-assets/college-bed.glb",
+  "dimensionsM": [0.9652, 0.9398, 2.1717],
+  "pivot": "bottom-center",
+  "forwardAxis": "+Z",
+  "generationMethod": "gpt-blender",
+  "status": "ready",
+  "disclosure": "Original Codex-authored FurnitureSpec built offline with the trusted Blender interpreter, not a live OpenAI API result. Main envelope follows Gonzaga's published bed diagram; mattress underside follows the supplied standard-bed photo. Mattress thickness, rail sections, and hardware are visual estimates."
+}
