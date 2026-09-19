@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,6 +29,14 @@ class Settings(BaseSettings):
     cors_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://localhost:5173"]
     )
+
+    # Linda: product sourcing (URL import + search). "fixture" needs no key and is
+    # the demo default; "live" uses OpenAI for extraction and web search.
+    product_sourcing: Literal["fixture", "live"] = "fixture"
+    openai_api_key: SecretStr | None = None
+    openai_model: str = "gpt-4.1-mini"
+    openai_web_search_tool: str = "web_search"
+    fixtures_dir: str | None = None
 
 
 @lru_cache

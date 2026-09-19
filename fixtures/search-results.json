@@ -1,0 +1,112 @@
+[
+  {
+    "title": "Fold-Down Wall Desk",
+    "category": "desk",
+    "priceUsd": 39,
+    "merchant": "DreamGrid Demo Search",
+    "sourceUrl": "https://example.com/search/fold-down-wall-desk",
+    "imageUrl": "/demo-assets/previews/placeholder.webp",
+    "dimensionsM": [0.8, 0.5, 0.45],
+    "styleTags": ["compact", "minimal"],
+    "colorTags": ["white"]
+  },
+  {
+    "title": "Student Writing Desk",
+    "category": "desk",
+    "priceUsd": 74,
+    "merchant": "DreamGrid Demo Search",
+    "sourceUrl": "https://example.com/search/student-writing-desk",
+    "imageUrl": "/demo-assets/previews/placeholder.webp",
+    "dimensionsM": [1.0, 0.75, 0.5],
+    "styleTags": ["study", "minimal"],
+    "colorTags": ["oak", "white"]
+  },
+  {
+    "title": "Wide Oak Work Table",
+    "category": "desk",
+    "priceUsd": 159,
+    "merchant": "DreamGrid Demo Search",
+    "sourceUrl": "https://example.com/search/wide-oak-work-table",
+    "imageUrl": "/demo-assets/previews/placeholder.webp",
+    "dimensionsM": [1.4, 0.75, 0.7],
+    "styleTags": ["scandinavian", "study"],
+    "colorTags": ["oak"]
+  },
+  {
+    "title": "Clip-On Reading Light",
+    "category": "lamp",
+    "priceUsd": 18,
+    "merchant": "DreamGrid Demo Search",
+    "sourceUrl": "https://example.com/search/clip-on-reading-light",
+    "imageUrl": "/demo-assets/previews/placeholder.webp",
+    "dimensionsM": [0.08, 0.3, 0.08],
+    "styleTags": ["compact", "modern"],
+    "colorTags": ["black"]
+  },
+  {
+    "title": "Paper Shade Table Lamp",
+    "category": "lamp",
+    "priceUsd": 32,
+    "merchant": "DreamGrid Demo Search",
+    "sourceUrl": "https://example.com/search/paper-shade-table-lamp",
+    "imageUrl": "/demo-assets/previews/placeholder.webp",
+    "dimensionsM": [0.25, 0.42, 0.25],
+    "styleTags": ["cozy", "soft"],
+    "colorTags": ["cream"]
+  },
+  {
+    "title": "Folding Metal Chair",
+    "category": "chair",
+    "priceUsd": 29,
+    "merchant": "DreamGrid Demo Search",
+    "sourceUrl": "https://example.com/search/folding-metal-chair",
+    "imageUrl": "/demo-assets/previews/placeholder.webp",
+    "dimensionsM": [0.45, 0.8, 0.5],
+    "styleTags": ["compact", "industrial"],
+    "colorTags": ["black"]
+  },
+  {
+    "title": "Mesh Task Chair",
+    "category": "chair",
+    "priceUsd": 69,
+    "merchant": "DreamGrid Demo Search",
+    "sourceUrl": "https://example.com/search/mesh-task-chair",
+    "imageUrl": "/demo-assets/previews/placeholder.webp",
+    "dimensionsM": [0.6, 0.95, 0.6],
+    "styleTags": ["modern", "study"],
+    "colorTags": ["gray"]
+  },
+  {
+    "title": "Five-Tier Narrow Bookcase",
+    "category": "shelf",
+    "priceUsd": 49,
+    "merchant": "DreamGrid Demo Search",
+    "sourceUrl": "https://example.com/search/five-tier-narrow-bookcase",
+    "imageUrl": "/demo-assets/previews/placeholder.webp",
+    "dimensionsM": [0.6, 1.75, 0.3],
+    "styleTags": ["slim", "storage"],
+    "colorTags": ["white"]
+  },
+  {
+    "title": "Twin Metal Bed Frame",
+    "category": "bed",
+    "priceUsd": 119,
+    "merchant": "DreamGrid Demo Search",
+    "sourceUrl": "https://example.com/search/twin-metal-bed-frame",
+    "imageUrl": "/demo-assets/previews/placeholder.webp",
+    "dimensionsM": [1.0, 0.35, 1.95],
+    "styleTags": ["minimal", "dorm"],
+    "colorTags": ["black"]
+  },
+  {
+    "title": "Round Jute Rug",
+    "category": "decor",
+    "priceUsd": 35,
+    "merchant": "DreamGrid Demo Search",
+    "sourceUrl": "https://example.com/search/round-jute-rug",
+    "imageUrl": "/demo-assets/previews/placeholder.webp",
+    "dimensionsM": [1.2, 0.01, 1.2],
+    "styleTags": ["organic", "cozy"],
+    "colorTags": ["natural"]
+  }
+]
