@@ -10,5 +10,5 @@
     "isolatedModules": true,
     "paths": { "@contracts": ["../../packages/contracts/index.ts"] }
   },
-  "include": ["src", "../../packages/contracts"]
+  "include": ["src", "../../packages/contracts/index.ts"]
 }

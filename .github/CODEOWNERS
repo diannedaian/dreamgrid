@@ -1,0 +1,14 @@
+# Dianne owns the 3D foundation and reviews shared architecture by default.
+* @diannedaian
+
+/apps/web/src/room/ @diannedaian
+/apps/web/src/scene/ @diannedaian
+/services/api/src/dreamgrid_api/boundaries/model_generation.py @diannedaian
+/packages/contracts/ @diannedaian
+/docs/ @diannedaian
+
+# Add Cindy's and Linda's GitHub usernames here as soon as they join:
+# /apps/web/src/catalog/ @cindy-username
+# /apps/web/src/interactions/ @cindy-username
+# /apps/web/src/commerce/ @linda-username
+# /services/api/src/dreamgrid_api/boundaries/commerce.py @linda-username

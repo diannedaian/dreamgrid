@@ -5,9 +5,12 @@
 
 # Dependencies and builds
 node_modules/
+.pnpm-store/
+*.tsbuildinfo
 dist/
 build/
 .next/
+.vite/
 coverage/
 
 # Local tooling
@@ -21,7 +24,9 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 *.blend1
 *.blend2
 *.blend@
-

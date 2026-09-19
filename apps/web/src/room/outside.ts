@@ -77,14 +77,24 @@ export function buildOutside(w: number, h: number, wallT: number, look: Look, vi
   key.position.set(1.5, 3, 1.5);
   sim.add(key);
 
-  // A branch of canopy hangs into the top third of the view; the rest is open sky.
+  // A canopy hangs into the top third of the view; the rest is open sky. It is built from
+  // overlapping clumps of different sizes and heights (plus a few dangling sprigs) so the
+  // lower edge is lumpy and organic rather than a line.
   const inner = { min: new Vector3(cx - bw / 2 + 0.05, -drop + 0.02, cz - bd / 2 + 0.05), max: new Vector3(cx + bw / 2 - 0.05, top - 0.05, -wallT - 0.25) };
-  const leafCount = Math.round(Math.min(1400, Math.max(400, w * h * 700)));
-  const canopy = leafCloud(leafCount, new Vector3(cx + w * 0.15, h * 1.12, -wallT - 1.0), new Vector3(w * 1.0 + 0.7, h * 0.5 + 0.15, 0.7), p, view, inner, h * 0.6, rnd);
+  const leafCount = Math.round(Math.min(1600, Math.max(450, w * h * 750)));
+  const clumps: Array<{ c: Vector3; r: Vector3 }> = [];
+  const spread = w * 1.3 + 0.6;
+  for (let i = 0; i < 8; i++) {
+    const rr = (0.28 + rnd() * 0.4) * (w * 0.45 + 0.35);
+    clumps.push({ c: new Vector3(cx + (rnd() - 0.5) * spread, h * (0.86 + rnd() * 0.4), -wallT - 0.75 - rnd() * 0.7), r: new Vector3(rr * (1 + rnd() * 0.5), rr * (0.55 + rnd() * 0.4), rr * 0.8) });
+  }
+  for (let i = 0; i < 3; i++) { // sprigs that dip lower
+    const rr = (0.12 + rnd() * 0.12) * (w * 0.45 + 0.35);
+    clumps.push({ c: new Vector3(cx + (rnd() - 0.5) * spread * 0.9, h * (0.62 + rnd() * 0.18), -wallT - 0.7 - rnd() * 0.5), r: new Vector3(rr * 1.3, rr, rr) });
+  }
+  const canopy = leafClumps(leafCount, clumps, p, view, inner, rnd);
   sim.add(canopy);
-  // a smaller cluster dipping lower on one side so the edge isn't a straight line
-  const bush = leafCloud(Math.round(leafCount * 0.25), new Vector3(cx + w * 0.55, h * 0.78, -wallT - 0.8), new Vector3(w * 0.35 + 0.2, h * 0.25 + 0.1, 0.4), p, view, inner, h * 0.55, rnd);
-  sim.add(bush);
+  const bush = canopy; // (kept for the sway update below)
   const branch = new Mesh(new CylinderGeometry(0.02, 0.045, w * 1.2 + 0.8, 8), new MeshStandardMaterial({ color: new Color(p.trunk), roughness: 1 }));
   branch.position.set(cx + w * 0.2, h * 1.05, -wallT - 1.0);
   branch.rotation.z = Math.PI / 2 - 0.12;
@@ -148,6 +158,38 @@ export function buildOutside(w: number, h: number, wallT: number, look: Look, vi
   };
   const dispose = () => { rt.dispose(); };
   return { group, update, render, dispose };
+}
+
+/** Leaves distributed across several ellipsoid clumps (count split by volume). */
+function leafClumps(n: number, clumps: Array<{ c: Vector3; r: Vector3 }>, p: Palette, view: OutsideView, inner: { min: Vector3; max: Vector3 }, rnd: () => number): InstancedMesh {
+  const vols = clumps.map((k) => k.r.x * k.r.y * k.r.z);
+  const total = vols.reduce((a, b) => a + b, 0);
+  const geo = new PlaneGeometry(0.2, 0.2);
+  const mat = new MeshStandardMaterial({ map: leafTexture(), alphaTest: 0.5, side: DoubleSide, roughness: 1, color: new Color("#ffffff") });
+  const mesh = new InstancedMesh(geo, mat, n);
+  const m = new Matrix4(), q = new Quaternion(), s = new Vector3(), pos = new Vector3(), col = new Color();
+  const palette = p.leaves.map((c) => new Color(c));
+  let i = 0;
+  clumps.forEach((k, ci) => {
+    const count = ci === clumps.length - 1 ? n - i : Math.round((vols[ci] / total) * n);
+    for (let j = 0; j < count && i < n; j++, i++) {
+      let u: number, v: number, w: number;
+      do { u = rnd() * 2 - 1; v = rnd() * 2 - 1; w = rnd() * 2 - 1; } while (u * u + v * v + w * w > 1);
+      const r = Math.cbrt(rnd()) * 0.45 + 0.55;
+      pos.set(k.c.x + u * k.r.x * r, k.c.y + v * k.r.y * r, k.c.z + w * k.r.z * r).clamp(inner.min, inner.max);
+      q.setFromEuler(new Euler((rnd() - 0.5) * 1.6, rnd() * Math.PI, (rnd() - 0.5) * 1.6));
+      const sc = 0.7 + rnd() * 0.8;
+      s.set(sc, sc, sc);
+      m.compose(pos, q, s);
+      mesh.setMatrixAt(i, m);
+      col.copy(palette[Math.floor(rnd() * palette.length)]);
+      if (view !== "snowy") col.offsetHSL(0, 0, (v * 0.5 + 0.5) * 0.14 - 0.08 + (w > 0 ? 0.03 : -0.03));
+      mesh.setColorAt(i, col);
+    }
+  });
+  mesh.instanceMatrix.needsUpdate = true;
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  return mesh;
 }
 
 function leafCloud(n: number, center: Vector3, radius: Vector3, p: Palette, view: OutsideView, inner: { min: Vector3; max: Vector3 }, floorY = -Infinity, rnd: () => number = Math.random): InstancedMesh {

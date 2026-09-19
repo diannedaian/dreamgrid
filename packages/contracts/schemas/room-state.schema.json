@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dreamgrid.dev/schemas/room-state.schema.json",
+  "title": "RoomState",
+  "description": "The minimal state shared by room interaction and budget features.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["room", "budgetUsd", "items"],
+  "properties": {
+    "room": { "$ref": "https://dreamgrid.dev/schemas/room-spec.schema.json" },
+    "budgetUsd": { "type": "number", "minimum": 0 },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "https://dreamgrid.dev/schemas/scene-item.schema.json" }
+    }
+  }
+}

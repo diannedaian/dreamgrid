@@ -1,0 +1,24 @@
+{
+  "name": "dreamgrid",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HackMIT 2026 monorepo for DreamGrid",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "bootstrap": "./scripts/bootstrap.sh",
+    "dev": "concurrently --kill-others-on-fail --names web,api --prefix-colors cyan,magenta \"pnpm dev:web\" \"pnpm dev:api\"",
+    "dev:web": "pnpm --filter @dreamgrid/web dev",
+    "dev:api": "./scripts/dev-api.sh",
+    "build": "pnpm -r --if-present build",
+    "lint": "pnpm -r --if-present lint && ./scripts/lint-api.sh",
+    "typecheck": "pnpm -r --if-present typecheck && ./scripts/typecheck-api.sh",
+    "test": "pnpm -r --if-present test && ./scripts/test-api.sh",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

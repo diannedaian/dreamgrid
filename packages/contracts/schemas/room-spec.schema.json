@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dreamgrid.dev/schemas/room-spec.schema.json",
+  "title": "RoomSpec",
+  "description": "A rectangular DreamGrid room measured in meters.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["widthM", "depthM", "heightM", "gridSizeM", "lightingMode"],
+  "properties": {
+    "widthM": { "type": "number", "exclusiveMinimum": 0 },
+    "depthM": { "type": "number", "exclusiveMinimum": 0 },
+    "heightM": { "type": "number", "exclusiveMinimum": 0 },
+    "gridSizeM": { "type": "number", "exclusiveMinimum": 0 },
+    "lightingMode": { "enum": ["day", "night"] }
+  }
+}
