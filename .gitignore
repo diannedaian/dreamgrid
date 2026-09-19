@@ -30,3 +30,6 @@ venv/
 *.blend1
 *.blend2
 *.blend@
+
+# Reproducible local Blender sources, renders, and validation reports
+/artifacts/

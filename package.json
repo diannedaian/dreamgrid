@@ -15,7 +15,8 @@
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint && ./scripts/lint-api.sh",
     "typecheck": "pnpm -r --if-present typecheck && ./scripts/typecheck-api.sh",
-    "test": "pnpm -r --if-present test && ./scripts/test-api.sh",
+    "test": "pnpm -r --if-present test && ./scripts/test-api.sh && pnpm test:models",
+    "test:models": "node --test tools/blender/asset.test.mjs",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
