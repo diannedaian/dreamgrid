@@ -36,7 +36,12 @@ function roomFromInches(w: number, d: number, h: number): RoomSpec | null {
 function build(room: RoomSpec, plan: Plan | null = null, view = false) {
   overlay.hidden = true;
   stopPolling();
-  start(room, plan, view);
+  void start(room, plan, view).catch((error) => {
+    console.error("Room initialization failed", error);
+    const hint = document.getElementById("hint")!;
+    hint.hidden = false;
+    hint.textContent = "The room could not load. Please refresh to try again.";
+  });
 }
 
 form.addEventListener("submit", (e) => {
@@ -160,6 +165,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       floor: shell.floor !== DEFAULT_FLOOR ? shell.floor : undefined,
       sun,
       view: shell.view,
+      openItems: placement?.openItemIds ?? plan?.openItems,
     });
   const designs = createDesignStore();
   let designId: string | null = new URLSearchParams(location.search).get("design");
@@ -192,7 +198,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     onResize();
     if (plan?.items.length) {
       const viewer = new PlacementController(scene, camera, canvas, room, controls, catalog, lamps, () => {});
-      await viewer.loadItems(plan.items);
+      await viewer.loadItems(plan.items, plan.openItems);
     }
   } else {
     sidebar.hidden = false;
@@ -200,9 +206,15 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     document.body.classList.add("has-leftbar");
     onResize();
     const tools = document.getElementById("item-tools")!;
+    const stateBtn = document.getElementById("tool-state") as HTMLButtonElement;
     const upBtn = document.getElementById("tool-up") as HTMLButtonElement, downBtn = document.getElementById("tool-down") as HTMLButtonElement;
     placement = new PlacementController(scene, camera, canvas, room, controls, catalog, lamps, () => syncUrl(), (on) => shell.setGridVisible(on), (item) => {
       tools.hidden = !item;
+      const state = item ? placement!.stateFor(item.id) : undefined;
+      stateBtn.hidden = !state;
+      stateBtn.textContent = state?.isOpen ? "Close fridge" : "Open fridge";
+      stateBtn.setAttribute("aria-pressed", String(state?.isOpen ?? false));
+      stateBtn.title = "Preview the door and interior; placement clearance uses the closed cabinet";
       if (!item) return;
       const wall = placement!.isAgainstWall(item.id);
       upBtn.disabled = downBtn.disabled = !wall;
@@ -210,6 +222,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     });
     document.getElementById("tool-rotate")!.addEventListener("click", () => placement!.rotateSelected());
     document.getElementById("tool-delete")!.addEventListener("click", () => placement!.removeSelected());
+    stateBtn.addEventListener("click", () => placement!.toggleSelectedState());
     upBtn.addEventListener("click", () => placement!.raiseSelected(1));
     downBtn.addEventListener("click", () => placement!.raiseSelected(-1));
     // keep the toolbar pinned above the selected item
@@ -286,7 +299,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       share.textContent = ok ? "Link copied" : "Copy failed";
       setTimeout(() => (share.textContent = "Share"), 1800);
     });
-    if (plan?.items.length) await placement.loadItems(plan.items);
+    if (plan?.items.length) await placement.loadItems(plan.items, plan.openItems);
   }
 
   applySun(sun);

@@ -15,6 +15,8 @@ export type Plan = {
   win: Array<{ s: "b" | "l"; u: number; v: number; w: number; h: number; k?: "d"; f?: "a" | "s" | "o"; c?: 1 }>;
   /** Placed furniture (reserved for the catalog integration). */
   items: SceneItem[];
+  /** IDs of models displaying their open pose; absent means all closed (legacy plans). */
+  openItems?: string[];
   /** Sun: time of day as 0..300 (sunrise 0, noon 100, sunset 200, midnight 300), heading the far wall faces, southern hemisphere. Omitted when default. */
   t?: number;
   hd?: number;
@@ -26,7 +28,7 @@ export type Plan = {
   vw?: "autumn" | "snowy" | "rainy";
 };
 
-export type Look = { paint?: string; floor?: string; sun?: SunSettings; view?: string };
+export type Look = { paint?: string; floor?: string; sun?: SunSettings; view?: string; openItems?: string[] };
 
 const inches = (m: number) => Math.round(m / INCH_M);
 
@@ -43,6 +45,7 @@ export function planFromState(room: RoomSpec, windows: WindowSpec[], items: Scen
       ...(x.corner ? { c: 1 as const } : {}),
     })),
     items: items.map((i) => ({ ...i, positionM: i.positionM.map((v) => Math.round(v * 10000) / 10000) as SceneItem["positionM"] })),
+    ...(look.openItems?.length ? { openItems: [...new Set(look.openItems)].filter((id) => items.some((i) => i.id === id)) } : {}),
     ...(look.sun && Math.round(look.sun.t * 300) !== 100 ? { t: Math.round(look.sun.t * 300) } : {}),
     ...(look.sun && look.sun.headingDeg ? { hd: look.sun.headingDeg } : {}),
     ...(look.sun?.southern ? { sh: 1 as const } : {}),
@@ -92,6 +95,7 @@ export function decodePlan(s: string): Plan | null {
     if (p?.v !== 1 || !ok(p.w) || !ok(p.d) || !ok(p.h) || !Array.isArray(p.win)) return null;
     return {
       v: 1, w: p.w, d: p.d, h: p.h, win: p.win, items: Array.isArray(p.items) ? p.items : [],
+      ...(Array.isArray(p.openItems) ? { openItems: [...new Set(p.openItems.filter((id: unknown) => typeof id === "string" && p.items?.some((item: SceneItem) => item?.id === id)))] as string[] } : {}),
       ...(Number.isFinite(p.t) ? { t: Math.min(300, Math.max(0, Math.round(p.t))) }
         : typeof p.t === "string" && p.t in TIME_T ? { t: Math.round(TIME_T[p.t as TimeOfDay] * 300) }
         : p.n === 1 ? { t: 300 } : {}),

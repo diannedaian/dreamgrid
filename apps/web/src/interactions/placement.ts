@@ -6,10 +6,11 @@ import type { ModelAsset, Product, RoomSpec, SceneItem } from "@contracts";
 import type { Catalog, CatalogEntry } from "../catalog/catalog";
 import type { LampRegistry } from "./lamps";
 import { loadModel } from "./models";
+import { createModelState, type ModelState } from "./modelStates";
 import { INCH_M, snapToInch } from "./units";
 import { footprintBlocksDoor, type DoorArc } from "./wallGrid";
 
-type Placed = { item: SceneItem; product: Product; object: Object3D };
+type Placed = { item: SceneItem; product: Product; object: Object3D; state?: ModelState };
 
 export class PlacementController {
   readonly items: SceneItem[] = [];
@@ -126,6 +127,20 @@ export class PlacementController {
     return this.selected ? this.placed.get(this.selected)?.item ?? null : null;
   }
 
+  get openItemIds(): string[] {
+    return [...this.placed.values()].filter((p) => p.state?.isOpen).map((p) => p.item.id);
+  }
+
+  stateFor(id: string): ModelState | undefined { return this.placed.get(id)?.state; }
+
+  toggleSelectedState(): void {
+    const p = this.selected ? this.placed.get(this.selected) : undefined;
+    if (!p?.state) return;
+    p.state.setOpen(!p.state.isOpen);
+    this.emit();
+    this.onSelect(p.item);
+  }
+
   /** World point above the selected item, for anchoring a toolbar on screen. */
   selectedAnchor(): Vector3 | null {
     const p = this.selected ? this.placed.get(this.selected) : undefined;
@@ -137,12 +152,14 @@ export class PlacementController {
   removeSelected() { if (this.selected) this.remove(this.selected); }
   raiseSelected(inches: number) { if (this.selected) this.raise(this.selected, inches); }
 
-  async loadItems(items: SceneItem[]) {
+  async loadItems(items: SceneItem[], openItemIds: string[] = []) {
     for (const it of items) {
       const entry = this.catalog.get(it.productId);
       if (!entry) continue;
       await this.add(entry.product, entry.asset, it.positionM, it.rotationYDeg, it.id);
+      if (openItemIds.includes(it.id)) this.placed.get(it.id)?.state?.setOpen(true);
     }
+    this.emit();
   }
 
   /** Door swings to check furniture against (hover shows a red warning when something blocks one). */
@@ -207,6 +224,7 @@ export class PlacementController {
   // ---- internals --------------------------------------------------------
 
   private attach(p: Placed) {
+    p.state = createModelState(p.object, p.product.id);
     p.object.rotation.y = (p.item.rotationYDeg * Math.PI) / 180;
     p.object.userData.itemId = p.item.id;
     this.group.add(p.object);

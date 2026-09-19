@@ -34,7 +34,8 @@ src/interactions/wallPicker.ts click a wall → menu → pick corners → window
 src/interactions/wallGrid.ts   wall-local coordinates, WindowSpec, door swing arc + collision math
 src/interactions/windowMesh.ts window dressing (pane + shadow-only leaf proxy + area light)
 src/interactions/models.ts     GLB loading, GLB sanitizing, pivot/scale normalization, procedural stand-ins
-src/interactions/lamps.ts      lamp registry (glow + point light at sunset/midnight)
+src/interactions/modelStates.ts  hinged fridge open/close pose; per-instance, cabinet stays fixed
+src/interactions/lamps.ts      lamp registry (GLB bulb rigs, or fixture point light, at sunset/midnight)
 src/interactions/share.ts      plan ⇄ URL encoding (base64url JSON)
 src/interactions/units.ts      inch/meter helpers, snapping
 src/catalog/catalog.ts         catalog store (fixtures + public/demo-assets/catalog.json)
@@ -69,6 +70,29 @@ keepFixtures }`, shapes from `packages/contracts`). `glbUrl` may be a real path 
 procedural stand-in. Lamps (category `lamp`) automatically glow at night. The room shell in `src/room/` is
 a placeholder; if replacing it, keep the `RoomShell` surface: `group`, `walls`, `setWindows`, `setSun`,
 `setWallColor`, `setFloor`, `setView`, `setGridVisible`, `setWallHighlight`, `update(dt, time, renderer)`.
+
+The cached **Torchiere + task lamp** includes `dreamgridLighting` GLB extras for two bulbs.
+The loader promotes this rig to the glTF scene (positions are already in final exported
+model space, not the inner furniture node's coordinates). The registry attaches lights
+and targets to that scene, which keeps them aligned through centering, scaling, dragging
+and rotation. It uses the rig's named emissive materials; fixture lamps still use the
+original inferred single point light. See `lamps.test.ts` for a real-asset regression test.
+Generated light intensities use a 0.05 preview scale to match the stylized room's
+exposure/bloom; these are not measured lighting predictions.
+This is cached-asset support only; the live model-generation backend is not integrated yet.
+
+The supplied **Whirlpool mini fridge** replaces `p-mini-fridge` / `m-mini-fridge`,
+so existing fridge placements load the finished asset. `modelStates.ts` binds its
+`DOOR PIVOT` hierarchy (glTF Y axis, +110 degrees). The selection toolbar shows
+Open fridge / Close fridge only when that hinge loaded successfully. Normalization
+happens once while closed; opening never moves or resizes the cabinet. The closed
+footprint remains the placement/collision footprint; this is an interior preview,
+not a validated door-clearance simulation.
+
+The web-only `Plan.openItems?: string[]` saves open item IDs in room links and saved
+designs. Legacy plans stay closed. `SceneItem` and canonical contracts are unchanged.
+The catalog's `hiddenProductIds` hides the five retired placeholder cards while
+keeping their IDs available to old saved plans; it does not delete those plans.
 
 **Linda (commerce).** Placed items are `placement.items: SceneItem[]`; every change calls the
 `onChange` callback given in `main.ts` (currently just re-syncs the URL). Hook budget/subtotal there.

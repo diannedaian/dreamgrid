@@ -1,6 +1,6 @@
 // Model loading with a cache. GLBs load via GLTFLoader; "fixture:*" URLs build procedural
 // stand-ins sized from the asset's dimensions. Everything returns pivot bottom-center, facing +Z.
-import { Box3, BoxGeometry, Color, ConeGeometry, CylinderGeometry, Group, Mesh, MeshStandardMaterial, Object3D, SphereGeometry, Vector3 } from "three";
+import { Box3, BoxGeometry, Color, ConeGeometry, CylinderGeometry, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, SphereGeometry, Vector3 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import type { ModelAsset, Product } from "@contracts";
@@ -24,7 +24,25 @@ async function build(product: Product, asset?: ModelAsset): Promise<Object3D> {
   if (asset.glbUrl.startsWith("fixture:")) return fixture(asset.glbUrl.slice(8), dims);
   const gltf = await loader.parseAsync(await fetchGlbSanitized(asset.glbUrl), "");
   const obj = gltf.scene;
+  // Generation metadata describes the final exported GLB space, not the inner
+  // furniture node's pre-normalization space. Promote it to the glTF scene so
+  // lights receive this loader's centering/scaling exactly once, with the meshes.
+  obj.traverse((o) => {
+    if (!obj.userData.dreamgridLighting && o.userData.dreamgridLighting) {
+      obj.userData.dreamgridLighting = o.userData.dreamgridLighting;
+    }
+  });
   obj.traverse((o) => { const m = o as Mesh; if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  // The supplied brushed-metal material has no UV/tangent frame. Its anisotropy
+  // produces invalid pixels that spread through bloom; use isotropic metal here.
+  // Geometry, glass transmission and the original supplied GLB stay untouched.
+  if (product.id === "p-mini-fridge") obj.traverse((node) => {
+    if (!(node instanceof Mesh)) return;
+    const mats = Array.isArray(node.material) ? node.material : [node.material];
+    for (const mat of mats) if (mat instanceof MeshPhysicalMaterial) {
+      mat.anisotropy = 0;
+    }
+  });
   return normalize(obj, dims, asset.glbUrl);
 }
 

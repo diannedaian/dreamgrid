@@ -12,9 +12,11 @@ export class Catalog {
   private products = new Map<string, Product>();
   private assets = new Map<string, ModelAsset>();
   private listeners = new Set<() => void>();
+  // Hide retired demo cards without breaking previously saved room plans.
+  private hiddenProductIds = new Set<string>();
 
   entries(): CatalogEntry[] {
-    return [...this.products.values()].map((product) => ({ product, asset: product.modelAssetId ? this.assets.get(product.modelAssetId) : undefined }));
+    return [...this.products.values()].filter((p) => !this.hiddenProductIds.has(p.id)).map((product) => ({ product, asset: product.modelAssetId ? this.assets.get(product.modelAssetId) : undefined }));
   }
 
   get(productId: string): CatalogEntry | undefined {
@@ -50,7 +52,7 @@ export class Catalog {
   }
 
   /**
-   * Load /demo-assets/catalog.json ({ products, assets, keepFixtures? }) if present, else fixtures.
+   * Load /demo-assets/catalog.json ({ products, assets, keepFixtures?, hiddenProductIds? }) if present, else fixtures.
    * With keepFixtures the built-in stand-ins stay alongside the real models (same ids override).
    */
   static async load(): Promise<Catalog> {
@@ -58,10 +60,11 @@ export class Catalog {
     try {
       const r = await fetch("/demo-assets/catalog.json", { cache: "no-store" });
       if (r.ok) {
-        const j = (await r.json()) as { products?: Product[]; assets?: ModelAsset[]; keepFixtures?: boolean };
+        const j = (await r.json()) as { products?: Product[]; assets?: ModelAsset[]; keepFixtures?: boolean; hiddenProductIds?: string[] };
         if (j.products?.length) {
           if (j.keepFixtures) c.add(FIXTURE_PRODUCTS, FIXTURE_ASSETS);
           c.add(j.products, j.assets ?? []);
+          c.hiddenProductIds = new Set(j.hiddenProductIds ?? []);
           return c;
         }
       }
