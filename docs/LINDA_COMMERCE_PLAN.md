@@ -399,3 +399,62 @@ plus an "applied swaps" section with a "Swap everything back" button in
 `AlternativesList`; `CommerceDemo` clears the fit message on any room edit.
 The compositor must do the same: keep `swapsApplied` next to `roomState` and
 reset the message whenever it sets the room outside the fit flow.
+
+### 2026-09-19 (later): Steps 6 to 10 done on the same branch
+
+Commits (after the Step 1 to 5 ones):
+
+5. `feat(commerce): add manual product entry with unit parsing and API adapter`
+   — Step 6: `units.ts`, `draftToProduct.ts`, `ImportProductForm.tsx`,
+   `src/lib/commerce/productSourcing.ts` (+ tests).
+6. `feat(api): add product sourcing (URL import, OpenAI extraction, search)`
+   — Steps 7, 8, 9 backend: `boundaries/product_sourcing.py`,
+   `adapters/commerce/{page_fetcher,html_product_parser,openai_client,
+   llm_product_extractor,search_provider,product_sourcing_service}.py`,
+   `routes/products.py`, `fixtures/search-results.json`, settings, tests.
+7. Step 9 UI + Step 10 docs — `productSearch.ts`, `ProductSearchForm.tsx`,
+   demo wiring, READMEs (see git log).
+
+Verified against real stores with the API running (fixture mode, no key):
+
+| Store | Result |
+|---|---|
+| burrow.com (Shopify) | title, price, image from JSON-LD; dimensions missing (LLM rung would fill) |
+| ikea.com | HTTP 200 JavaScript shell; title only → reported as manual with a note |
+| wayfair.com | HTTP 429 (bot protection) → manual draft with the HTTP code in the note |
+| target.com | JavaScript shell → manual |
+| `http://127.0.0.1/...` | refused by the SSRF guard |
+
+Test counts: web 78 (69 in commerce + lib/commerce), contracts 8, API 39.
+ruff, mypy strict, eslint, tsc, and the Vite build pass.
+
+Decisions made while implementing Steps 6 to 10:
+
+- **Stdlib HTML parser, no BeautifulSoup**: avoids a new dependency and a
+  `constraints-dev.txt` refresh. `httpx` moved from dev-only to runtime
+  dependency (already pinned).
+- **No OpenAI SDK**: `openai_client.py` is a ~100-line httpx wrapper around
+  the Responses API with `text.format = json_schema` (strict). Swap in the SDK
+  later if wanted; the `TextModel` protocol is the seam.
+- **LLM rung only fills missing fields**; structured data is never
+  overwritten. Output is capped at confidence 0.7 and labeled `llm`.
+- **Search ranking is client-side** (`rankSearchResults`) so there is one
+  implementation of the price/size/style weights, shared with alternatives via
+  `scoring.ts`.
+- **Title-only pages count as "manual"**: a `<title>` alone is what bot walls
+  and JS shells return; calling that "structured data" misled the form.
+- **`step="any"` on number inputs**: `step="0.1"` made browsers refuse to
+  submit values like 47.24 in (found by the jsdom test).
+- **`build_product_sourcing` uses `parents[6]`** to reach `<repo>/fixtures`;
+  `DREAMGRID_FIXTURES_DIR` overrides it for deployments.
+
+Not done / open:
+
+- Nothing is pushed; no PR yet.
+- `App.tsx` still untouched; `CommerceDemo.tsx` shows the full wiring.
+- Live OpenAI paths (extraction and web search) are exercised only by fakes.
+  First run with a real key: set `DREAMGRID_PRODUCT_SOURCING=live`, paste the
+  Burrow URL above, and confirm dimensions arrive labeled "AI".
+- `/demo-assets/previews/placeholder.webp` (used as the image for hand-entered
+  products and fixture search results) does not exist yet; Dianne's asset PR
+  should add a small placeholder image.

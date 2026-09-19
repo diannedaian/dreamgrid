@@ -73,3 +73,24 @@ describe("CommerceDemo swap lifecycle", () => {
     expect(screen.getByText("Over budget")).toBeInTheDocument();
   });
 });
+
+describe("CommerceDemo product sourcing", () => {
+  it("adds a hand-entered product to the catalog and lets it be placed", () => {
+    render(<CommerceDemo />);
+
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Thrifted Stool" } });
+    fireEvent.change(screen.getByLabelText("Price (USD)"), { target: { value: "12" } });
+    fireEvent.change(screen.getByLabelText("Category"), { target: { value: "chair" } });
+    const dims = screen.getAllByLabelText("Width");
+    fireEvent.change(dims[dims.length - 1], { target: { value: "14" } });
+    const heights = screen.getAllByLabelText("Height");
+    fireEvent.change(heights[heights.length - 1], { target: { value: "18" } });
+    const depths = screen.getAllByLabelText("Depth");
+    fireEvent.change(depths[depths.length - 1], { target: { value: "14" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add to catalog" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Thrifted Stool" }));
+
+    expect(screen.getByTestId("budget-subtotal")).toHaveTextContent("$419");
+  });
+});

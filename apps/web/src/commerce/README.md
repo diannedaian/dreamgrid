@@ -91,6 +91,40 @@ Class names (`commerce-budget`, `commerce-alternatives`, `commerce-plan`,
 `commerce-approval`, and their `__element` / `--status` variants) are the
 styling hooks; no CSS ships from this directory.
 
+## Product sourcing (paste a link, or search by size and budget)
+
+`ImportProductForm` and `ProductSearchForm` create new `Product`s. Both go
+through `src/lib/commerce/productSourcing.ts`, which never throws: with the
+API down, import yields a manual draft and search yields an empty offline
+result, so the manual form always works.
+
+- `units.ts` — `toMeters`, `fromMeters`, `parseDimensionString` (handles
+  `47.2"W x 23.6"D x 29.5"H`, `120 x 60 x 75 cm`, `W 120cm x D 60cm x H 75cm`).
+  User units are converted to meters here, at the input boundary.
+- `draftToProduct.ts` — `fieldsFromDraft`, `validateFields`, `buildProduct`
+  (runs `validateProduct` from the contracts package; a bad product never
+  reaches the catalog). `priceUsd: 0` means "unpriced".
+- `productSearch.ts` — `rankSearchResults(query, drafts)`: 0.4 price fit +
+  0.4 size fit + 0.2 style. Over-limit results sort last but are never hidden.
+- `ImportProductForm` props: `onProductCreated`, `draft?` (prefill),
+  `fetchDraft?` (test injection). Shows how each field was obtained
+  (structured data / page text / AI / fixture / by hand).
+- `ProductSearchForm` props: `defaultMaxPriceUsd` (pass
+  `summary.remainingUsd`), `onPickResult` (hand the draft to the import form),
+  `search?` (test injection).
+
+API contract (see `services/api/.../routes/products.py`): `POST
+/api/v1/products/import { url }` and `POST /api/v1/products/search
+{ category, keywords?, targetDimensionsM?, maxPriceUsd?, styleTags?, limit? }`.
+Both return camelCase `ProductDraft`s, never `Product`s. With
+`DREAMGRID_PRODUCT_SOURCING=fixture` (default) search reads
+`fixtures/search-results.json` and no key is needed.
+
+**Ownership note:** the manifesto gives the import-product UI to Cindy. These
+two forms live here so the sourcing pipeline could be built end to end; Cindy
+may move or restyle them. A new `Product` should be appended to the app's
+product list so the catalog, the budget, and the generator all see it.
+
 ## Approval
 
 Approval produces a shopping plan (per-merchant lines with `sourceUrl` links

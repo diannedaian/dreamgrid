@@ -1,9 +1,16 @@
 # DreamGrid API
 
-Minimal FastAPI backbone for DreamGrid. It currently exposes only a health
-check and defines typed boundaries for future model-generation and commerce
-adapters. It does not call OpenAI, Blender, Meshy, Tripo, Visa, or any other
-external service.
+Minimal FastAPI backbone for DreamGrid. It exposes a health check, Linda's
+product-sourcing routes (`POST /api/v1/products/import` and `/search`), and
+typed boundaries for model-generation and commerce adapters.
+
+By default the service calls no external provider: product import fetches
+only the page the user pasted, and search answers from
+`fixtures/search-results.json`. With `DREAMGRID_PRODUCT_SOURCING=live` and
+`DREAMGRID_OPENAI_API_KEY` set, import falls back to OpenAI for fields the page
+did not state and search uses the OpenAI web-search tool. Every draft says
+which method produced it. No route calls Blender, Meshy, Tripo, Visa, or any
+payment provider.
 
 ## Ownership
 

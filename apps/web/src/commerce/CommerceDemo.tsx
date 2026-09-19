@@ -1,9 +1,12 @@
 import type { Product, RoomState, SceneItem } from "@dreamgrid/contracts";
 import { useMemo, useState } from "react";
 
+import type { ProductDraft } from "../lib/commerce/productSourcing";
 import { AlternativesList } from "./AlternativesList";
 import { ApprovalScreen } from "./ApprovalScreen";
 import { BudgetPanel } from "./BudgetPanel";
+import { ImportProductForm } from "./ImportProductForm";
+import { ProductSearchForm } from "./ProductSearchForm";
 import {
   PLACEHOLDER_MODEL_ASSET_ID,
   applySwap,
@@ -29,9 +32,11 @@ export type CommerceDemoProps = {
  */
 export function CommerceDemo({
   initialRoomState = demoRoomState,
-  products = demoProducts,
+  products: initialProducts = demoProducts,
 }: CommerceDemoProps) {
   const [roomState, setRoomState] = useState<RoomState>(initialRoomState);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [pickedDraft, setPickedDraft] = useState<ProductDraft>();
   const [swapsApplied, setSwapsApplied] = useState<Alternative[]>([]);
   const [fitMessage, setFitMessage] = useState<string>();
   const [plan, setPlan] = useState<ShoppingPlan>();
@@ -68,6 +73,12 @@ export function CommerceDemo({
   function handleUndoSwaps() {
     changeRoom(revertSwaps(roomState, swapsApplied));
     setSwapsApplied([]);
+  }
+
+  /** A sourced product joins the catalog; the user adds it to the room like any other. */
+  function handleProductCreated(product: Product) {
+    setProducts([...products, product]);
+    setPickedDraft(undefined);
   }
 
   function handleFitToBudget() {
@@ -143,6 +154,12 @@ export function CommerceDemo({
       >
         Review shopping plan
       </button>
+
+      <ProductSearchForm
+        defaultMaxPriceUsd={summary.remainingUsd}
+        onPickResult={setPickedDraft}
+      />
+      <ImportProductForm draft={pickedDraft} onProductCreated={handleProductCreated} />
     </div>
   );
 }
