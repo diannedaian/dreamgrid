@@ -28,6 +28,7 @@ from dreamgrid_api.adapters.commerce.search_provider import (
     OpenAIWebSearchProvider,
     SearchProvider,
 )
+from dreamgrid_api.adapters.commerce.serpapi_search_provider import SerpApiShoppingProvider
 from dreamgrid_api.adapters.commerce.url_lookup import NullUrlLookup, OpenAIUrlLookup, UrlLookup
 from dreamgrid_api.boundaries.product_sourcing import ProductDraft, ProductQuery, SearchOutcome
 from dreamgrid_api.config import Settings
@@ -147,12 +148,18 @@ def build_product_sourcing(settings: Settings) -> ProductSourcingService:
     extractor: ProductExtractor = NullProductExtractor()
     search: SearchProvider = fixture_search
     lookup: UrlLookup = NullUrlLookup()
+    model: OpenAIResponsesModel | None = None
     if settings.sourcing_is_live and settings.openai_api_key:
         model = OpenAIResponsesModel(
             settings.openai_api_key.get_secret_value(), settings.openai_model
         )
         extractor = LlmProductExtractor(model)
-        search = OpenAIWebSearchProvider(model, tool_type=settings.openai_web_search_tool)
         lookup = OpenAIUrlLookup(model, tool_type=settings.openai_web_search_tool)
+
+    backend = settings.search_backend
+    if backend == "serpapi" and settings.serpapi_api_key:
+        search = SerpApiShoppingProvider(settings.serpapi_api_key.get_secret_value())
+    elif backend == "openai" and model is not None:
+        search = OpenAIWebSearchProvider(model, tool_type=settings.openai_web_search_tool)
 
     return ProductSourcingService(HttpxPageFetcher(), extractor, search, lookup)

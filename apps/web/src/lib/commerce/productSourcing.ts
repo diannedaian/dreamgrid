@@ -49,10 +49,13 @@ export type ProductSearchQuery = {
   limit?: number;
 };
 
+export type SearchProviderName = "fixture" | "openai" | "serpapi";
+
 export type ProductSearchResult = {
   results: ProductDraft[];
   /** Where the results came from; surfaced in the UI as a disclosure. */
   source: "live" | "fixture" | "offline";
+  provider?: SearchProviderName;
   note?: string;
 };
 
@@ -153,7 +156,12 @@ export async function searchProducts(
         ? payload.source
         : "live";
     const note = "note" in payload && typeof payload.note === "string" ? payload.note : undefined;
-    return { results, source, note };
+    const provider =
+      "provider" in payload &&
+      (payload.provider === "fixture" || payload.provider === "openai" || payload.provider === "serpapi")
+        ? payload.provider
+        : undefined;
+    return { results, source, provider, note };
   } catch (error) {
     const reason = error instanceof Error ? error.message : "unknown error";
     return { results: [], source: "offline", note: `Search is unavailable (${reason}).` };

@@ -61,6 +61,8 @@ class SearchOutcome:
     results: tuple[ProductDraft, ...]
     source: Literal["live", "fixture"]
     note: str | None = None
+    """Which backend answered, for the UI disclosure."""
+    provider: Literal["fixture", "openai", "serpapi"] = "fixture"
 
 
 class ProductSourcingGateway(Protocol):

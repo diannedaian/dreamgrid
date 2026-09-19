@@ -78,6 +78,7 @@ class SearchProductsRequest(CamelModel):
 
 class SearchProductsResponse(CamelModel):
     source: Literal["live", "fixture"]
+    provider: Literal["fixture", "openai", "serpapi"]
     results: list[ProductDraftResponse]
     note: str | None = None
 
@@ -113,6 +114,7 @@ async def search_products(
     outcome = await gateway.search(query, limit=request.limit)
     return SearchProductsResponse(
         source=outcome.source,
+        provider=outcome.provider,
         results=[ProductDraftResponse.from_draft(draft) for draft in outcome.results],
         note=outcome.note,
     )

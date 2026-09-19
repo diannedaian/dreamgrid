@@ -30,7 +30,6 @@ from dreamgrid_api.boundaries.product_sourcing import (
     SearchOutcome,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -298,6 +297,7 @@ class OpenAIWebSearchProvider:
                 return SearchOutcome(
                     results=(),
                     source="live",
+                    provider="openai",
                     note="The search only found store category pages, not product pages. "
                     "Try different keywords.",
                 )
@@ -313,7 +313,9 @@ class OpenAIWebSearchProvider:
             )
             payload = parse_json_object(structured.text)
         except OpenAIError as error:
-            return SearchOutcome(results=(), source="live", note=f"Search unavailable: {error}")
+            return SearchOutcome(
+                results=(), source="live", provider="openai", note=f"Search unavailable: {error}"
+            )
         candidates = [
             draft
             for item in payload.get("results", [])
@@ -335,7 +337,7 @@ class OpenAIWebSearchProvider:
                 "check the store for the exact amount."
             )
             note = f"{note} {conversion}" if note else conversion
-        return SearchOutcome(results=results, source="live", note=note)
+        return SearchOutcome(results=results, source="live", provider="openai", note=note)
 
 
 def _number(value: Any) -> float | None:

@@ -622,7 +622,9 @@ async def test_lookup_not_found_or_failing_yields_manual_draft(
 
 
 def test_factory_defaults_to_fixture_components_without_a_key() -> None:
-    settings = Settings(environment="test", product_sourcing="auto", openai_api_key=None)
+    settings = Settings(
+        environment="test", product_sourcing="auto", openai_api_key=None, serpapi_api_key=None
+    )
     service = build_product_sourcing(settings)
     assert not settings.sourcing_is_live
     assert isinstance(service, ProductSourcingService)
@@ -644,14 +646,21 @@ def test_fixture_mode_ignores_a_present_key() -> None:
 
 @pytest.mark.anyio
 async def test_default_fixture_path_points_at_the_repo_fixtures() -> None:
-    service = build_product_sourcing(Settings(environment="test", product_sourcing="fixture"))
+    service = build_product_sourcing(
+        Settings(environment="test", product_sourcing="fixture", product_search="fixture")
+    )
     outcome = await service.search(ProductQuery(category="desk"))
     assert outcome.source == "fixture"
     assert len(outcome.results) == 3
 
 
 def test_factory_uses_openai_when_live_and_key_present() -> None:
-    settings = Settings(environment="test", product_sourcing="live", openai_api_key="sk-test")
+    settings = Settings(
+        environment="test",
+        product_sourcing="live",
+        openai_api_key="sk-test",
+        serpapi_api_key=None,
+    )
     service = build_product_sourcing(settings)
     assert isinstance(service._extractor, LlmProductExtractor)  # noqa: SLF001
     assert isinstance(service._search_provider, OpenAIWebSearchProvider)  # noqa: SLF001

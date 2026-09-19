@@ -488,3 +488,29 @@ Test counts: web 86, contracts 8, API 44. All checks pass.
 Cost/latency note: each live search or lookup is one Responses API call with
 web search, roughly 4 to 8 s. Results are cached per URL/query in the API
 process, so rehearsing the same demo inputs is free after the first run.
+
+### 2026-09-19 (night): SerpAPI Google Shopping replaces OpenAI as the search engine
+
+OpenAI web search as a product search engine was slow (12-18 s) and noisy
+even after the citation fix (an Austrian IKEA page, a Best Buy reviews page,
+spray paint for "small lamp"). Added `serpapi_search_provider.py`: one GET to
+SerpAPI's `google_shopping` engine, ~14 s on this network, real listings with
+prices, merchants, and thumbnails. `SERPAPI_KEY` in the repo-root `.env`.
+
+Backend selection (`DREAMGRID_PRODUCT_SEARCH=auto`): SerpAPI if keyed, else
+OpenAI web search if keyed, else fixture. The OpenAI URL lookup and
+extraction rung are unchanged and still fill dimensions when a result is
+picked and its link is read.
+
+Findings: Google ignores the `tbs` price filter, so the limit goes into the
+query text ("small desk under $43") and results are ordered within-budget
+first; several sellers list one catalog item, so results are deduped by
+catalog id; links are Google Shopping product pages (`www.google.com/...`)
+because SerpAPI's basic results rarely include the merchant URL; the
+merchant's own page is one click further.
+
+Live check: "small desk under $43" -> 6 desks $25.99-$39.89 from Walmart,
+eBay, Home Depot. "lamp under $30" -> 5 lamps $12.99-$20.99.
+
+Open: the API process the user started in their own terminal keeps running
+old code; restart it after pulling. Tests: API 61, web 87.

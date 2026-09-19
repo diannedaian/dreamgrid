@@ -46,6 +46,15 @@ class Settings(BaseSettings):
     )
     openai_model: str = "gpt-4.1-mini"
     openai_web_search_tool: str = "web_search"
+    # Product search backend. "auto": SerpAPI if its key exists, else OpenAI web search if
+    # that key exists, else the fixture.
+    product_search: Literal["auto", "serpapi", "openai", "fixture"] = "auto"
+    serpapi_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "DREAMGRID_SERPAPI_API_KEY", "SERPAPI_API_KEY", "SERPAPI_KEY"
+        ),
+    )
     fixtures_dir: str | None = None
 
     @property
@@ -53,6 +62,16 @@ class Settings(BaseSettings):
         if self.product_sourcing == "live":
             return True
         return self.product_sourcing == "auto" and self.openai_api_key is not None
+
+    @property
+    def search_backend(self) -> Literal["serpapi", "openai", "fixture"]:
+        if self.product_search != "auto":
+            return self.product_search
+        if self.serpapi_api_key is not None:
+            return "serpapi"
+        if self.sourcing_is_live and self.openai_api_key is not None:
+            return "openai"
+        return "fixture"
 
 
 @lru_cache

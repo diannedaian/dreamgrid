@@ -29,6 +29,13 @@ const SOURCE_LABEL = {
   offline: "Search is unavailable right now.",
 } as const;
 
+function sourceLabel(result: ProductSearchResult): string {
+  if (result.provider === "serpapi") {
+    return "Google Shopping listings via SerpAPI. Pick one and read its link to get dimensions.";
+  }
+  return SOURCE_LABEL[result.source];
+}
+
 /**
  * "I need a desk about 120 x 60 x 75 cm for under $43." Ranks the API's
  * candidates by price, size, and style fit. Unstyled.
@@ -144,7 +151,7 @@ export function ProductSearchForm({
       {outcome && (
         <div className="commerce-search__results">
           <p role="status">
-            {SOURCE_LABEL[outcome.result.source]}
+            {sourceLabel(outcome.result)}
             {outcome.result.note ? ` ${outcome.result.note}` : ""}
           </p>
           {outcome.ranked.length === 0 ? (
