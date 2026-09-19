@@ -9,9 +9,18 @@
       "merchant": "DreamGrid Demo Catalog",
       "sourceUrl": "",
       "imageUrl": "",
-      "dimensionsM": [0.48895, 0.8382, 0.5588],
-      "styleTags": ["upholstered", "study"],
-      "colorTags": ["blue"],
+      "dimensionsM": [
+        0.48895,
+        0.8382,
+        0.5588
+      ],
+      "styleTags": [
+        "upholstered",
+        "study"
+      ],
+      "colorTags": [
+        "blue"
+      ],
       "modelAssetId": "asset-college-chair"
     },
     {
@@ -22,9 +31,19 @@
       "merchant": "DreamGrid Demo Catalog",
       "sourceUrl": "",
       "imageUrl": "",
-      "dimensionsM": [0.9652, 0.9398, 2.1717],
-      "styleTags": ["dorm", "twin-xl"],
-      "colorTags": ["oak", "navy"],
+      "dimensionsM": [
+        0.9652,
+        0.9398,
+        2.1717
+      ],
+      "styleTags": [
+        "dorm",
+        "twin-xl"
+      ],
+      "colorTags": [
+        "oak",
+        "navy"
+      ],
       "modelAssetId": "asset-college-bed"
     },
     {
@@ -35,10 +54,42 @@
       "merchant": "DreamGrid Demo Catalog",
       "sourceUrl": "",
       "imageUrl": "",
-      "dimensionsM": [1.0668, 0.762, 0.6096],
-      "styleTags": ["dorm", "study"],
-      "colorTags": ["oak"],
+      "dimensionsM": [
+        1.0668,
+        0.762,
+        0.6096
+      ],
+      "styleTags": [
+        "dorm",
+        "study"
+      ],
+      "colorTags": [
+        "oak"
+      ],
       "modelAssetId": "asset-college-desk"
+    },
+    {
+      "id": "monstera-plant",
+      "title": "Monstera plant",
+      "category": "decor",
+      "priceUsd": 68,
+      "merchant": "DreamGrid Demo Catalog",
+      "sourceUrl": "",
+      "imageUrl": "",
+      "dimensionsM": [
+        1.15,
+        1.75,
+        0.95
+      ],
+      "styleTags": [
+        "plant",
+        "boho"
+      ],
+      "colorTags": [
+        "green",
+        "white"
+      ],
+      "modelAssetId": "asset-monstera-plant"
     }
   ],
   "assets": [
@@ -46,7 +97,11 @@
       "id": "asset-college-chair",
       "productId": "college-chair",
       "glbUrl": "/demo-assets/college-chair.glb",
-      "dimensionsM": [0.48895, 0.8382, 0.5588],
+      "dimensionsM": [
+        0.48895,
+        0.8382,
+        0.5588
+      ],
       "pivot": "bottom-center",
       "forwardAxis": "+Z",
       "generationMethod": "gpt-blender",
@@ -57,7 +112,11 @@
       "id": "asset-college-bed",
       "productId": "college-bed",
       "glbUrl": "/demo-assets/college-bed.glb",
-      "dimensionsM": [0.9652, 0.9398, 2.1717],
+      "dimensionsM": [
+        0.9652,
+        0.9398,
+        2.1717
+      ],
       "pivot": "bottom-center",
       "forwardAxis": "+Z",
       "generationMethod": "gpt-blender",
@@ -68,12 +127,31 @@
       "id": "asset-college-desk",
       "productId": "college-desk",
       "glbUrl": "/demo-assets/college-desk.glb",
-      "dimensionsM": [1.0668, 0.762, 0.6096],
+      "dimensionsM": [
+        1.0668,
+        0.762,
+        0.6096
+      ],
       "pivot": "bottom-center",
       "forwardAxis": "+Z",
       "generationMethod": "gpt-blender",
       "status": "ready",
       "disclosure": "Dianne's original FurnitureSpec built offline in Blender (PR #3, dorm-desk.glb). 42 x 24 x 30 inch dorm-desk envelope with right-side drawers; details are visual estimates."
+    },
+    {
+      "id": "asset-monstera-plant",
+      "productId": "monstera-plant",
+      "glbUrl": "/demo-assets/monstera-plant.glb",
+      "dimensionsM": [
+        1.15,
+        1.75,
+        0.95
+      ],
+      "pivot": "bottom-center",
+      "forwardAxis": "+Z",
+      "generationMethod": "gpt-blender",
+      "status": "ready",
+      "disclosure": "Monstera plant with ceramic pot, modeled in Blender from a reference photograph (17 individually modeled leaves). Compressed with gltf-transform (meshopt). Not a manufacturer model."
     }
   ]
 }

@@ -55,6 +55,10 @@ public/demo-assets/            Dianne's GLBs (college-bed/desk/chair) + catalog.
   items (`SceneItem[]`), paint, floor, sun (`t` 0..300, `hd`, `sh`), outside view (`vw`).
 - The wall picker and the placement controller share the canvas. `canvas.dataset.busy` (furniture gesture
   in progress) and `canvas.dataset.picking` (window/door corner picking) are the hand-off flags.
+- Big GLBs: compress with `npx @gltf-transform/cli optimize in.glb out.glb --compress meshopt --texture-compress false --simplify false --palette false`
+  (the loader has the meshopt decoder wired in). Keep `--palette false`, or material names/colors get merged away.
+  If a Blender export's leaf/fabric color came from a procedural shader, the GLB material has no baseColorFactor and renders white;
+  set one in the material (see how `monstera-plant.glb` was patched) before compressing.
 - GLB quirk: three's GLTFLoader treats a node `extras.pivot` as its own pivot array. Dianne's exporter writes
   the string `"bottom-center"` there; `models.ts` strips it before parsing. Ask Dianne to rename it.
 

@@ -2,9 +2,11 @@
 // stand-ins sized from the asset's dimensions. Everything returns pivot bottom-center, facing +Z.
 import { Box3, BoxGeometry, Color, ConeGeometry, CylinderGeometry, Group, Mesh, MeshStandardMaterial, Object3D, SphereGeometry, Vector3 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import type { ModelAsset, Product } from "@contracts";
 
 const loader = new GLTFLoader();
+loader.setMeshoptDecoder(MeshoptDecoder); // assets may be meshopt-compressed (gltf-transform optimize --compress meshopt)
 const cache = new Map<string, Promise<Object3D>>();
 
 export async function loadModel(product: Product, asset?: ModelAsset): Promise<Object3D> {
