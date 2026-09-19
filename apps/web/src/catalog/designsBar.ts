@@ -28,7 +28,7 @@ export function mountDesignsBar(bar: HTMLElement, popup: HTMLElement, o: Designs
   const saveBtn = document.getElementById("save-design") as HTMLButtonElement;
   saveBtn.hidden = false;
 
-  const setOpen = (open: boolean) => { document.body.classList.toggle("leftbar-open", open); toggle.textContent = open ? "✕" : "☰"; toggle.title = open ? "Close designs" : "Saved designs"; try { localStorage.setItem("dreamgrid.leftbar", open ? "1" : "0"); } catch { /* ignore */ } };
+  const setOpen = (open: boolean) => { document.body.classList.toggle("leftbar-open", open); toggle.textContent = open ? "←" : "☰"; toggle.title = open ? "Close layouts" : "Saved layouts"; try { localStorage.setItem("dreamgrid.leftbar", open ? "1" : "0"); } catch { /* ignore */ } };
   let open = false;
   try { open = localStorage.getItem("dreamgrid.leftbar") === "1"; } catch { /* ignore */ }
   setOpen(open);
@@ -37,7 +37,7 @@ export function mountDesignsBar(bar: HTMLElement, popup: HTMLElement, o: Designs
   const render = () => {
     list.replaceChildren();
     const designs = o.store.list();
-    if (!designs.length) { list.innerHTML = `<p class="empty">No saved designs yet. Save this one to come back to it.</p>`; return; }
+    if (!designs.length) { list.innerHTML = `<p class="empty">No saved layouts yet. Save this one to come back to it.</p>`; return; }
     for (const d of designs) {
       const el = document.createElement("div");
       el.className = "design" + (d.id === currentId ? " current" : "");
@@ -55,9 +55,9 @@ export function mountDesignsBar(bar: HTMLElement, popup: HTMLElement, o: Designs
   const openPopup = () => {
     popup.hidden = false;
     popup.innerHTML = `
-      <div class="sheet" role="dialog" aria-label="Save design">
+      <div class="sheet" role="dialog" aria-label="Save layout">
         <button type="button" class="close" aria-label="Close">✕</button>
-        <h2>Save this design</h2>
+        <h2>Save this layout</h2>
         <label>Name <input type="text" class="name" maxlength="60" placeholder="e.g. Dorm, bed by the window" /></label>
         <div class="actions">
           <button type="button" class="primary do-save">${currentId ? "Save changes" : "Save"}</button>
@@ -65,15 +65,15 @@ export function mountDesignsBar(bar: HTMLElement, popup: HTMLElement, o: Designs
         </div>
         <div class="after" hidden>
           <p class="ok">Saved.</p>
-          <h3>Start another design</h3>
-          <p class="sub">Enter the room size for a fresh, empty room. Your saved designs stay in the left bar.</p>
+          <h3>Start another layout</h3>
+          <p class="sub">Enter the room size for a fresh, empty room. Your saved layouts stay in the left bar.</p>
           <div class="dims">
             <label>Width <input class="w-ft" type="number" min="0" step="1" /> ft <input class="w-in" type="number" min="0" max="11" step="1" /> in</label>
             <label>Depth <input class="d-ft" type="number" min="0" step="1" /> ft <input class="d-in" type="number" min="0" max="11" step="1" /> in</label>
             <label>Height <input class="h-ft" type="number" min="0" step="1" /> ft <input class="h-in" type="number" min="0" max="11" step="1" /> in</label>
           </div>
           <div class="actions">
-            <button type="button" class="primary do-new">New design with these measurements</button>
+            <button type="button" class="primary do-new">New layout with these measurements</button>
             <button type="button" class="ghost do-stay">Keep editing this one</button>
           </div>
         </div>

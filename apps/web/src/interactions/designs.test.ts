@@ -9,7 +9,7 @@ describe("design store", () => {
     const s = createDesignStore(mem());
     const a = s.save({ name: "Dorm A", plan });
     const b = s.save({ name: "  ", plan: { ...plan, w: 100 } });
-    expect(b.name).toBe("Untitled design");
+    expect(b.name).toBe("Untitled layout");
     expect(s.list().map((d) => d.id)).toEqual([b.id, a.id]);
     const a2 = s.save({ id: a.id, name: "Dorm A v2", plan });
     expect(a2.id).toBe(a.id);

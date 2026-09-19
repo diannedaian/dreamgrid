@@ -36,7 +36,7 @@ export function createDesignStore(storage: Pick<Storage, "getItem" | "setItem"> 
       const arr = read();
       const id = d.id ?? `d${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
       const latest = arr.reduce((m, x) => Math.max(m, x.savedAt || 0), 0);
-      const next: SavedDesign = { id, name: d.name.trim() || "Untitled design", plan: d.plan, thumb: d.thumb, savedAt: Math.max(Date.now(), latest + 1) };
+      const next: SavedDesign = { id, name: d.name.trim() || "Untitled layout", plan: d.plan, thumb: d.thumb, savedAt: Math.max(Date.now(), latest + 1) };
       const i = arr.findIndex((x) => x.id === id);
       if (i >= 0) arr[i] = next; else arr.push(next);
       write(arr);

@@ -54,16 +54,22 @@
       #menu-toggle { position: fixed; left: 20px; top: 14px; z-index: 9; font: inherit; font-size: 22px; line-height: 1; border: 0; background: none; cursor: pointer; color: var(--ink); padding: 4px; }
       #menu-toggle:hover { color: var(--honey-deep); }
       #menu-toggle[hidden] { display: none; }
-      /* logo floats on a hazy iridescent glow: layered pastel radial gradients, blurred, no hard edges */
-      .chip.brand { left: 52px; top: 10px; font-family: var(--serif); font-size: 17px; padding: 10px 18px; background: none; }
-      .chip.brand::before { content: ""; position: absolute; inset: -14px -26px; z-index: -1; border-radius: 50%; filter: blur(14px); opacity: 0.95;
+      /* logo floats on a soft cloud: iridescent pastel wash, masked into overlapping puffs with feathered edges */
+      .chip.brand { left: 52px; top: 12px; font-family: var(--serif); font-size: 17px; padding: 10px 18px; background: none; }
+      .chip.brand::before { content: ""; position: absolute; inset: -12px -18px -8px; z-index: -1; opacity: 0.96;
         background:
-          radial-gradient(ellipse 60% 70% at 25% 40%, rgba(255,214,235,0.95), transparent 70%),
-          radial-gradient(ellipse 55% 65% at 70% 35%, rgba(205,225,255,0.95), transparent 70%),
-          radial-gradient(ellipse 60% 60% at 55% 75%, rgba(255,240,200,0.95), transparent 70%),
-          radial-gradient(ellipse 50% 60% at 85% 70%, rgba(210,250,235,0.9), transparent 70%),
-          radial-gradient(ellipse 70% 70% at 50% 50%, rgba(255,255,255,0.95), transparent 75%); }
-      .chip.brand span { color: var(--honey); }
+          radial-gradient(ellipse 55% 70% at 22% 45%, rgba(255,214,235,1), transparent 72%),
+          radial-gradient(ellipse 50% 65% at 68% 30%, rgba(205,225,255,1), transparent 72%),
+          radial-gradient(ellipse 60% 55% at 50% 85%, rgba(255,240,205,1), transparent 72%),
+          radial-gradient(ellipse 45% 60% at 90% 70%, rgba(210,250,235,1), transparent 72%),
+          #fff;
+        --puffs:
+          radial-gradient(circle at 22% 60%, #000 0 15px, transparent 25px),
+          radial-gradient(circle at 48% 40%, #000 0 22px, transparent 33px),
+          radial-gradient(circle at 76% 55%, #000 0 17px, transparent 27px),
+          radial-gradient(ellipse 42% 26% at 50% 72%, #000 0 70%, transparent 100%);
+        -webkit-mask: var(--puffs); mask: var(--puffs); }
+      .chip.brand span { color: #8f7fc9; } /* lavender "Grid" */
       .chip.dims { right: 62px; font-variant-numeric: tabular-nums; }
       .chip.action { right: 20px; top: 46px; pointer-events: auto; font-weight: 600; font-family: var(--sans); }
       .chip.action.save-design { top: 72px; }
@@ -297,9 +303,9 @@
     </div>
 
     <div id="stage"></div>
-    <button type="button" id="menu-toggle" title="Saved designs" hidden>☰</button>
+    <button type="button" id="menu-toggle" title="Saved layouts" hidden>☰</button>
     <aside id="leftbar" hidden>
-      <div class="head"><h2>Designs</h2></div>
+      <div class="head"><h2>Layouts</h2></div>
       <div class="designs"></div>
     </aside>
     <div id="save-popup" hidden></div>
@@ -311,7 +317,7 @@
       <div class="chip brand">Dream<span>Grid</span></div>
       <div class="chip dims" id="dims-chip"></div>
       <button class="chip action" id="share" type="button">Share</button>
-      <button class="chip action save-design" id="save-design" type="button" hidden>Save design</button>
+      <button class="chip action save-design" id="save-design" type="button" hidden>Save layout</button>
       <button class="chip action reset-design" id="reset-design" type="button" hidden>Reset</button>
       <button class="chip action measure" id="measure" type="button" hidden>Measure</button>
       <div id="measure-label" hidden></div>
