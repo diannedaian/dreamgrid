@@ -46,6 +46,13 @@ export type WindowSpec = {
   kind?: "window" | "door";
 };
 
+/** Do two openings on the same wall overlap (touching edges are fine)? */
+export function openingsOverlap(a: WindowSpec, b: WindowSpec): boolean {
+  if (a.surface !== b.surface) return false;
+  const eps = 1e-6;
+  return a.uM < b.uM + b.widthM - eps && b.uM < a.uM + a.widthM - eps && a.vM < b.vM + b.heightM - eps && b.vM < a.vM + a.heightM - eps;
+}
+
 /** Quarter-disc a door sweeps when it opens into the room (hinge on the left edge as seen from inside). */
 export type DoorArc = { cx: number; cz: number; r: number; sx: 1 | -1; sz: 1 | -1 };
 

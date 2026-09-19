@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
-import { cellAt, doorArc, footprintBlocksDoor, fromWallUV, toWallUV, windowFromCells } from "./wallGrid";
+import { cellAt, doorArc, footprintBlocksDoor, fromWallUV, openingsOverlap, toWallUV, windowFromCells } from "./wallGrid";
 import { feetInchesToM, mToInches } from "./units";
 
 const room = { widthM: feetInchesToM(12, 0), depthM: feetInchesToM(10, 0), heightM: feetInchesToM(8, 0), gridSizeM: 0.0254, lightingMode: "day" as const };
@@ -59,5 +59,15 @@ describe("doors", () => {
     expect(footprintBlocksDoor(arc.cx - 0.4, arc.cz + 0.3, 0.3, 0.3, arc)).toBe(false);
     // Big rug that overlaps the corner of the swing.
     expect(footprintBlocksDoor(0, 0, room.widthM, room.depthM, arc)).toBe(true);
+  });
+});
+
+describe("openingsOverlap", () => {
+  const a = { surface: "back-wall" as const, uM: 1, vM: 1, widthM: 1, heightM: 1 };
+  it("detects overlap on the same wall and ignores other walls and touching edges", () => {
+    expect(openingsOverlap(a, { ...a, uM: 1.5 })).toBe(true);
+    expect(openingsOverlap(a, { ...a, uM: 2 })).toBe(false); // shares an edge
+    expect(openingsOverlap(a, { ...a, surface: "left-wall" })).toBe(false);
+    expect(openingsOverlap(a, { ...a, vM: 0, heightM: 0.5, kind: "door" })).toBe(false);
   });
 });

@@ -9,6 +9,8 @@ export type FloorPreset = {
   group: "Wood" | "Tile" | "Carpet" | "Other";
   tileM: [w: number, d: number];
   roughness: number;
+  /** Texture resolution for one tile (default 512). */
+  px?: number;
   /** Grid-line ink that reads on this floor. */
   gridInk: "light" | "dark";
   paint: (ctx: CanvasRenderingContext2D, w: number, h: number) => void;
@@ -52,6 +54,31 @@ const noise = (base: string, spread: number, count: number) => (ctx: CanvasRende
   }
 };
 
+/** Cut-pile carpet: soft mottling, thousands of tiny fibers, and a faint weave. */
+const carpet = (base: string, fiber: [string, string]) => (ctx: CanvasRenderingContext2D, W: number, H: number) => {
+  ctx.fillStyle = base; ctx.fillRect(0, 0, W, H);
+  for (let k = 0; k < 24; k++) { // very soft mottling (kept faint so the tile repeat doesn't show)
+    const x = Math.random() * W, y = Math.random() * H, r = W * (0.1 + Math.random() * 0.2);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    const light = Math.random() > 0.5;
+    g.addColorStop(0, light ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  ctx.lineCap = "round";
+  for (let k = 0; k < 42000; k++) { // pile fibers
+    const x = Math.random() * W, y = Math.random() * H, a = Math.random() * Math.PI * 2, len = 1.5 + Math.random() * 3;
+    ctx.strokeStyle = Math.random() > 0.5 ? fiber[0] : fiber[1];
+    ctx.globalAlpha = 0.18 + Math.random() * 0.25;
+    ctx.lineWidth = 0.8 + Math.random() * 0.9;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len); ctx.stroke();
+  }
+  ctx.globalAlpha = 0.06; // faint diagonal weave
+  ctx.strokeStyle = "#000"; ctx.lineWidth = 1;
+  for (let d = -H; d < W + H; d += 6) { ctx.beginPath(); ctx.moveTo(d, 0); ctx.lineTo(d + H, H); ctx.stroke(); }
+  ctx.globalAlpha = 1;
+};
+
 export const FLOOR_PRESETS: FloorPreset[] = [
   { key: "wood-light", label: "Light wood", group: "Wood", tileM: [48 * IN, 30 * IN], roughness: 0.6, gridInk: "light", paint: wood(["#e0b77f", "#dcb279", "#e3bb84", "#d9ae75", "#dfb57d", "#dab077"], 0.18, 0.04) },
   { key: "wood-medium", label: "Medium wood", group: "Wood", tileM: [48 * IN, 30 * IN], roughness: 0.6, gridInk: "light", paint: wood(["#b9814c", "#b07845", "#bf8852", "#ad7443", "#b67e4a", "#b27a47"], 0.3, 0.06) },
@@ -59,8 +86,8 @@ export const FLOOR_PRESETS: FloorPreset[] = [
   { key: "tile-white", label: "White tile", group: "Tile", tileM: [24 * IN, 24 * IN], roughness: 0.35, gridInk: "dark", paint: tile("#f4f1ea", "#f4f1ea", "#cfc9bd", 2) },
   { key: "tile-checker", label: "Checker tile", group: "Tile", tileM: [24 * IN, 24 * IN], roughness: 0.35, gridInk: "light", paint: tile("#f2eee6", "#2e2b2a", "#bdb7ab", 2) },
   { key: "tile-terracotta", label: "Terracotta", group: "Tile", tileM: [24 * IN, 24 * IN], roughness: 0.8, gridInk: "light", paint: tile("#c47a52", "#bd7049", "#8f5638", 2) },
-  { key: "carpet-beige", label: "Beige carpet", group: "Carpet", tileM: [24 * IN, 24 * IN], roughness: 1, gridInk: "dark", paint: noise("#d9cbb3", 0.18, 6000) },
-  { key: "carpet-grey", label: "Grey carpet", group: "Carpet", tileM: [24 * IN, 24 * IN], roughness: 1, gridInk: "light", paint: noise("#8f8f8c", 0.18, 6000) },
+  { key: "carpet-beige", label: "Beige carpet", group: "Carpet", tileM: [40 * IN, 40 * IN], roughness: 1, px: 1024, gridInk: "dark", paint: carpet("#d6c7ad", ["#efe3cc", "#b9a888"]) },
+  { key: "carpet-grey", label: "Grey carpet", group: "Carpet", tileM: [40 * IN, 40 * IN], roughness: 1, px: 1024, gridInk: "light", paint: carpet("#8d8d8a", ["#b3b3ae", "#6a6a67"]) },
   { key: "concrete", label: "Concrete", group: "Other", tileM: [36 * IN, 36 * IN], roughness: 0.9, gridInk: "light", paint: noise("#b9b6b0", 0.1, 3000) },
 ];
 
@@ -70,7 +97,7 @@ export function floorPreset(key: string | undefined): FloorPreset {
   return FLOOR_PRESETS.find((p) => p.key === key) ?? FLOOR_PRESETS.find((p) => p.key === DEFAULT_FLOOR)!;
 }
 
-export function makeFloorTexture(preset: FloorPreset, roomW: number, roomD: number, px = 512): CanvasTexture {
+export function makeFloorTexture(preset: FloorPreset, roomW: number, roomD: number, px = preset.px ?? 512): CanvasTexture {
   const c = document.createElement("canvas");
   c.width = px; c.height = Math.round((px * preset.tileM[1]) / preset.tileM[0]);
   preset.paint(c.getContext("2d")!, c.width, c.height);

@@ -1,7 +1,7 @@
 // What you see through a window: a small diorama box behind the wall with sky, ground, a leafy
 // tree built from hundreds of leaf sprites (they cast dappled light into the room), and weather.
 import {
-  BackSide, CanvasTexture, Color, CylinderGeometry, DirectionalLight, DoubleSide, Euler, Group, HemisphereLight,
+  BackSide, CanvasTexture, Color, DirectionalLight, DoubleSide, Euler, Group, HemisphereLight,
   InstancedMesh, LinearSRGBColorSpace, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PlaneGeometry,
   Quaternion, Scene, ShaderMaterial, SphereGeometry, SRGBColorSpace, Texture, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer,
 } from "three";
@@ -77,28 +77,13 @@ export function buildOutside(w: number, h: number, wallT: number, look: Look, vi
   key.position.set(1.5, 3, 1.5);
   sim.add(key);
 
-  // A canopy hangs into the top third of the view; the rest is open sky. It is built from
-  // overlapping clumps of different sizes and heights (plus a few dangling sprigs) so the
-  // lower edge is lumpy and organic rather than a line.
+  // An organic smattering of leaves: dense near the top of the view, thinning out lower down,
+  // with loose clumps so it never reads as a line. No trunk or branches.
   const inner = { min: new Vector3(cx - bw / 2 + 0.05, -drop + 0.02, cz - bd / 2 + 0.05), max: new Vector3(cx + bw / 2 - 0.05, top - 0.05, -wallT - 0.25) };
-  const leafCount = Math.round(Math.min(1600, Math.max(450, w * h * 750)));
-  const clumps: Array<{ c: Vector3; r: Vector3 }> = [];
-  const spread = w * 1.3 + 0.6;
-  for (let i = 0; i < 8; i++) {
-    const rr = (0.28 + rnd() * 0.4) * (w * 0.45 + 0.35);
-    clumps.push({ c: new Vector3(cx + (rnd() - 0.5) * spread, h * (0.86 + rnd() * 0.4), -wallT - 0.75 - rnd() * 0.7), r: new Vector3(rr * (1 + rnd() * 0.5), rr * (0.55 + rnd() * 0.4), rr * 0.8) });
-  }
-  for (let i = 0; i < 3; i++) { // sprigs that dip lower
-    const rr = (0.12 + rnd() * 0.12) * (w * 0.45 + 0.35);
-    clumps.push({ c: new Vector3(cx + (rnd() - 0.5) * spread * 0.9, h * (0.62 + rnd() * 0.18), -wallT - 0.7 - rnd() * 0.5), r: new Vector3(rr * 1.3, rr, rr) });
-  }
-  const canopy = leafClumps(leafCount, clumps, p, view, inner, rnd);
+  const leafCount = Math.round(Math.min(1500, Math.max(400, w * h * 700)));
+  const canopy = leafScatter(leafCount, { cx, w, h, wallT }, p, view, inner, rnd);
   sim.add(canopy);
   const bush = canopy; // (kept for the sway update below)
-  const branch = new Mesh(new CylinderGeometry(0.02, 0.045, w * 1.2 + 0.8, 8), new MeshStandardMaterial({ color: new Color(p.trunk), roughness: 1 }));
-  branch.position.set(cx + w * 0.2, h * 1.05, -wallT - 1.0);
-  branch.rotation.z = Math.PI / 2 - 0.12;
-  sim.add(branch);
   // Soft clouds drifting across the sky.
   const clouds = cloudField(view, bw, bd, cx, cz, h, rnd);
   sim.add(clouds.group);
@@ -160,64 +145,39 @@ export function buildOutside(w: number, h: number, wallT: number, look: Look, vi
   return { group, update, render, dispose };
 }
 
-/** Leaves distributed across several ellipsoid clumps (count split by volume). */
-function leafClumps(n: number, clumps: Array<{ c: Vector3; r: Vector3 }>, p: Palette, view: OutsideView, inner: { min: Vector3; max: Vector3 }, rnd: () => number): InstancedMesh {
-  const vols = clumps.map((k) => k.r.x * k.r.y * k.r.z);
-  const total = vols.reduce((a, b) => a + b, 0);
+/** Leaves scattered across the view: many near the top, few lower down, gathered into loose clumps. */
+function leafScatter(n: number, f: { cx: number; w: number; h: number; wallT: number }, p: Palette, view: OutsideView, inner: { min: Vector3; max: Vector3 }, rnd: () => number): InstancedMesh {
   const geo = new PlaneGeometry(0.2, 0.2);
   const mat = new MeshStandardMaterial({ map: leafTexture(), alphaTest: 0.5, side: DoubleSide, roughness: 1, color: new Color("#ffffff") });
   const mesh = new InstancedMesh(geo, mat, n);
   const m = new Matrix4(), q = new Quaternion(), s = new Vector3(), pos = new Vector3(), col = new Color();
   const palette = p.leaves.map((c) => new Color(c));
-  let i = 0;
-  clumps.forEach((k, ci) => {
-    const count = ci === clumps.length - 1 ? n - i : Math.round((vols[ci] / total) * n);
-    for (let j = 0; j < count && i < n; j++, i++) {
-      let u: number, v: number, w: number;
-      do { u = rnd() * 2 - 1; v = rnd() * 2 - 1; w = rnd() * 2 - 1; } while (u * u + v * v + w * w > 1);
-      const r = Math.cbrt(rnd()) * 0.45 + 0.55;
-      pos.set(k.c.x + u * k.r.x * r, k.c.y + v * k.r.y * r, k.c.z + w * k.r.z * r).clamp(inner.min, inner.max);
-      q.setFromEuler(new Euler((rnd() - 0.5) * 1.6, rnd() * Math.PI, (rnd() - 0.5) * 1.6));
-      const sc = 0.7 + rnd() * 0.8;
-      s.set(sc, sc, sc);
-      m.compose(pos, q, s);
-      mesh.setMatrixAt(i, m);
-      col.copy(palette[Math.floor(rnd() * palette.length)]);
-      if (view !== "snowy") col.offsetHSL(0, 0, (v * 0.5 + 0.5) * 0.14 - 0.08 + (w > 0 ? 0.03 : -0.03));
-      mesh.setColorAt(i, col);
-    }
-  });
-  mesh.instanceMatrix.needsUpdate = true;
-  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-  return mesh;
-}
-
-function leafCloud(n: number, center: Vector3, radius: Vector3, p: Palette, view: OutsideView, inner: { min: Vector3; max: Vector3 }, floorY = -Infinity, rnd: () => number = Math.random): InstancedMesh {
-  const geo = new PlaneGeometry(0.2, 0.2);
-  const mat = new MeshStandardMaterial({ map: leafTexture(), alphaTest: 0.5, side: DoubleSide, roughness: 1, color: new Color("#ffffff") });
-  const mesh = new InstancedMesh(geo, mat, n);
-  const m = new Matrix4(), q = new Quaternion(), s = new Vector3(), pos = new Vector3(), col = new Color();
-  const palette = p.leaves.map((c) => new Color(c));
+  const spread = f.w * 1.4 + 0.8;
+  // loose clump centers, mostly high up
+  const clumps = Array.from({ length: 7 }, () => new Vector3(f.cx + (rnd() - 0.5) * spread, f.h * (0.85 + rnd() * 0.5), -f.wallT - 0.5 - rnd() * 1.2));
   for (let i = 0; i < n; i++) {
-    // Uniform-ish points in an ellipsoid, denser toward the outside so the silhouette reads.
-    let u: number, v: number, w: number;
-    do { u = rnd() * 2 - 1; v = rnd() * 2 - 1; w = rnd() * 2 - 1; } while (u * u + v * v + w * w > 1);
-    const r = Math.cbrt(rnd()) * 0.4 + 0.6;
-    pos.set(center.x + u * radius.x * r, center.y + v * radius.y * r, center.z + w * radius.z * r).clamp(inner.min, inner.max);
-    // Organic lower edge: leaves thin out below `floorY` instead of stopping on a line.
-    if (pos.y < floorY && rnd() < (floorY - pos.y) / 0.25) pos.y = floorY + rnd() * radius.y * 0.6;
+    // height: bias strongly toward the top of the view; a few stragglers reach lower
+    const t = Math.pow(rnd(), 2.4); // mostly near 0 → near the top; a few stragglers lower
+    let y = f.h * 1.35 - t * f.h * 0.95;
+    let x = f.cx + (rnd() - 0.5) * spread;
+    let z = -f.wallT - 0.4 - rnd() * 1.4;
+    if (rnd() < 0.65) { // pull toward a clump for organic density variation
+      const c = clumps[Math.floor(rnd() * clumps.length)];
+      const k = 0.35 + rnd() * 0.35;
+      x = x * (1 - k) + (c.x + (rnd() - 0.5) * 0.5) * k;
+      y = y * (1 - k) + (c.y + (rnd() - 0.5) * 0.35) * k;
+      z = z * (1 - k) + c.z * k;
+    }
+    pos.set(x, y, z).clamp(inner.min, inner.max);
     q.setFromEuler(new Euler((rnd() - 0.5) * 1.6, rnd() * Math.PI, (rnd() - 0.5) * 1.6));
-    const k = 0.7 + rnd() * 0.8;
-    s.set(k, k, k);
+    const sc = 0.65 + rnd() * 0.85;
+    s.set(sc, sc, sc);
     m.compose(pos, q, s);
     mesh.setMatrixAt(i, m);
     col.copy(palette[Math.floor(rnd() * palette.length)]);
-    // lighter toward the top for a sun-kissed canopy (not for snow, which is already white)
-    if (view !== "snowy") col.offsetHSL(0, 0, (v * 0.5 + 0.5) * 0.14 - 0.08 + (w > 0 ? 0.03 : -0.03)); // lit on top and toward the room
+    if (view !== "snowy") col.offsetHSL(0, 0, (1 - t) * 0.12 - 0.05 + (z > -f.wallT - 1 ? 0.03 : -0.03)); // brighter near the top and nearer the glass
     mesh.setColorAt(i, col);
   }
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
   mesh.instanceMatrix.needsUpdate = true;
   if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   return mesh;
