@@ -327,3 +327,68 @@ Branch names: `linda/budget-engine`, `linda/alternatives`, `linda/budget-ui`,
   "Apply all" runs `fitToBudget`. No auto-apply.
 - Q4 Workflow: the agent implements on a `linda/*` branch, runs checks, and
   summarizes; Linda reviews.
+
+## Progress log
+
+### 2026-09-19: Steps 0 to 5 done on branch `linda-budget-engine`
+
+Branch is `linda-budget-engine` (hyphen) because a branch named `linda`
+already exists and git cannot hold both `linda` and `linda/*`. Delete the
+empty `linda` branch to use the workflow doc's slash naming.
+
+Environment (Step 0): pnpm installed with `npm install -g pnpm@11.19.0`
+(`corepack enable` needs admin). Run pnpm from PowerShell, not Git Bash (the
+Git Bash shim mangles the path). `.venv` created with Python 3.13; API deps
+installed and tests pass.
+
+Commits:
+
+1. `feat(budget): calculate subtotal and budget status from scene items` —
+   Step 1: `budget.ts`, `budget.test.ts`, README, this plan.
+2. `feat(budget): rank cheaper alternatives and build a shopping plan` —
+   Steps 2 and 3: `scoring.ts`, `alternatives.ts`, `shoppingPlan.ts`,
+   `format.ts`, `testFixtures.ts`, tests.
+3. Step 4 and 5 (UI, demo harness, handoff README) — see git log.
+
+What exists in `apps/web/src/commerce/`:
+
+| File | Purpose |
+|---|---|
+| `budget.ts` | `summarizeBudget`, `roundUsd`, `budgetStatus` |
+| `scoring.ts` | `jaccard`, `styleSimilarity`, `sharedTags`, `footprintFit`, `dimensionFit` |
+| `alternatives.ts` | `rankAlternatives`, `applySwap`, `fitToBudget`, `PLACEHOLDER_MODEL_ASSET_ID` |
+| `shoppingPlan.ts` | `buildShoppingPlan`, `approvePlan`, `planToText` |
+| `format.ts` | `formatUsd`, `formatSignedUsd` |
+| `BudgetPanel.tsx`, `AlternativesList.tsx`, `PlanSummary.tsx`, `ApprovalScreen.tsx` | Props-only components |
+| `CommerceDemo.tsx`, `demoData.ts`, `demo-main.tsx` | Standalone harness; served at `/commerce-demo.html` in dev |
+| `testFixtures.ts` | Fixture loader + builders for node-environment tests |
+| `README.md` | Handoff: inputs, wiring, exports, Cindy asks |
+
+Tests: 32 in `src/commerce` (pure modules use `// @vitest-environment node`
+so `import.meta.url` is a `file:` URL; component tests use the default
+jsdom). Lint, typecheck, build, and API pytest all pass.
+
+Decisions made while implementing:
+
+- `modelAssetId` has `minLength: 1` in the schema, so a swap to a product
+  without an asset uses `PLACEHOLDER_MODEL_ASSET_ID = "asset-placeholder"`.
+  Cindy's loader should map it to the backbone cube.
+- `rankAlternatives` returns every candidate (not just the best per item),
+  sorted by score; `fitToBudget` picks greedily and skips items it already
+  swapped.
+- `fitToBudget` on an already affordable room returns the same state object
+  and no swaps.
+- `apps/web/commerce-demo.html` is a second Vite entry so the demo can be
+  viewed without editing the shared `main.tsx`/`App.tsx`. Vite's build only
+  bundles `index.html`, so it never ships.
+- `demoData.ts` imports the repo fixtures with a type cast; the contracts
+  package already validates those files.
+
+Not done / next:
+
+- Not pushed; no PR opened yet. Push and open a draft PR after Linda's
+  review.
+- `App.tsx` untouched (shared file; wire at the T+4 integration session).
+- Step 6 (manual product entry + `units.ts`) is the next item.
+- Ask Cindy about `PLACEHOLDER_MODEL_ASSET_ID`, deletion semantics, and who
+  renders prices in the inventory panel.
