@@ -1,104 +1,81 @@
 # Image-first model pipeline — Cindy handoff
 
-Status: implemented laptop MVP; one live GPT-to-Blender path verified September 19, 2026.
-Branch: `codex/image-model-pipeline`, based on `codex/generation-college-bed`.
-No room, catalog UI, dragging, or budget behavior is changed by this branch.
+Status: laptop MVP, September 19, 2026. Branch: `codex/image-model-pipeline`.
+Default generation model: **`gpt-5.6-sol`, high reasoning**.
 
-## What this actually does
+## What is implemented
 
-One product image becomes a **template-based stylized approximation** with confirmed
-outer dimensions. GPT selects a family, colors, drawer side/count, shelf count, and
-explicit dimension evidence. Trusted code compiles the recipe; Blender exports GLB.
-This is not arbitrary image-to-CAD, photogrammetry, manufacturing geometry, or a fit guarantee.
+One product image → Sol-authored custom geometry JSON → validated FurnitureSpec →
+trusted Blender builder → normalized GLB URL. Live generation does **not** select a
+predefined furniture template and never runs AI-written Python. Sol chooses bounded
+parts, their arrangement, materials and lamp emitters from the supplied image.
 
-Supported families: plain dorm bed, pedestal desk, four-leg desk, four-leg upholstered
-chair, wooden sled chair, open bookcase, and simple table lamp. Unusual/unsupported
-objects fail explicitly. No Meshy/Tripo calls are implemented yet. Preset mode is an
-explicit opt-in approximation, never a silent replacement claimed to match the photo.
+Categories: `bed`, `desk`, `chair`, `shelf`, `lamp`, `decor`. Plants, planters and
+vases use `decor`. Live imports return the legacy field `template: "custom"`.
+Existing furniture presets remain an explicit offline option only; no decor preset
+exists. Never silently substitute one for a failed live generation.
 
-## Setup on Dianne's laptop
+This is a stylized shopping preview, not exact reconstruction or a fit guarantee.
+Hidden details and plant leaf cutouts can be simplified. The chosen overall bounding
+dimensions are validated; independently accurate component dimensions are not.
+Meshy/Tripo fallback and URL-only image import are **not implemented**.
 
-1. Pull this branch (or its merged successor) and run `pnpm bootstrap`.
-2. Install Blender; the default executable is `/Applications/Blender.app/Contents/MacOS/Blender`.
-3. Copy `services/api/.env.example` to `services/api/.env` only if the latter does not exist.
-4. Set `OPENAI_API_KEY` locally. Never put it in chat, Git, a `VITE_` variable, or frontend code.
-5. Run `pnpm dev`. API is `http://localhost:8000`; interactive endpoint docs are `/docs`.
+## Local setup and Sol configuration
 
-`pnpm dev:api` runs from `services/api`, so it reads that directory's `.env`.
-Restart the API after changing `.env`. All API calls and generated asset downloads
-must use Cindy's configured `VITE_API_BASE_URL`, not the frontend's asset origin.
-By default both frontend and backend run on Dianne's laptop for the demo.
+1. Pull this branch (or its merged successor), then run `pnpm bootstrap`.
+2. Install Blender. Tested: Blender 5.2.1 LTS on Dianne's Mac.
+3. Copy `services/api/.env.example` to `services/api/.env` only if it does not exist.
+4. Set `OPENAI_API_KEY` in that ignored file. Never put keys in Git, chat, browser
+   code or a `VITE_` variable. Existing `.env` files override the new code defaults;
+   update the following settings if upgrading from the earlier mini-based version:
 
-## Import panel UX
+```dotenv
+DREAMGRID_OPENAI_MODEL=gpt-5.6-sol
+DREAMGRID_OPENAI_REASONING_EFFORT=high
+DREAMGRID_OPENAI_MAX_OUTPUT_TOKENS=12000
+DREAMGRID_OPENAI_REQUEST_TIMEOUT_SECONDS=600
+DREAMGRID_BLENDER_PATH=/Applications/Blender.app/Contents/MacOS/Blender
+```
 
-1. Upload/paste **one product image** (PNG/JPEG/WebP, at most 5 MB and 20 MP).
-2. Optional: product URL and pasted product specifications (at most 6,000 characters).
-3. Prepare the import. Show the returned image/title/category and labeled width,
-   depth, height, including each measurement's source/evidence.
-4. Let users edit the sizes in inches/cm/m. Convert to meters before sending.
-5. Require confirmation. If any unchanged size is `estimated`, require a separate
-   “Use estimated size” checkbox. Keep an Estimated size badge in inventory.
-6. Start generation, show queued/generating state or a correctly sized placeholder.
-7. Poll for completion and replace the placeholder with the returned GLB. Preserve
-   its SceneItem placement and rotation; do not rescale the model a second time.
+5. Run `pnpm dev`. API: `http://localhost:8000`; API documentation: `/docs`.
 
-The user approved image-first import, URL assistance, explicit default-size estimates,
-and laptop execution. Unknown dimensions must never be represented as verified facts.
-Geometry matches the chosen outer envelope, not necessarily the real product's unknown size.
+`pnpm dev:api` runs from `services/api` and reads its `.env`; restart after edits.
+All requests and GLB downloads use `VITE_API_BASE_URL`. On Cindy's laptop,
+`localhost` means **Cindy's laptop**, not Dianne's. The supported hackathon setup is
+frontend and backend together on Dianne's laptop; separate-laptop hosting needs an
+explicit connectivity/security setup. Do not expose this unauthenticated server publicly.
 
-## Four endpoints
+The OpenAI Docs skill was used to verify the exact model and Responses parameters
+against [official Sol documentation](https://developers.openai.com/api/docs/models/gpt-5.6-sol).
+The defaults match our tested configuration; no claim is made that high reasoning
+is the fastest or cheapest usable setting.
 
-| Endpoint | Input/result |
+## Import interaction and endpoints
+
+1. Upload/paste one PNG/JPEG/WebP product image (up to 5 MB, 20 MP).
+2. Optionally add a product URL and/or pasted specifications (up to 6,000 characters).
+3. Prepare and show title, warnings, category and source-labeled width/height/depth.
+4. Let the user edit sizes; convert inches/cm to meters. Require confirmation and
+   explicit acceptance of every estimated axis. Keep estimates labeled in inventory.
+5. Generate, poll, then insert the ready asset into the room without resizing again.
+
+| Endpoint under `/api/v1/models` | Purpose |
 |---|---|
-| `POST /api/v1/models/prepare` | Image + optional context → `PreparedImport` |
-| `POST /api/v1/models/generate` | Import ID + confirmed sizes → `GenerationJob` (HTTP 202) |
-| `GET /api/v1/models/jobs/{jobId}` | queued/generating/ready/failed; asset only when ready |
-| `GET /api/v1/models/assets/{hash}.glb` | Self-contained GLB |
+| `POST /prepare` | Image + optional context → `PreparedImport` |
+| `POST /generate` | Import ID + confirmed sizes → `GenerationJob` (HTTP 202) |
+| `GET /jobs/{jobId}` | queued / generating / ready / failed |
+| `GET /assets/{hash}.glb` | Self-contained GLB |
 
-Canonical additive schema: `packages/contracts/schemas/model-pipeline.schema.json`.
-Types/validators are exported from `@dreamgrid/contracts`. Existing Product, ModelAsset,
-SceneItem, and room contracts remain field-for-field unchanged. The new job envelope
-avoids pretending a queued model already has a valid asset URL.
+The expensive Sol request happens in **prepare**, before the generation job exists.
+Show “Analyzing image” then; do not put a 30-second timeout on preparation. Allow
+the configured 600-second provider timeout plus a margin for optional page lookup.
+Poll the Blender job every ~1 second, stopping on ready/failed or unmount; allow up
+to 160 seconds for four queued builds, each with a 35-second process limit. A timed
+out/cancelled browser request does not guarantee backend work stopped. Do not
+automatically retry a paid preparation.
 
-Prepare request:
-
-```json
-{
-  "imageDataUrl": "data:image/jpeg;base64,...",
-  "sourceUrl": "https://mitylite.com/products/chairs/campus-2-chair",
-  "productText": "Overall width 19.25 inches, height 33 inches, depth 22 inches.",
-  "categoryHint": "chair",
-  "mode": "live"
-}
-```
-
-Only `imageDataUrl` is required. `categoryHint` is optional in live mode. For an
-explicit offline approximation, use `mode: "preset"` and a required category hint.
-That path still validates the upload, but **does not analyze it**; warnings say so.
-The UI must not automatically retry in preset mode without showing that choice.
-
-Generate request after the review screen:
-
-```json
-{
-  "importId": "<32-character ID returned by prepare>",
-  "productId": "<Cindy's stable item/product ID>",
-  "dimensions": { "widthM": 0.48895, "heightM": 0.8382, "depthM": 0.5588 },
-  "confirmed": true,
-  "acceptEstimated": false
-}
-```
-
-Dimensions must be finite, 0.05–5 meters per axis. These are bounded model inputs,
-not ergonomics checks. Estimates use named example presets (not claimed category
-averages). A changed size is marked `user`; an unchanged estimate stays `estimated`
-and needs explicit acceptance. All source-extracted values remain reviewable candidates.
-Evidence from supplied/page text must actually appear there. Simple quoted unit
-conversions are recomputed deterministically; compound/fractional text needs careful review.
-
-## Client helper and room integration
-
-Use `apps/web/src/lib/modelGeneration/client.ts`:
+Use `apps/web/src/lib/modelGeneration/client.ts`, with contracts from
+`@dreamgrid/contracts`:
 
 ```ts
 const api = createModelGenerationClient();
@@ -106,120 +83,153 @@ const prepared = await api.prepare({
   imageDataUrl: await furnitureImageDataUrl(file),
   productText: specificationText,
   sourceUrl: shoppingUrl || undefined,
-}, abortController.signal);
+  categoryHint: 'decor', // Optional; omit to let Sol classify.
+  mode: 'live',
+}, signal);
 
-// Render the review panel here. Do not auto-confirm estimates.
+// Render and confirm the size-review panel before this call.
 const job = await api.generate({
   importId: prepared.importId,
   productId,
-  dimensions: {
-    widthM: measurementToMeters(enteredWidth, unit),
-    heightM: measurementToMeters(enteredHeight, unit),
-    depthM: measurementToMeters(enteredDepth, unit),
-  },
+  dimensions: { widthM: 1.15, heightM: 1.75, depthM: 0.95 },
   confirmed: true,
-  acceptEstimated: userCheckedEstimatedSize,
-}, abortController.signal);
+  acceptEstimated: true, // Only after explicit user acceptance.
+  estimatedAxes: ['width', 'height', 'depth'],
+}, signal);
 
-// Poll api.job(job.jobId) every ~750–1,000 ms while mounted, for at most 90 seconds.
-// Stop polling on ready/failed, timeout, or unmount. A timeout is not a successful model.
-// On ready, use latest.asset with the existing ModelAsset scene component at scale 1.
+// Poll api.job(job.jobId, signal); insert latest.asset only once status === 'ready'.
 ```
 
-The helper validates responses and converts backend-relative GLB URLs to the API
-origin. Do not manually prefix them again. Canceling an HTTP request does not cancel
-an already accepted Blender job; it finishes and can be retrieved/cached.
+Those example plant sizes are **estimates**, not retailer measurements. Edited
+guesses must stay in `estimatedAxes`; otherwise changed values are treated as user
+measurements. Unchanged backend estimates still require acceptance. A planter's
+published size is not the size of its pictured foliage. Show all returned warnings
+and `asset.disclosure`, and retain `job.dimensions` provenance alongside the asset.
 
-Preserve the full job's `dimensions` provenance separately from ModelAsset, and show
-its `disclosure`. A retry with the same import/product/sizes returns the same active
-or completed job. Editing dimensions uses the stored analysis and makes **no new GPT call**.
-If category/template is wrong, prepare again with clearer context or choose an
-explicit category preset; this version has no free-form model editor.
+Dimensions must be finite, 0.05–5 m per axis. Supplied/page-text evidence must appear
+in the source; simple quoted unit conversions are recomputed. This does not prove
+the retailer text identifies the correct variant or component: review still matters.
 
-Generation does not require a price and does not create a Product. Cindy/Linda own
-shopping metadata and unknown-price handling. Never invent a zero price to imply an
-unknown-cost item is free. The shopping URL is input context, not purchase authorization.
+Editing sizes reuses the saved analysis, with no additional Sol call. The client
+helper validates responses and resolves backend-relative GLB URLs automatically;
+do not prefix them again. Use `fixtures/plant-prepared-import.json` for offline
+review UI development; its import ID is synthetic, not usable with a live server.
 
-## URL assistance limits
+## Scene and lamp integration
 
-Only a single HTTPS HTML page is fetched from exact configured hosts (default:
-`mitylite.com`, `www.ikea.com`, `www.target.com`). No redirects, cookies, login, browser
-automation, PDFs, retailer search, reverse-image lookup, or anti-bot bypass.
-Private/reserved network targets are blocked; TLS uses a pinned validated public IP.
-Page size/time and extracted text are bounded. This is best-effort dimension context,
-not universal scraping. JavaScript-only specs, PDF brochures, and blocked pages should
-fall back to pasted specification text. The source image is never fetched from arbitrary URLs.
+GLB geometry uses meters, X width, Y up, Z depth; bottom-center pivot; +Z front.
+Keep placement/rotation in Cindy's SceneItem parent group and use scale 1.
 
-## Cost, speed, and failure behavior
+`ModelAsset.lighting` is a new **optional additive field**. Lamp metadata contains
+normalized model-local bulb positions/directions, material names for glow, and
+night activation. Non-light objects omit it. Brightness/beam/color are preview
+defaults, not measured photometry. The same rig is stored in GLB root extras as
+`dreamgridLighting`, but the API field is the client integration contract.
 
-- Default configurable model: `gpt-4.1-mini-2025-04-14` (image input, structured output).
-- One GPT request per uncached live preparation; no automatic paid retry or web-search tool.
-- Images are resized to at most 1024 pixels and re-encoded without metadata.
-- At most 900 output tokens; `store: false`; API errors never echo provider bodies.
-  This is not a claim of zero provider-side retention. The user-selected image is sent
-  to OpenAI for analysis. See [image input documentation](https://developers.openai.com/api/docs/guides/images-vision)
-  and [structured output documentation](https://developers.openai.com/api/docs/guides/structured-outputs).
-- Input/output token usage is returned for display. Cached preparation returns zero new tokens.
-- Analysis cache: 32 entries, up to 1 hour; imports: at most 100. No raw images saved to disk.
-- Default live-call cap: 30 attempts per API process. It resets on restart and is **not**
-  an account-level spending cap; set a project budget in the provider dashboard too.
-- One Blender process at a time, at most four pending builds, 35-second process timeout.
-- No Cycles preview rendering in the runtime path. GLB cache lives in ignored
-  `artifacts/generated-models/`, keyed by compiled recipe, dimensions, and style version.
-- Jobs are bounded in-memory state (100 per process). Restart loses imports/job IDs;
-  generated files survive. Re-prepare after a 404. One API worker only.
-- HTTP 400/422: fix input or explicitly accept estimates; 404: expired/missing state;
-  429: session/queue busy or cap reached; 502/503: provider/config unavailable.
-- Failures stay failures. Offer preset mode or the existing curated demo assets explicitly.
-
-Measured live chair test: **5.37 s analysis, 9.60 s total**, 2,226 input tokens and
-129 output tokens, with pasted product dimensions. One successful sample, not a
-latency/reliability guarantee. All seven templates were also built at non-default
-dimensions and loaded in Three.js; offline fresh builds took about 0.5–2.5 s locally.
-The tested manufacturer HTML page did not expose readable dimensions through the
-bounded lookup; its pasted specification text worked. Do not rehearse a URL-only demo.
-
-## Verification
-
-```bash
-pnpm check
-# Optional real Blender smoke test; no network or paid calls:
-.venv/bin/python tools/blender/check_pipeline_templates.py
-# Inspect an exported smoke model with the actual Three.js loader:
-node tools/blender/inspect-glb.mjs artifacts/pipeline-template-checks/shelf.glb artifacts/pipeline-template-checks/shelf.json
+```tsx
+// Both siblings must share the same position/rotation parent, not the GLB root.
+<group position={position} rotation={rotation}>
+  <ModelAsset
+    url={asset.glbUrl}
+    lighting={asset.lighting}
+    lightingMode={roomLightingMode}
+  />
+  <ModelLights lighting={asset.lighting} mode={roomLightingMode} />
+</group>
 ```
 
-Automated tests use fake providers/builders. They cover required confirmation,
-size provenance, defaults, cache reuse, API failures, request limits, source-host
-restrictions, unit conversions, template schema validity, and frontend URL resolution.
-The local HTTP prepare/generate/poll/download flow was also checked with an explicit
-lamp preset: asset download returned 200 with the correct GLB media type and frontend CORS origin.
+Components live in `apps/web/src/scene/`. `roomLightingMode` is `'day' | 'night'`.
+The helper keeps light targets under the same transform and clones glowing
+materials per instance so one lamp does not change another. Shadows default off
+for performance. Do not also instantiate duplicate lights from GLB extras.
+This branch provides tested helpers and metadata; wiring Cindy's actual room
+toggle and insertion UI remains her integration work.
 
-## Deployment later
+### Cindy's current plain Three.js room
 
-Keep Cindy's prepare/generate/poll/asset interface; replace the execution/storage internals.
+At wrap-up, `origin/main` has moved to Cindy's vanilla TypeScript/Three.js room,
+while this feature branch still contains the older React backbone. **Do not replace
+Cindy's app shell, package configuration or room with this branch's versions.**
+The React example above is for the backbone only. The backend/GLB/metadata contract
+does not require React; use the pure helpers in `src/scene/modelLighting.ts`:
 
-1. Run a Linux VM/container with Blender and its OS libraries. Ship the **repository's
-   templates and trusted builder** as well as the API; the Python wheel alone is insufficient.
-   A static frontend host or short-lived function is not a drop-in Blender backend.
-2. Replace process-memory jobs/imports with durable shared state and a bounded worker queue.
-   Multiple API workers currently would lose each other's job IDs; do not enable them yet.
-3. Put generated assets in object storage and return accessible HTTPS asset URLs.
-4. Add user authentication, per-user limits, a durable spending budget, and controlled
-   network egress before public exposure. CORS and random IDs are not authentication.
-5. Run Blender in a restricted OS/container user with CPU/memory/time limits. Today it
-   runs only trusted code with an environment stripped of API keys, but is not an OS sandbox.
-6. Configure exact frontend origins, HTTPS, secret storage, retention/cleanup, job retries,
-   health checks, logging without images/keys, and concurrent-load tests.
+```ts
+// Import Group from three, and these three helpers from modelLighting.
+const model = cloneModelForLighting(loadedGltf.scene, asset.lighting);
+const lights = createModelLights(asset.lighting, roomLightingMode);
+const placedItem = new Group();
+placedItem.add(model.instance, lights);
+setModelGlow(model.instance, asset.lighting, roomLightingMode);
+// Put SceneItem position/rotation on placedItem, not model.instance.
 
-For the hackathon, leave the server loopback-only and run the demo frontend on the same
-laptop. Do not expose this unauthenticated development server through a public tunnel.
+function updateRoomLighting(mode: 'day' | 'night') {
+  lights.visible = mode === 'night';
+  setModelGlow(model.instance, asset.lighting, mode);
+}
+```
 
-## Agent starting instruction for Cindy
+On removal, dispose the helper-created lights and call `model.dispose()`; do not
+dispose geometry/materials shared by other loaded instances. Cindy's existing
+`LampRegistry.registerLamp` currently adds one inferred point light. For generated
+assets, use the supplied multi-emitter rig instead of registering a duplicate
+default light; wire the room's day/night event into the update function. This
+integration is documented, not already merged or tested inside Cindy's room.
 
-Read this document and `apps/web/AGENTS.md`. Use the existing modelGeneration client
-to add image import, source-labeled size review, explicit estimate acceptance, generation
-status, and scene insertion. Keep API/Blender generation unchanged; keep transforms in
-SceneItem, meter units, Y-up, +Z front, floor-centered pivot, and scale 1. Use the returned
-productId consistently. Preserve cached demo assets and visibly disclose approximate/preset
-models. Do not add API keys to the browser or treat unknown prices as zero.
+Before merging, review the backend/shared-contract changes and adapt only the
+client/lighting helpers into the current frontend. The branch checks below cover
+this branch, not a combined build of the latest room plus generation.
+
+Other additive contract changes: custom lathe/tube geometry, generation `decor`,
+`template: "custom"`, and `estimatedAxes`. Product/SceneItem shapes are unchanged.
+Review these changes with the consuming agents before merging.
+
+## URL behavior and measured speed
+
+The optional URL helper reads bounded HTML text from exact configured public HTTPS
+hosts (MityLite, IKEA, Target by default). It blocks redirects/private networks and
+does not run a browser or download product images. Blocked/JavaScript-only pages
+need pasted specifications. **Wayfair browser access in this chat is not backend
+functionality**; URL-only import is not ready for a demo.
+
+Fresh single-run Sol/high measurements, local image → ready GLB:
+
+| Subject | Preparation | Blender/build | Total |
+|---|---:|---:|---:|
+| Target dual-head lamp | 86.36 s | 1.90 s | 88.26 s |
+| Wayfair pictured plant + pot | 114.02 s | 1.76 s | 115.79 s |
+
+Totals include a tiny diagnostic handoff; exclude human size confirmation, prior
+research/browser-assisted image retrieval, HTTP route/browser loading and studio
+preview renders. These are single samples, not latency guarantees. See the full
+[lamp](experiments/sol-lamp-test-2026-09-19.md) and
+[plant](experiments/wayfair-plant-url-test-2026-09-19.md) records. The plant passed
+GLB/Three.js validation but has a visibly disconnected leaf; visual review remains
+necessary. Blender is not the dominant cost in these samples.
+
+## Limits, verification and deployment
+
+- One uncached Sol request per preparation, no automatic paid retry. Image maximum
+  normalized edge: 1024 px. `store: false`; image sent to OpenAI. No claim of zero
+  provider retention. Output cap includes reasoning tokens.
+- Default cap: 30 live attempts per API process; resets on restart, not a billing
+  guarantee. Configure the provider's project budget separately.
+- Analysis cache: 32 entries / up to one hour; 100 imports and 100 jobs per process.
+  One API worker, one preparation at a time, one Blender worker, four pending builds.
+- Imports/job IDs are in memory and disappear on restart. GLBs persist under ignored
+  `artifacts/generated-models/`; no user image is saved by the regular API.
+- Generated assets: <=2 MB and <=40,000 triangles, validated outer envelope.
+  No studio rendering in the runtime path. Benchmark renders/raw images stay local.
+- HTTP 400/422: fix input/confirmation; 404: expired/missing state; 429: busy/cap;
+  502/503: provider/config unavailable. Failures never become fake successful assets.
+
+`pnpm check` runs offline lint, types, tests and builds. Real generation is opt-in
+with `tools/test_image_pipeline.py` and incurs API cost; use a fresh output folder.
+Its defaults now inherit backend settings. `--reuse-analysis` avoids another API
+call for builder debugging; never report that as fresh generation speed.
+
+For deployment later, keep these client endpoints but add a Blender-capable runtime
+with the repository's trusted builder/schemas, durable jobs/queue, object storage,
+authentication/limits, HTTPS and restricted worker resources. Multiple API workers,
+public tunnels and short-lived serverless functions are not supported substitutes
+for today's single-process local setup. Blender receives no API key but is not an
+OS sandbox. CORS and random job IDs are not authentication.

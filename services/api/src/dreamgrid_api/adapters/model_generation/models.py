@@ -7,7 +7,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-Category = Literal["bed", "desk", "chair", "shelf", "lamp"]
+Category = Literal["bed", "desk", "chair", "shelf", "lamp", "decor"]
 Template = Literal["bed", "desk-pedestal", "desk-table", "chair", "chair-sled", "shelf", "lamp"]
 Source = Literal["product_text", "product_url", "image_label", "estimated", "user"]
 Size = Annotated[float, Field(ge=0.05, le=5, allow_inf_nan=False)]
@@ -57,7 +57,7 @@ class PreparedImport(Data):
     expiresAt: str
     title: str
     category: Category
-    template: Template
+    template: Template | Literal["custom"]
     dimensions: DimensionReview
     warnings: list[str]
     analysisMethod: Literal["gpt", "preset"]
@@ -70,6 +70,9 @@ class GenerateRequest(Data):
     dimensions: Dimensions
     confirmed: Literal[True]
     acceptEstimated: bool = False
+    estimatedAxes: list[Literal["width", "height", "depth"]] = Field(
+        default_factory=list, max_length=3
+    )
 
 
 class GenerationJob(Data):

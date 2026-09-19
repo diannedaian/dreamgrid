@@ -1,0 +1,18 @@
+{
+  "importId": "00000000000000000000000000000001",
+  "expiresAt": "2099-01-01T00:00:00+00:00",
+  "title": "Plant and planter — synthetic contract fixture",
+  "category": "decor",
+  "template": "custom",
+  "dimensions": {
+    "width": {"valueM": 1.15, "source": "estimated", "evidence": "Illustrative foliage spread, not a product measurement"},
+    "height": {"valueM": 1.75, "source": "estimated", "evidence": "Illustrative plant-plus-pot height, not pot-only height"},
+    "depth": {"valueM": 0.95, "source": "estimated", "evidence": "Illustrative foliage depth, not a product measurement"}
+  },
+  "warnings": [
+    "Synthetic fixture for UI/contract tests; not a real import ID or live generation result.",
+    "Plant leaves are simplified; full-assembly dimensions are estimates."
+  ],
+  "analysisMethod": "gpt",
+  "usage": {"inputTokens": 0, "outputTokens": 0, "cached": false}
+}

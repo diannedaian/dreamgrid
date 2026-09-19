@@ -78,7 +78,8 @@ class BlenderBuilder:
                 raise
             if process.returncode != 0:
                 raise PipelineError(
-                    "Blender could not build this model. Try a simpler template.", 422
+                    "Blender could not build this geometry. Review the image or change provider.",
+                    422,
                 )
             exported = work / "model.glb"
             report = json.loads((work / "validation.json").read_text())

@@ -1,6 +1,7 @@
-import type { ModelAsset } from './types.js';
+import type { ModelAsset, ProductCategory } from './types.js';
 
-export type GenerationCategory = 'bed' | 'desk' | 'chair' | 'shelf' | 'lamp';
+/** Includes plants/planters under decor; matches the catalog taxonomy. */
+export type GenerationCategory = ProductCategory;
 export type FurnitureTemplate = 'bed' | 'desk-pedestal' | 'desk-table' | 'chair' | 'chair-sled' | 'shelf' | 'lamp';
 export type DimensionSource = 'product_text' | 'product_url' | 'image_label' | 'estimated' | 'user';
 export type ConfirmedDimensions = { widthM: number; heightM: number; depthM: number };
@@ -22,7 +23,8 @@ export type PreparedImport = {
   expiresAt: string;
   title: string;
   category: GenerationCategory;
-  template: FurnitureTemplate;
+  /** Legacy field retained: live image-authored geometry always returns custom. */
+  template: FurnitureTemplate | 'custom';
   dimensions: DimensionReview;
   warnings: string[];
   analysisMethod: 'gpt' | 'preset';
@@ -34,6 +36,7 @@ export type GenerateRequest = {
   dimensions: ConfirmedDimensions;
   confirmed: true;
   acceptEstimated?: boolean;
+  estimatedAxes?: ('width' | 'height' | 'depth')[];
 };
 export type GenerationJob = {
   jobId: string;

@@ -3,7 +3,7 @@
 FastAPI backend for DreamGrid. This branch includes health checks plus the
 image-first GPT/Blender generation pipeline. Commerce remains a separate boundary.
 See [Cindy's model-pipeline handoff](../../docs/MODEL_PIPELINE_HANDOFF.md) for setup,
-endpoint contracts, supported templates, dimension confirmation, and deployment limits.
+endpoint contracts, custom geometry, lamp lighting, dimension confirmation, and deployment limits.
 
 ## Ownership
 
@@ -29,6 +29,12 @@ Health checks and explicit preset mode need no OpenAI credentials. Live preparat
 requires a server-side `OPENAI_API_KEY`; generation needs Blender. Environment overrides go
 in `services/api/.env` (use `.env.example` as a template); `dev:api` runs from that
 directory. Environment variables supplied by a deployment also work.
+
+Defaults: `gpt-5.6-sol`, high reasoning, 12,000 maximum output tokens (including
+reasoning), 600-second provider timeout. Existing local `.env` overrides must be
+updated from the earlier mini settings; see `.env.example`. No automatic paid retries.
+Live generation includes plant/decor. The optional product URL supplies dimension
+context only; an uploaded image is still required.
 
 ## Validate
 

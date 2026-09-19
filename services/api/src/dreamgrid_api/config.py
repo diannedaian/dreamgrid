@@ -31,7 +31,10 @@ class Settings(BaseSettings):
         default_factory=lambda: ["http://localhost:3000", "http://localhost:5173"]
     )
     openai_api_key: SecretStr = Field(default=SecretStr(""), validation_alias="OPENAI_API_KEY")
-    openai_model: str = "gpt-4.1-mini-2025-04-14"
+    openai_model: str = "gpt-5.6-sol"
+    openai_reasoning_effort: Literal["none", "low", "medium", "high"] | None = "high"
+    openai_request_timeout_seconds: float = Field(default=600, ge=1, le=1200)
+    openai_max_output_tokens: int = Field(default=12000, ge=100, le=32000)
     openai_max_calls: int = Field(default=30, ge=0, le=1000)
     blender_path: str = "/Applications/Blender.app/Contents/MacOS/Blender"
     project_root: Path = Path(__file__).resolve().parents[4]

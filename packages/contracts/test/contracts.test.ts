@@ -8,12 +8,15 @@ import {
   validateFurnitureSpec,
   validateModelAsset,
   validateProduct,
+  validatePrepareRequest,
+  validatePreparedImport,
   validateRoomState,
   validateSceneItem,
 } from "../src/index.js";
 import type {
   FurnitureSpec,
   ModelAsset,
+  PrepareRequest,
   Product,
   RoomState,
 } from "../src/index.js";
@@ -26,6 +29,21 @@ async function fixture<T>(name: string): Promise<T> {
 }
 
 describe("DreamGrid contract fixtures", () => {
+  it("accepts plants as decor in import requests and the shared review fixture", async () => {
+    const request: PrepareRequest = {
+      imageDataUrl: "data:image/png;base64,AAAAAAAAAAAAAAAA",
+      categoryHint: "decor",
+      mode: "live",
+    };
+    expect(validatePrepareRequest(request), JSON.stringify(validatePrepareRequest.errors)).toBe(true);
+    const prepared = await fixture<unknown>("plant-prepared-import.json");
+    assertValidContract("PreparedImport", validatePreparedImport, prepared);
+    expect(prepared.category).toBe("decor");
+    expect(prepared.template).toBe("custom");
+    expect(prepared.dimensions.height.source).toBe("estimated");
+    expect(validatePrepareRequest({ ...request, categoryHint: "made-up-category" })).toBe(false);
+  });
+
   it("validates the complete eight-product catalog", async () => {
     const products = await fixture<unknown[]>("products.json");
 

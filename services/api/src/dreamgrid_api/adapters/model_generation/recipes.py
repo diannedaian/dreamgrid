@@ -8,7 +8,7 @@ from jsonschema import Draft202012Validator
 
 from .models import TEMPLATES, Analysis, Dimensions, PipelineError
 
-STYLE_VERSION = "soft-dorm-v1"
+STYLE_VERSION = "image-geometry-v2"
 
 
 def compile_recipe(analysis: Analysis, dimensions: Dimensions, root: Path) -> dict[str, Any]:

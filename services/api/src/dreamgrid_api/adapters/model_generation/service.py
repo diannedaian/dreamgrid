@@ -8,18 +8,20 @@ import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 from uuid import uuid4
 
 from dreamgrid_api.config import Settings
 
 from .blender_runner import BlenderBuilder, Builder
+from .geometry import ImageGeometry, compile_geometry, lighting_from_glb
 from .image_input import normalize_image
 from .measurements import quoted_meters
 from .models import (
     TEMPLATES,
     Analysis,
     DimensionReview,
+    Dimensions,
     GenerateRequest,
     GenerationJob,
     Measurement,
@@ -27,6 +29,8 @@ from .models import (
     PipelineError,
     PreparedImport,
     PrepareRequest,
+    Source,
+    Template,
     Usage,
 )
 from .openai_analysis import Analyzer, OpenAIAnalyzer
@@ -36,9 +40,17 @@ from .recipes import STYLE_VERSION, compile_recipe
 
 @dataclass
 class ImportRecord:
-    analysis: Analysis
+    analysis: ImageGeometry | Analysis
     prepared: PreparedImport
     expires: float
+
+
+def compile_model(
+    analysis: ImageGeometry | Analysis, dimensions: Dimensions, root: Path
+) -> dict[str, Any]:
+    if isinstance(analysis, ImageGeometry):
+        return compile_geometry(analysis, dimensions, root)
+    return compile_recipe(analysis, dimensions, root)
 
 
 class Pipeline:
@@ -92,6 +104,7 @@ class Pipeline:
                     request.categoryHint,
                     request.mode,
                     self.settings.openai_model,
+                    self.settings.openai_reasoning_effort,
                     STYLE_VERSION,
                 ]
             ).encode()
@@ -105,14 +118,17 @@ class Pipeline:
                 cached.analysis, prepared, cached.expires
             )
             return prepared
-        warnings = [
-            "Stylized template approximation; hidden details and exact shape are not reconstructed."
-        ]
+        warnings = ["Image-based reconstruction; verify the preview. Hidden geometry is uncertain."]
+        analysis: ImageGeometry | Analysis
         page_text = ""
         if request.mode == "preset":
             if request.categoryHint is None:
                 raise PipelineError("Choose a category for explicit preset mode.")
             template = "desk-pedestal" if request.categoryHint == "desk" else request.categoryHint
+            if template not in TEMPLATES:
+                raise PipelineError(
+                    "No decor preset exists. Use live image generation for plants and decor."
+                )
             unknown = ObservedDimension(valueM=None, source="unknown", evidence="")
             analysis = Analysis(
                 title="Approximate " + request.categoryHint,
@@ -158,12 +174,25 @@ class Pipeline:
                 page_text,
                 request.categoryHint,
             )
-        if analysis.template == "unsupported":
+        if (isinstance(analysis, ImageGeometry) and not analysis.supported) or (
+            isinstance(analysis, Analysis) and analysis.template == "unsupported"
+        ):
             raise PipelineError(
-                "Shape outside MVP templates. Choose a simpler item or explicit preset.",
+                "Shape cannot be represented reliably. Supply another view or provider.",
                 422,
             )
-        category, defaults, preset_label = TEMPLATES[analysis.template]
+        if isinstance(analysis, ImageGeometry):
+            category, defaults = analysis.category, analysis.referenceSize
+            preset_label = "Image-inferred size; not a product measurement"
+            warnings.extend(analysis.limitations)
+            # Fail invalid geometry at prepare, before asking the user to accept it.
+            compile_geometry(
+                analysis,
+                Dimensions(widthM=defaults[0], heightM=defaults[1], depthM=defaults[2]),
+                self.settings.project_root,
+            )
+        else:
+            category, defaults, preset_label = TEMPLATES[analysis.template]
         measurements: dict[str, Measurement] = {}
         for axis, fallback in zip(["width", "height", "depth"], defaults, strict=True):
             observed = cast(ObservedDimension, getattr(analysis, axis))
@@ -178,11 +207,11 @@ class Pipeline:
             )
             if value is not None and math.isfinite(value) and 0.05 <= value <= 5 and grounded:
                 converted = quoted_meters(observed.evidence)
-                if converted is not None and .05 <= converted <= 5:
+                if converted is not None and 0.05 <= converted <= 5:
                     value = converted
                 measurements[axis] = Measurement(
                     valueM=value,
-                    source=observed.source,
+                    source=cast(Source, observed.source),
                     evidence=observed.evidence[:240],
                 )
             else:
@@ -200,7 +229,9 @@ class Pipeline:
             expiresAt=datetime.fromtimestamp(now + 3600, UTC).isoformat(),
             title=analysis.title[:100],
             category=category,
-            template=analysis.template,
+            template="custom"
+            if isinstance(analysis, ImageGeometry)
+            else cast(Template, analysis.template),
             dimensions=DimensionReview(**measurements),
             warnings=warnings,
             analysisMethod="gpt" if request.mode == "live" else "preset",
@@ -224,7 +255,11 @@ class Pipeline:
             ["width", "height", "depth"], request.dimensions.vector(), strict=True
         ):
             measurement = cast(Measurement, getattr(review, axis))
-            if abs(measurement.valueM - value) > 1e-8:
+            if axis in request.estimatedAxes:
+                measurement.valueM = value
+                measurement.source = "estimated"
+                measurement.evidence = "User-confirmed estimate; not a measured product dimension"
+            elif abs(measurement.valueM - value) > 1e-8:
                 measurement.valueM = value
                 measurement.source = "user"
                 measurement.evidence = "User-entered measurement"
@@ -232,7 +267,7 @@ class Pipeline:
                 raise PipelineError(
                     "Explicitly accept estimated sizes or enter measured dimensions."
                 )
-        spec = compile_recipe(record.analysis, request.dimensions, self.settings.project_root)
+        spec = compile_model(record.analysis, request.dimensions, self.settings.project_root)
         digest = hashlib.sha256(
             (STYLE_VERSION + json.dumps(spec, sort_keys=True)).encode()
         ).hexdigest()
@@ -262,13 +297,14 @@ class Pipeline:
         try:
             async with self.worker:
                 job.status = "generating"
-                spec = compile_recipe(
+                spec = compile_model(
                     record.analysis, request.dimensions, self.settings.project_root
                 )
                 job.cached = await self.builder.build(
                     spec,
                     self.directory / f"{digest}.glb",
-                    record.analysis.template == "chair-sled",
+                    isinstance(record.analysis, Analysis)
+                    and record.analysis.template == "chair-sled",
                 )
                 estimated = any(
                     getattr(job.dimensions, axis).source == "estimated"
@@ -287,7 +323,7 @@ class Pipeline:
                     "generationMethod": method,
                     "status": "ready",
                     "disclosure": (
-                        "GPT-selected procedural template built in Blender. "
+                        "GPT-authored image-specific geometry built in Blender. "
                         if method == "gpt-blender"
                         else "Explicit original DreamGrid preset; image not analyzed by AI. "
                     )
@@ -298,6 +334,8 @@ class Pipeline:
                         else "Confirmed outer size; interior details are estimated."
                     ),
                 }
+                if spec.get("lights"):
+                    job.asset["lighting"] = lighting_from_glb(self.directory / f"{digest}.glb")
                 job.status = "ready"
         except asyncio.CancelledError:
             job.status, job.error = "failed", "Backend stopped; retry generation."
