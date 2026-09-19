@@ -3,9 +3,10 @@
 import {
   BackSide, CanvasTexture, Color, DirectionalLight, DoubleSide, Euler, Group, HemisphereLight,
   InstancedMesh, LinearSRGBColorSpace, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PlaneGeometry,
-  Quaternion, Scene, ShaderMaterial, SphereGeometry, SRGBColorSpace, Texture, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer,
+  Quaternion, Scene, ShaderMaterial, ShapeGeometry, SphereGeometry, SRGBColorSpace, Texture, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer,
 } from "three";
 import type { Look } from "./sun";
+import { openingShape, type WindowShape } from "../interactions/wallGrid";
 
 export type OutsideView = "leafy" | "autumn" | "snowy" | "rainy";
 export const VIEWS: Array<{ key: OutsideView; label: string }> = [
@@ -54,7 +55,7 @@ export function seededRandom(seed: number): () => number {
   };
 }
 
-export function buildOutside(w: number, h: number, wallT: number, look: Look, view: OutsideView, pageBg = "#adbc9c", limits: OutsideLimits = { up: 1.2, down: 0.8, left: 0.6, right: 0.6 }, seed = 1): Outside {
+export function buildOutside(w: number, h: number, wallT: number, look: Look, view: OutsideView, pageBg = "#adbc9c", limits: OutsideLimits = { up: 1.2, down: 0.8, left: 0.6, right: 0.6 }, seed = 1, shape: WindowShape = "rect"): Outside {
   void pageBg; void limits; // the diorama is never drawn in the room scene, so it may be any size
   const p = PALETTES[view];
   const rnd = seededRandom(seed); // same seed → same leaves and clouds at every time of day
@@ -72,8 +73,8 @@ export function buildOutside(w: number, h: number, wallT: number, look: Look, vi
   sim.add(dome);
 
   // Lights for the diorama (its own, so it reads well regardless of the room's shadows).
-  sim.add(new HemisphereLight(new Color(look.sky), new Color(look.ground), 1.5));
-  const key = new DirectionalLight(new Color(look.sun), Math.max(0.8, Math.min(2.6, look.sunIntensity * 0.8)));
+  sim.add(new HemisphereLight(new Color(look.sky), new Color(look.ground), 1.1 * look.hemiIntensity));
+  const key = new DirectionalLight(new Color(look.sun), Math.min(2.4, look.sunIntensity * 0.8));
   key.position.set(1.5, 3, 1.5);
   sim.add(key);
 
@@ -84,7 +85,7 @@ export function buildOutside(w: number, h: number, wallT: number, look: Look, vi
   const canopy = leafScatter(leafCount, { cx, w, h, wallT }, p, view, inner, rnd);
   sim.add(canopy);
   // Soft clouds drifting across the sky.
-  const clouds = cloudField(view, bw, bd, cx, cz, h, rnd);
+  const clouds = cloudField(view, bw, bd, cx, cz, h, rnd, look);
   sim.add(clouds.group);
 
   // Weather.
@@ -103,8 +104,12 @@ export function buildOutside(w: number, h: number, wallT: number, look: Look, vi
   const rt = new WebGLRenderTarget(px, Math.max(256, Math.round((px * h) / w)));
   rt.texture.colorSpace = LinearSRGBColorSpace;
   const group = new Group();
-  const pane = new Mesh(new PlaneGeometry(w, h), glassMaterial(rt.texture, rt.width, rt.height));
-  pane.position.set(w / 2, h / 2, -wallT + 0.005);
+  // The pane is cut to the opening's outline; UVs map its rectangle to the rendered view.
+  const paneGeo = new ShapeGeometry(openingShape(w, h, shape), 24);
+  const uv = paneGeo.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) / w, uv.getY(i) / h);
+  const pane = new Mesh(paneGeo, glassMaterial(rt.texture, rt.width, rt.height));
+  pane.position.set(0, 0, -wallT + 0.005);
   group.add(pane);
   // Invisible copy of the canopy so the sun still throws dappled leaf shadows into the room.
   const proxy = new InstancedMesh(canopy.geometry, new MeshBasicMaterial({ map: leafTexture(), alphaTest: 0.5, side: DoubleSide, colorWrite: false, depthWrite: false }), canopy.count);
@@ -218,7 +223,9 @@ function skyTexture([top, horizon, ground]: [string, string, string], tint: [str
   const mix = (hex: string) => `#${new Color(hex).lerp(new Color(tint[0]), tint[1]).getHexString()}`;
   void ground;
   const gr = ctx.createLinearGradient(0, 0, 0, 256);
-  gr.addColorStop(0, mix(top)); gr.addColorStop(0.42, mix(horizon)); gr.addColorStop(0.6, mix("#f4f1e6")); gr.addColorStop(1, mix(horizon));
+  // Horizon band: the horizon color lifted a little (bright by day, still dark at night).
+  const glow = `#${new Color(mix(horizon)).lerp(new Color("#ffffff"), 0.3).getHexString()}`;
+  gr.addColorStop(0, mix(top)); gr.addColorStop(0.42, mix(horizon)); gr.addColorStop(0.6, glow); gr.addColorStop(1, mix(horizon));
   ctx.fillStyle = gr; ctx.fillRect(0, 0, 16, 256);
   const t = new CanvasTexture(c);
   t.colorSpace = SRGBColorSpace;
@@ -226,11 +233,13 @@ function skyTexture([top, horizon, ground]: [string, string, string], tint: [str
 }
 
 
-function cloudField(view: OutsideView, bw: number, bd: number, cx: number, cz: number, h: number, rnd: () => number = Math.random) {
+function cloudField(view: OutsideView, bw: number, bd: number, cx: number, cz: number, h: number, rnd: () => number = Math.random, look?: Look) {
   const group = new Group();
   const n = view === "rainy" ? 7 : 4;
   const tex = cloudTexture();
-  const tint = view === "rainy" ? "#9aa6b6" : view === "snowy" ? "#f1f5fb" : "#ffffff";
+  const base = view === "rainy" ? "#9aa6b6" : view === "snowy" ? "#f1f5fb" : "#ffffff";
+  // Clouds take on the sky's light: bright by day, dim and blue at night.
+  const tint = look ? `#${new Color(base).lerp(new Color(look.pane[1]), 0.45).getHexString()}` : base;
   const items: Array<{ m: Mesh; speed: number }> = [];
   for (let i = 0; i < n; i++) {
     const s = 0.6 + rnd() * 0.9;

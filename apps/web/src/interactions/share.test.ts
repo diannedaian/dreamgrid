@@ -38,6 +38,11 @@ describe("share plan", () => {
     expect(back.items[0].rotationYDeg).toBe(90);
   });
 
+  it("carries window shapes", () => {
+    const back = decodePlan(encodePlan(planFromState(room, [{ ...windows[0], shape: "arch" }, { ...windows[0], uM: 2, shape: "oval" }])))!;
+    expect(windowsFromPlan(back).map((w) => w.shape)).toEqual(["arch", "oval"]);
+  });
+
   it("uses only URL-safe characters", () => {
     const plan: Plan = { v: 1, w: 200, d: 199, h: 97, win: [{ s: "l", u: 7, v: 3, w: 63, h: 62 }], items: [] };
     expect(encodePlan(plan)).toMatch(/^[A-Za-z0-9_-]+$/);

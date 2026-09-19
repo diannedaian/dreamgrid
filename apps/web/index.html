@@ -57,7 +57,8 @@
       #menu-toggle:hover { color: var(--honey-deep); }
       #menu-toggle[hidden] { display: none; }
       body.t-midnight #menu-toggle { color: #eef0fa; }
-      .chip.brand { left: 56px; font-family: var(--serif); font-size: 17px; }
+      .chip.brand { left: 56px; top: 14px; font-family: var(--serif); font-size: 17px; background: #fff; padding: 6px 12px; border-radius: 10px; box-shadow: 0 2px 8px rgba(40,50,30,0.12); }
+      body.t-midnight .chip.brand { background: #fff; color: var(--ink); }
       .chip.brand span { color: var(--honey); }
       .chip.dims { right: 20px; font-variant-numeric: tabular-nums; }
       .chip.action { right: 20px; top: 46px; pointer-events: auto; font-weight: 600; font-family: var(--sans); }
@@ -181,7 +182,12 @@
       #menu { position: fixed; z-index: 20; display: grid; background: var(--cream); border: 0; border-radius: 12px; box-shadow: 0 10px 30px rgba(40,50,30,0.25); overflow: hidden; }
       #menu button { padding: 10px 16px; font: inherit; border: 0; background: none; color: var(--ink); text-align: left; cursor: pointer; }
       #menu button:hover { background: var(--cream-2); }
-      #menu button[hidden] { display: none; }
+      #menu button[hidden], #menu .menu-label[hidden] { display: none; }
+      #menu .menu-label { padding: 10px 16px 2px; font-size: 12px; color: var(--ink-soft); }
+      #menu .menu-row { display: flex; gap: 6px; padding: 4px 12px 8px; }
+      #menu .menu-row button { padding: 6px 10px; border-radius: 999px; border: 1px solid #d9cdb8; background: #fff; font-size: 16px; line-height: 1; }
+      #menu .menu-row button:hover { background: var(--cream-2); }
+      #menu .menu-row[hidden] { display: none; }
       #menu [data-remove] { color: #c8412c; }
       #menu [data-remove]:hover { color: #a83322; }
       #menu[hidden] { display: none; }
@@ -233,7 +239,13 @@
     <div id="detail" hidden></div>
 
     <div id="menu" hidden>
-      <button type="button" data-add-window>Add window</button>
+      <div class="menu-label">Add window</div>
+      <div class="menu-row">
+        <button type="button" data-add-window data-shape="rect" title="Rectangle">▭</button>
+        <button type="button" data-add-window data-shape="arch" title="Arched top">⌒</button>
+        <button type="button" data-add-window data-shape="semi" title="Semicircle">◠</button>
+        <button type="button" data-add-window data-shape="oval" title="Oval">⬭</button>
+      </div>
       <button type="button" data-add-door>Add door</button>
       <button type="button" data-remove hidden>Remove</button>
     </div>

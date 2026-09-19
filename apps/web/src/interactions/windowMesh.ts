@@ -32,7 +32,7 @@ export function buildWindowDressing(spec: WindowSpec, room: RoomSpec, wallT: num
   const outside = buildOutside(w, h, wallT, look, view, pageBg, {
     up: Math.max(0, room.heightM - spec.vM - h - M), down: Math.max(0, spec.vM - 0.05),
     left: spec.surface === "back-wall" ? before : after, right: spec.surface === "back-wall" ? after : before,
-  }, seed);
+  }, seed, spec.shape ?? "rect");
   g.add(outside.group);
   g.userData.update = outside.update;
   g.userData.render = outside.render;

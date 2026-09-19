@@ -1,6 +1,6 @@
 // Wall-local coordinates. Cindy owns this (interactions).
 // u runs along the wall from its left edge, v runs up from the floor. Both in meters.
-import { Vector3 } from "three";
+import { Shape, Vector3 } from "three";
 import type { RoomSpec } from "@contracts";
 import { INCH_M } from "./units";
 
@@ -44,7 +44,39 @@ export type WindowSpec = {
   heightM: number;
   /** A door is a hole that also swings inward; windows are the default. */
   kind?: "window" | "door";
+  /** Window outline within its rectangle: rectangle (default), arched top, semicircle, or oval. */
+  shape?: WindowShape;
 };
+
+export type WindowShape = "rect" | "arch" | "semi" | "oval";
+export const WINDOW_SHAPES: Array<{ key: WindowShape; label: string }> = [
+  { key: "rect", label: "Rectangle" }, { key: "arch", label: "Arched" }, { key: "semi", label: "Semicircle" }, { key: "oval", label: "Oval" },
+];
+
+/** Outline of an opening in a local frame where its rectangle spans (0..w, 0..h). */
+export function openingShape(w: number, h: number, shape: WindowShape = "rect"): Shape {
+  const sh = new Shape();
+  switch (shape) {
+    case "arch": {
+      const r = Math.min(w / 2, h / 2);
+      sh.moveTo(0, 0); sh.lineTo(w, 0); sh.lineTo(w, h - r);
+      sh.absarc(w / 2, h - r, r, 0, Math.PI, false);
+      sh.lineTo(0, 0);
+      break;
+    }
+    case "semi":
+      sh.moveTo(w, 0);
+      sh.absellipse(w / 2, 0, w / 2, h, 0, Math.PI, false, 0);
+      sh.lineTo(w, 0);
+      break;
+    case "oval":
+      sh.absellipse(w / 2, h / 2, w / 2, h / 2, 0, Math.PI * 2, false, 0);
+      break;
+    default:
+      sh.moveTo(0, 0); sh.lineTo(w, 0); sh.lineTo(w, h); sh.lineTo(0, h); sh.closePath();
+  }
+  return sh;
+}
 
 /** Do two openings on the same wall overlap (touching edges are fine)? */
 export function openingsOverlap(a: WindowSpec, b: WindowSpec): boolean {
@@ -79,12 +111,12 @@ export function footprintBlocksDoor(cx: number, cz: number, w: number, d: number
 }
 
 /** The smallest inch-aligned rectangle covering a set of inch cells (two opposite corners is enough). */
-export function windowFromCells(surface: WallSurface, cells: Cell[], kind: "window" | "door" = "window"): WindowSpec {
+export function windowFromCells(surface: WallSurface, cells: Cell[], kind: "window" | "door" = "window", shape: WindowShape = "rect"): WindowSpec {
   const is = cells.map((c) => c.i);
   const js = cells.map((c) => c.j);
   const i0 = Math.min(...is);
   const j0 = kind === "door" ? 0 : Math.min(...js); // doors always reach the floor
   const i1 = Math.max(...is) + 1;
   const j1 = Math.max(...js) + 1;
-  return { surface, uM: i0 * INCH_M, vM: j0 * INCH_M, widthM: (i1 - i0) * INCH_M, heightM: (j1 - j0) * INCH_M, ...(kind === "door" ? { kind } : {}) };
+  return { surface, uM: i0 * INCH_M, vM: j0 * INCH_M, widthM: (i1 - i0) * INCH_M, heightM: (j1 - j0) * INCH_M, ...(kind === "door" ? { kind } : {}), ...(kind === "window" && shape !== "rect" ? { shape } : {}) };
 }

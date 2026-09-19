@@ -23,7 +23,7 @@ import {
 } from "three";
 import type { RoomSpec } from "@contracts";
 import { FOOT_M, INCH_M } from "../interactions/units";
-import { doorArc, type WindowSpec } from "../interactions/wallGrid";
+import { doorArc, openingShape, type WindowSpec } from "../interactions/wallGrid";
 import { buildWindowDressing } from "../interactions/windowMesh";
 import { DEFAULT_SUN, lookAt, nearestTime, toSunVector, type SunSettings } from "./sun";
 import { DEFAULT_VIEW, viewLighting, type OutsideView } from "./outside";
@@ -242,11 +242,11 @@ function wallWithHoles(len: number, h: number, windows: WindowSpec[], mat: MeshS
   const shape = new Shape();
   shape.moveTo(0, 0); shape.lineTo(len, 0); shape.lineTo(len, h); shape.lineTo(0, h); shape.closePath();
   for (const win of windows) {
+    // Hole outline in wall coordinates: the opening's local shape shifted to (uM, vM).
+    const local = openingShape(win.widthM, win.heightM, win.kind === "door" ? "rect" : win.shape);
     const hole = new Path();
-    hole.moveTo(win.uM, win.vM);
-    hole.lineTo(win.uM + win.widthM, win.vM);
-    hole.lineTo(win.uM + win.widthM, win.vM + win.heightM);
-    hole.lineTo(win.uM, win.vM + win.heightM);
+    const pts = local.getPoints(24);
+    pts.forEach((pt, i) => (i === 0 ? hole.moveTo(pt.x + win.uM, pt.y + win.vM) : hole.lineTo(pt.x + win.uM, pt.y + win.vM)));
     hole.closePath();
     shape.holes.push(hole);
   }

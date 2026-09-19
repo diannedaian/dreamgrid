@@ -17,14 +17,14 @@ import {
 } from "three";
 import type { RoomSpec } from "@contracts";
 import { FOOT_M, INCH_M } from "./units";
-import { cellAt, fromWallUV, openingsOverlap, sameCell, toWallUV, wallYaw, windowFromCells, type Cell, type WallSurface, type WindowSpec } from "./wallGrid";
+import { cellAt, fromWallUV, openingsOverlap, sameCell, toWallUV, wallYaw, windowFromCells, type Cell, type WallSurface, type WindowShape, type WindowSpec } from "./wallGrid";
 import type { RoomShell } from "../room/buildRoom";
 
 type Mode =
   | { kind: "idle" }
   | { kind: "menu"; surface: WallSurface; cell: Cell }
   | { kind: "remove"; index: number }
-  | { kind: "window"; surface: WallSurface; cells: Cell[]; what: "window" | "door" };
+  | { kind: "window"; surface: WallSurface; cells: Cell[]; what: "window" | "door"; shape: WindowShape };
 
 const WINDOW_POINTS = 2;
 const LIFT = 0.002;
@@ -57,7 +57,7 @@ export class WallPicker {
     canvas.addEventListener("pointermove", (e) => this.onMove(e));
     canvas.addEventListener("pointerup", (e) => this.onUp(e));
     window.addEventListener("keydown", (e) => e.key === "Escape" && this.cancel());
-    menu.querySelector("[data-add-window]")!.addEventListener("click", () => this.startWindow("window"));
+    menu.querySelectorAll<HTMLElement>("[data-add-window]").forEach((b) => b.addEventListener("click", () => this.startWindow("window", (b.dataset.shape as WindowShape) || "rect")));
     menu.querySelector("[data-add-door]")!.addEventListener("click", () => this.startWindow("door"));
     menu.querySelector("[data-remove]")!.addEventListener("click", () => this.removeCurrent());
   }
@@ -151,7 +151,7 @@ export class WallPicker {
   }
 
   private showMenu(e: PointerEvent, which: "add" | "remove", removeLabel = "Remove") {
-    const add = this.menu.querySelectorAll<HTMLElement>("[data-add-window],[data-add-door]");
+    const add = this.menu.querySelectorAll<HTMLElement>("[data-add-window],[data-add-door],.menu-label,.menu-row");
     const rem = this.menu.querySelector<HTMLElement>("[data-remove]")!;
     add.forEach((b) => (b.hidden = which !== "add"));
     rem.hidden = which !== "remove";
@@ -169,9 +169,9 @@ export class WallPicker {
     this.cancel();
   }
 
-  private startWindow(what: "window" | "door") {
+  private startWindow(what: "window" | "door", shape: WindowShape = "rect") {
     if (this.mode.kind !== "menu") return;
-    this.mode = { kind: "window", surface: this.mode.surface, cells: [], what };
+    this.mode = { kind: "window", surface: this.mode.surface, cells: [], what, shape };
     this.canvas.dataset.picking = "1"; // furniture interaction stands down while picking corners
     this.menu.hidden = true;
     this.footSel.visible = false;
@@ -180,7 +180,7 @@ export class WallPicker {
 
   private finishWindow() {
     if (this.mode.kind !== "window") return;
-    const spec = windowFromCells(this.mode.surface, this.mode.cells, this.mode.what);
+    const spec = windowFromCells(this.mode.surface, this.mode.cells, this.mode.what, this.mode.shape);
     if (this.windows.some((w) => openingsOverlap(w, spec))) {
       this.flash(`That ${this.mode.what} would overlap an existing window or door`);
       this.cancel();

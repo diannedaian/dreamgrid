@@ -83,12 +83,12 @@ export type Look = {
 };
 
 export const LOOKS: Record<TimeOfDay, Look> = {
-  // Soft, hazy golden light: wide bloom that spills off sunlit surfaces, yellow-green daylight,
-  // gentle contrast. Strongest at sunrise/sunset; midnight stays cool and dim.
-  sunrise: { sun: "#ffc070", sunIntensity: 2.8, sky: "#ffe6bd", ground: "#c9a86a", hemiIntensity: 1.1, fill: "#ffdcae", fillIntensity: 0.85, spill: "#ffcf86", spillIntensity: 2.4, bloom: 0.42, bloomThreshold: 0.74, bloomRadius: 0.9, exposure: 1.0, lampsOn: false, bodyClass: "t-sunrise", pane: ["#ffe2a8", "#fff1cc", "#a9c565"] },
-  noon: { sun: "#ffe59a", sunIntensity: 2.5, sky: "#fff7d2", ground: "#d3c27c", hemiIntensity: 1.3, fill: "#fff0bf", fillIntensity: 1.1, spill: "#ffe8a6", spillIntensity: 2.4, bloom: 0.4, bloomThreshold: 0.76, bloomRadius: 0.9, exposure: 1.02, lampsOn: false, bodyClass: "t-noon", pane: ["#fff6d2", "#f9efb9", "#a5c96a"] },
-  sunset: { sun: "#ffa455", sunIntensity: 3.0, sky: "#ffcf9a", ground: "#a8763f", hemiIntensity: 0.95, fill: "#ffc08a", fillIntensity: 0.7, spill: "#ffb060", spillIntensity: 2.4, bloom: 0.42, bloomThreshold: 0.74, bloomRadius: 0.9, exposure: 0.98, lampsOn: true, bodyClass: "t-sunset", pane: ["#f9ab68", "#ffd9a6", "#7a8a45"] },
-  midnight: { sun: "#a9b6f0", sunIntensity: 0.9, sky: "#7580b0", ground: "#332c44", hemiIntensity: 0.55, fill: "#93a0d8", fillIntensity: 0.2, spill: "#93a3f5", spillIntensity: 0.9, bloom: 0.45, bloomThreshold: 0.65, bloomRadius: 0.8, exposure: 0.85, lampsOn: true, bodyClass: "t-midnight", pane: ["#1c2551", "#33427a", "#1f2a3a"] },
+  // The day's arc: pink at sunrise → whitest (warm) at noon → orange toward sunset → no light at midnight.
+  // Soft, hazy bloom throughout the day. Slider values blend between these.
+  sunrise: { sun: "#ffb39a", sunIntensity: 2.6, sky: "#ffd6c6", ground: "#d0a07a", hemiIntensity: 1.05, fill: "#ffc8b3", fillIntensity: 0.8, spill: "#ffb89c", spillIntensity: 1.8, bloom: 0.36, bloomThreshold: 0.78, bloomRadius: 0.9, exposure: 1.0, lampsOn: false, bodyClass: "t-sunrise", pane: ["#ffd6c2", "#ffe9d8", "#a9c56a"] },
+  noon: { sun: "#fff0c4", sunIntensity: 2.1, sky: "#fff9ea", ground: "#d9c88a", hemiIntensity: 1.2, fill: "#fff3cc", fillIntensity: 1.0, spill: "#ffefbd", spillIntensity: 1.7, bloom: 0.32, bloomThreshold: 0.8, bloomRadius: 0.9, exposure: 1.0, lampsOn: false, bodyClass: "t-noon", pane: ["#fff8e6", "#fdf3c8", "#aacb5e"] },
+  sunset: { sun: "#ff8a30", sunIntensity: 2.8, sky: "#ffb56a", ground: "#a86f2c", hemiIntensity: 0.9, fill: "#ffa650", fillIntensity: 0.65, spill: "#ff9a3e", spillIntensity: 1.8, bloom: 0.36, bloomThreshold: 0.78, bloomRadius: 0.9, exposure: 0.98, lampsOn: true, bodyClass: "t-sunset", pane: ["#ff9e4a", "#ffcd8a", "#7a8a45"] },
+  midnight: { sun: "#9fb0e8", sunIntensity: 0.25, sky: "#6b74a3", ground: "#2c2740", hemiIntensity: 0.45, fill: "#8a95c8", fillIntensity: 0.15, spill: "#8fa0f0", spillIntensity: 0, bloom: 0.25, bloomThreshold: 0.9, bloomRadius: 0.8, exposure: 0.85, lampsOn: true, bodyClass: "t-midnight", pane: ["#141b3d", "#25305e", "#161e2c"] },
 };
 
 /** The look for any time of day, blended between the two nearest checkpoints. */
