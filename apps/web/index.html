@@ -12,9 +12,6 @@
         --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
       }
       html, body { margin: 0; height: 100%; background: var(--sage); font-family: var(--sans); color: var(--ink); transition: background 0.8s ease; overflow: hidden; }
-      body.t-sunrise { background: #c6bf9c; }
-      body.t-sunset { background: #b9a487; }
-      body.t-midnight { background: #3f4a5e; }
       #stage { position: fixed; inset: 0; bottom: var(--panel-h, 0px); left: var(--left-w, 0px); z-index: 0; transition: left 0.25s ease; }
       body.has-leftbar { --left-w: 0px; }
       body.has-leftbar.leftbar-open { --left-w: 250px; }
@@ -56,17 +53,13 @@
       #menu-toggle { position: fixed; left: 20px; top: 14px; z-index: 9; font: inherit; font-size: 22px; line-height: 1; border: 0; background: none; cursor: pointer; color: var(--ink); padding: 4px; }
       #menu-toggle:hover { color: var(--honey-deep); }
       #menu-toggle[hidden] { display: none; }
-      body.t-midnight #menu-toggle { color: #eef0fa; }
       .chip.brand { left: 56px; top: 14px; font-family: var(--serif); font-size: 17px; background: #fff; padding: 6px 12px; border-radius: 10px; box-shadow: 0 2px 8px rgba(40,50,30,0.12); }
-      body.t-midnight .chip.brand { background: #fff; color: var(--ink); }
       .chip.brand span { color: var(--honey); }
       .chip.dims { right: 20px; font-variant-numeric: tabular-nums; }
       .chip.action { right: 20px; top: 46px; pointer-events: auto; font-weight: 600; font-family: var(--sans); }
       .chip.action.save-design { top: 72px; }
       .chip.action[hidden] { display: none; }
       .chip.mode { left: 20px; top: 62px; pointer-events: auto; cursor: pointer; border: 0; font-family: var(--sans); }
-      body.t-midnight .chip, body.t-midnight #hint, body.t-midnight #item-tools button { color: #eef0fa; }
-      body.t-midnight .chip.brand span { color: #f0b46a; }
       .chip.mode { display: none; }
 
       /* Left drawer: saved designs -------------------------------------- */
@@ -84,7 +77,6 @@
       #leftbar .sub { font-size: 10.5px; color: var(--ink-soft); }
       #leftbar .del { border: 0; background: none; color: var(--ink-soft); cursor: pointer; font-size: 12px; } #leftbar .del:hover { color: #c8412c; }
       #leftbar .empty { font-size: 12px; color: var(--ink-soft); padding: 0 6px; line-height: 1.4; }
-      body.t-midnight #leftbar { background: #2c3242; color: #eef0fa; } body.t-midnight #leftbar .design { background: #3a4153; } body.t-midnight #leftbar .sub, body.t-midnight #leftbar .empty { color: #b9bfd0; }
 
       /* Save popup */
       #save-popup { position: fixed; inset: 0; z-index: 31; background: rgba(40,46,36,0.35); display: grid; place-items: center; padding: 20px; box-sizing: border-box; }
@@ -104,7 +96,6 @@
       #save-popup .dims label { display: grid; grid-template-columns: 4.5em 4em auto 4em auto; align-items: center; gap: 6px; font-size: 13px; color: var(--ink); }
       #save-popup .dims input { width: 100%; box-sizing: border-box; padding: 7px 8px; font: inherit; border: 1px solid #d9cdb8; border-radius: 8px; background: #fff; }
       #save-popup [hidden] { display: none; }
-      body.t-midnight #save-popup .sheet { background: #2c3242; color: #eef0fa; }
 
       /* Bottom panel --------------------------------------------------- */
       #sidebar { position: fixed; left: var(--left-w, 0px); right: 0; bottom: 0; height: 236px; z-index: 6; transition: left 0.25s ease; box-sizing: border-box; padding: 12px 18px 14px; display: flex; gap: 26px; align-items: stretch; overflow-x: auto; overflow-y: hidden; background: var(--cream); box-shadow: 0 -8px 30px rgba(40,50,30,0.18); }
@@ -148,9 +139,6 @@
       .time-labels button.on { color: var(--honey-deep); font-weight: 700; text-decoration: none; }
       .compass { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; margin-bottom: 8px; }
       .compass button { padding: 5px 0; }
-      body.t-midnight #sidebar { background: #2c3242; color: #eef0fa; }
-      body.t-midnight #sidebar .item-card, body.t-midnight .floor-btn, body.t-midnight .seg button:not(.on), body.t-midnight .compass button:not(.on) { background: #3a4153; color: #eef0fa; border-color: #4a5266; }
-      body.t-midnight #sidebar h3, body.t-midnight .item-card .sub, body.t-midnight .row .lbl, body.t-midnight .floor-btn { color: #b9bfd0; }
       /* Product detail sheet */
       #detail { position: fixed; inset: 0; z-index: 30; background: rgba(40,46,36,0.35); display: grid; place-items: center; padding: 20px; box-sizing: border-box; }
       #detail[hidden] { display: none; }
@@ -166,7 +154,6 @@
       #detail .shop { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border: 1px dashed #d9cdb8; border-radius: 10px; font-size: 12px; color: var(--ink-soft); margin-bottom: 12px; } #detail .shop a { color: var(--honey-deep); }
       #detail .add { font-weight: 700; font-size: 16px; }
       @media (max-width: 640px) { #detail .sheet { grid-template-columns: 1fr; } }
-      body.t-midnight #detail .sheet { background: #2c3242; color: #eef0fa; } body.t-midnight #detail .preview { background: #3a4153; }
 
       #hint { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); padding: 0; background: none; color: var(--ink-soft); font-size: 13px; white-space: nowrap; }
       #hint[hidden] { display: none; }

@@ -7,7 +7,7 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { RoomSpec } from "@contracts";
 import { RoomShell } from "./room/buildRoom";
-import { DEFAULT_SUN, TIMES, lookAt, type SunSettings } from "./room/sun";
+import { DEFAULT_SUN, lookAt, type SunSettings } from "./room/sun";
 import { DEFAULT_FLOOR, DEFAULT_PAINT } from "./room/floors";
 import type { OutsideView } from "./room/outside";
 import { createCamera } from "./interactions/camera";
@@ -179,7 +179,6 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     bloom.threshold = look.bloomThreshold;
     bloom.radius = look.bloomRadius;
     renderer.toneMappingExposure = look.exposure;
-    for (const t of TIMES) document.body.classList.toggle(`t-${t}`, `t-${t}` === look.bodyClass);
     syncUrl();
   };
 
