@@ -35,6 +35,8 @@ src/interactions/wallGrid.ts   wall-local coordinates, WindowSpec, door swing ar
 src/interactions/windowMesh.ts window dressing (pane + shadow-only leaf proxy + area light)
 src/interactions/models.ts     GLB loading, GLB sanitizing, pivot/scale normalization, procedural stand-ins
 src/interactions/lamps.ts      lamp registry (glow + point light at sunset/midnight)
+src/interactions/measure.ts    Measure tool: two clicks on floor/walls/furniture → distance (inch-snapped)
+src/interactions/specBuilder.ts FurnitureSpec → geometry (Dianne's schema), plus tidySpec fixes
 src/interactions/share.ts      plan ⇄ URL encoding (base64url JSON)
 src/interactions/units.ts      inch/meter helpers, snapping
 src/catalog/catalog.ts         catalog store (fixtures + public/demo-assets/catalog.json)

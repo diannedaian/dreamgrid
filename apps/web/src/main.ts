@@ -17,6 +17,7 @@ import { copyText, decodePlan, planFromState, planUrl, roomFromPlan, sunFromPlan
 import { doorArc, type WindowSpec } from "./interactions/wallGrid";
 import { LampRegistry } from "./interactions/lamps";
 import { PlacementController } from "./interactions/placement";
+import { MeasureTool } from "./interactions/measure";
 import { Catalog } from "./catalog/catalog";
 import QRCode from "qrcode";
 import { mountSidebar } from "./catalog/sidebar";
@@ -274,6 +275,25 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       onNewRoom: ({ w, d, h }) => { location.href = `${location.pathname}?w=${w}&d=${d}&h=${h}`; },
     });
     void bar;
+    // Measure: two clicks anywhere in the room → distance.
+    const measureBtn = document.getElementById("measure")!;
+    const measureLabel = document.getElementById("measure-label")!;
+    measureBtn.hidden = false;
+    const measure = new MeasureTool(scene, camera, canvas, room, () => placement!.objects(), measureLabel, (on) => {
+      measureBtn.textContent = on ? "Measuring… click two points (Esc to stop)" : "Measure";
+      measureBtn.classList.toggle("on", on);
+      hint.hidden = true;
+    });
+    measureBtn.addEventListener("click", () => measure.toggle());
+    frameHooks.push(() => {
+      const a = measure.labelAnchor();
+      if (!a) return;
+      const v = a.point.clone().project(camera);
+      const r = canvas.getBoundingClientRect();
+      measureLabel.style.left = `${r.left + ((v.x + 1) / 2) * r.width}px`;
+      measureLabel.style.top = `${r.top + ((1 - v.y) / 2) * r.height - 14}px`;
+    });
+
     // Reset: back to an empty room with the same measurements (two clicks, no dialog).
     const reset = document.getElementById("reset-design")!;
     reset.hidden = false;
