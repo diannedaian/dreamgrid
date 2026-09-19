@@ -11,8 +11,9 @@ npm run build   # typecheck + production build
 Enter room width, depth, and height in feet and inches, or measure with the iPhone app
 (`ios/README.md`). The room is rendered in meters (see `packages/contracts`) with a 1-inch
 placement grid on the floor and both walls (dreamy blue; shown only while dragging furniture or
-picking on a wall). Click a foot square on a wall for the menu: **Add window** or **Add door**, then pick
-the top-left and bottom-right inch. Both are plain holes; windows show the outside and let the sun in,
+picking on a wall). Click a foot square on a wall for the menu: **Add window** (rectangle, arched, semicircle, oval),
+**Add corner window** (one pick on each wall; wraps the corner), or **Add door**, then pick the corners.
+Click an existing opening to remove it. Openings may not overlap. Both are plain holes; windows show the outside and let the sun in,
 doors reach the floor and draw their inward swing arc. Hovering furniture inside a door's swing tints it
 red with a warning.
 

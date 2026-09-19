@@ -17,14 +17,15 @@ import {
 } from "three";
 import type { RoomSpec } from "@contracts";
 import { FOOT_M, INCH_M } from "./units";
-import { cellAt, fromWallUV, openingsOverlap, sameCell, toWallUV, wallYaw, windowFromCells, type Cell, type WallSurface, type WindowShape, type WindowSpec } from "./wallGrid";
+import { cellAt, cornerWindowFromCells, fromWallUV, openingsOverlap, sameCell, toWallUV, wallYaw, windowFromCells, type Cell, type WallSurface, type WindowShape, type WindowSpec } from "./wallGrid";
 import type { RoomShell } from "../room/buildRoom";
 
 type Mode =
   | { kind: "idle" }
   | { kind: "menu"; surface: WallSurface; cell: Cell }
   | { kind: "remove"; index: number }
-  | { kind: "window"; surface: WallSurface; cells: Cell[]; what: "window" | "door"; shape: WindowShape };
+  | { kind: "window"; surface: WallSurface; cells: Cell[]; what: "window" | "door"; shape: WindowShape }
+  | { kind: "corner"; picks: Array<{ surface: WallSurface; cell: Cell }> };
 
 const WINDOW_POINTS = 2;
 const LIFT = 0.002;
@@ -59,6 +60,7 @@ export class WallPicker {
     window.addEventListener("keydown", (e) => e.key === "Escape" && this.cancel());
     menu.querySelectorAll<HTMLElement>("[data-add-window]").forEach((b) => b.addEventListener("click", () => this.startWindow("window", (b.dataset.shape as WindowShape) || "rect")));
     menu.querySelector("[data-add-door]")!.addEventListener("click", () => this.startWindow("door"));
+    menu.querySelector("[data-add-corner]")!.addEventListener("click", () => this.startCorner());
     menu.querySelector("[data-remove]")!.addEventListener("click", () => this.removeCurrent());
   }
 
@@ -88,9 +90,9 @@ export class WallPicker {
   }
 
   private onMove(e: PointerEvent) {
-    if (this.mode.kind !== "window") return;
+    if (this.mode.kind !== "window" && this.mode.kind !== "corner") return;
     const h = this.hit(e);
-    if (!h || h.surface !== this.mode.surface) {
+    if (!h || (this.mode.kind === "window" && h.surface !== this.mode.surface)) {
       this.hover.visible = false;
       return;
     }
@@ -105,6 +107,20 @@ export class WallPicker {
     if (this.canvas.dataset.busy) return; // a furniture drag/select owns this gesture
     if (!d || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 4) return; // it was an orbit drag
     const h = this.hit(e);
+
+    if (this.mode.kind === "corner") {
+      if (!h) return;
+      const [u, v] = toWallUV(h.surface, h.point, this.room);
+      if (this.openingAt(h.surface, u, v) >= 0) { this.flash("That spot is already a window or door"); return; }
+      if (this.mode.picks.some((p) => p.surface === h.surface)) { this.flash("Now pick a point on the other wall"); return; }
+      const cell = cellAt(u, v, INCH_M);
+      this.mode.picks.push({ surface: h.surface, cell });
+      const m = marker("#2ecc71", 0.9);
+      this.place(m, h.surface, cell, INCH_M);
+      this.selected.add(m);
+      if (this.mode.picks.length === 2) this.finishCorner();
+      return;
+    }
 
     if (this.mode.kind === "window") {
       if (!h || h.surface !== this.mode.surface) return;
@@ -130,7 +146,7 @@ export class WallPicker {
       // Clicked an existing window/door: offer to remove it.
       this.cancel();
       this.mode = { kind: "remove", index: existing };
-      const kind = this.windows[existing].kind === "door" ? "door" : "window";
+      const kind = this.windows[existing].kind === "door" ? "door" : this.windows[existing].corner ? "corner window" : "window";
       this.showMenu(e, "remove", `Remove ${kind}`);
       return;
     }
@@ -151,7 +167,7 @@ export class WallPicker {
   }
 
   private showMenu(e: PointerEvent, which: "add" | "remove", removeLabel = "Remove") {
-    const add = this.menu.querySelectorAll<HTMLElement>("[data-add-window],[data-add-door],.menu-label,.menu-row");
+    const add = this.menu.querySelectorAll<HTMLElement>("[data-add-window],[data-add-door],[data-add-corner],.menu-label,.menu-row");
     const rem = this.menu.querySelector<HTMLElement>("[data-remove]")!;
     add.forEach((b) => (b.hidden = which !== "add"));
     rem.hidden = which !== "remove";
@@ -163,7 +179,39 @@ export class WallPicker {
 
   private removeCurrent() {
     if (this.mode.kind !== "remove") return;
-    this.windows.splice(this.mode.index, 1);
+    const target = this.windows[this.mode.index];
+    if (target.corner) {
+      // remove its partner on the other wall too (same height band)
+      for (let i = this.windows.length - 1; i >= 0; i--) {
+        const w = this.windows[i];
+        if (w.corner && Math.abs(w.vM - target.vM) < 1e-6 && Math.abs(w.heightM - target.heightM) < 1e-6) this.windows.splice(i, 1);
+      }
+    } else this.windows.splice(this.mode.index, 1);
+    this.shell.setWindows(this.windows);
+    this.onWindowsChanged(this.windows);
+    this.cancel();
+  }
+
+  private startCorner() {
+    if (this.mode.kind !== "menu") return;
+    this.mode = { kind: "corner", picks: [] };
+    this.canvas.dataset.picking = "1";
+    this.menu.hidden = true;
+    this.footSel.visible = false;
+    this.canvas.style.cursor = "crosshair";
+    this.flash("Corner window: pick one point on each wall");
+  }
+
+  private finishCorner() {
+    if (this.mode.kind !== "corner") return;
+    const pair = cornerWindowFromCells(this.mode.picks[0], this.mode.picks[1]);
+    if (!pair) { this.cancel(); return; }
+    if (pair.some((spec) => this.windows.some((w) => openingsOverlap(w, spec)))) {
+      this.flash("That corner window would overlap an existing window or door");
+      this.cancel();
+      return;
+    }
+    this.windows.push(...pair);
     this.shell.setWindows(this.windows);
     this.onWindowsChanged(this.windows);
     this.cancel();

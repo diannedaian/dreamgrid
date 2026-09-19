@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
-import { cellAt, doorArc, footprintBlocksDoor, fromWallUV, openingsOverlap, toWallUV, windowFromCells } from "./wallGrid";
+import { cellAt, cornerWindowFromCells, doorArc, footprintBlocksDoor, fromWallUV, openingsOverlap, toWallUV, windowFromCells } from "./wallGrid";
 import { feetInchesToM, mToInches } from "./units";
 
 const room = { widthM: feetInchesToM(12, 0), depthM: feetInchesToM(10, 0), heightM: feetInchesToM(8, 0), gridSizeM: 0.0254, lightingMode: "day" as const };
@@ -69,5 +69,16 @@ describe("openingsOverlap", () => {
     expect(openingsOverlap(a, { ...a, uM: 2 })).toBe(false); // shares an edge
     expect(openingsOverlap(a, { ...a, surface: "left-wall" })).toBe(false);
     expect(openingsOverlap(a, { ...a, vM: 0, heightM: 0.5, kind: "door" })).toBe(false);
+  });
+});
+
+describe("corner windows", () => {
+  it("builds two halves that both run to the corner over the same height band", () => {
+    const pair = cornerWindowFromCells({ surface: "back-wall", cell: { i: 40, j: 70 } }, { surface: "left-wall", cell: { i: 30, j: 36 } })!;
+    expect(pair.map((w) => w.surface)).toEqual(["back-wall", "left-wall"]);
+    for (const w of pair) { expect(w.uM).toBe(0); expect(w.corner).toBe(true); expect(mToInches(w.vM)).toBeCloseTo(36, 6); expect(mToInches(w.heightM)).toBeCloseTo(35, 6); }
+    expect(mToInches(pair[0].widthM)).toBeCloseTo(41, 6);
+    expect(mToInches(pair[1].widthM)).toBeCloseTo(31, 6);
+    expect(cornerWindowFromCells({ surface: "back-wall", cell: { i: 1, j: 1 } }, { surface: "back-wall", cell: { i: 5, j: 5 } })).toBeNull();
   });
 });

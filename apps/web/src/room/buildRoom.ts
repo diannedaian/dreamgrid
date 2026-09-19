@@ -195,12 +195,21 @@ export class RoomShell {
     left.position.set(-w / 2, 0, -d / 2);
     left.userData.surface = "left-wall";
 
-    // Corner post covers the back wall's exposed end.
-    const post = new Mesh(new BoxGeometry(WALL_T, h, WALL_T), this.wallMat);
-    post.position.set(-w / 2 - WALL_T / 2, h / 2, -d / 2 - WALL_T / 2);
+    // Corner post covers the back wall's exposed end, cut away where a corner window wraps around.
+    const posts: Mesh[] = [];
+    const bands = windows.filter((x) => x.corner).map((x) => [x.vM, x.vM + x.heightM] as [number, number]).sort((a, b) => a[0] - b[0]);
+    let y = 0;
+    const segments: Array<[number, number]> = [];
+    for (const [b0, b1] of bands) { if (b0 > y) segments.push([y, b0]); y = Math.max(y, b1); }
+    if (y < h) segments.push([y, h]);
+    for (const [y0, y1] of segments) {
+      const post = new Mesh(new BoxGeometry(WALL_T, y1 - y0, WALL_T), this.wallMat);
+      post.position.set(-w / 2 - WALL_T / 2, (y0 + y1) / 2, -d / 2 - WALL_T / 2);
+      posts.push(post);
+    }
 
-    for (const m of [back, left, post]) { m.castShadow = true; m.receiveShadow = true; }
-    this.wallGroup.add(back, left, post);
+    for (const m of [back, left, ...posts]) { m.castShadow = true; m.receiveShadow = true; }
+    this.wallGroup.add(back, left, ...posts);
     this.walls = [back, left];
 
     for (const d of this.disposers) d();

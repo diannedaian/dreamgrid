@@ -30,7 +30,7 @@ src/room/sun.ts             time-of-day slider model (0..1), compass heading, he
 src/room/floors.ts          procedural floor presets + paint palette
 src/room/outside.ts         per-window diorama (own Scene → render target → pane), weather, seeded layout
 src/interactions/placement.ts  placed items: drop, drag, rotate, raise (wall-only), delete, overlaps, door swings
-src/interactions/wallPicker.ts click a wall → menu → pick two inch corners → window or door
+src/interactions/wallPicker.ts click a wall → menu → pick corners → window (4 shapes), corner window (one pick per wall), or door; click an opening → remove
 src/interactions/wallGrid.ts   wall-local coordinates, WindowSpec, door swing arc + collision math
 src/interactions/windowMesh.ts window dressing (pane + shadow-only leaf proxy + area light)
 src/interactions/models.ts     GLB loading, GLB sanitizing, pivot/scale normalization, procedural stand-ins

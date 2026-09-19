@@ -12,7 +12,7 @@ export type Plan = {
   d: number;
   h: number;
   /** Windows: surface (b = back wall, l = left wall) and u, v, width, height in whole inches. */
-  win: Array<{ s: "b" | "l"; u: number; v: number; w: number; h: number; k?: "d"; f?: "a" | "s" | "o" }>;
+  win: Array<{ s: "b" | "l"; u: number; v: number; w: number; h: number; k?: "d"; f?: "a" | "s" | "o"; c?: 1 }>;
   /** Placed furniture (reserved for the catalog integration). */
   items: SceneItem[];
   /** Sun: time of day as 0..300 (sunrise 0, noon 100, sunset 200, midnight 300), heading the far wall faces, southern hemisphere. Omitted when default. */
@@ -40,6 +40,7 @@ export function planFromState(room: RoomSpec, windows: WindowSpec[], items: Scen
       s: x.surface === "back-wall" ? "b" : "l", u: inches(x.uM), v: inches(x.vM), w: inches(x.widthM), h: inches(x.heightM),
       ...(x.kind === "door" ? { k: "d" as const } : {}),
       ...(x.shape === "arch" ? { f: "a" as const } : x.shape === "semi" ? { f: "s" as const } : x.shape === "oval" ? { f: "o" as const } : {}),
+      ...(x.corner ? { c: 1 as const } : {}),
     })),
     items: items.map((i) => ({ ...i, positionM: i.positionM.map((v) => Math.round(v * 10000) / 10000) as SceneItem["positionM"] })),
     ...(look.sun && Math.round(look.sun.t * 300) !== 100 ? { t: Math.round(look.sun.t * 300) } : {}),
@@ -60,6 +61,7 @@ export function windowsFromPlan(plan: Plan): WindowSpec[] {
     heightM: x.h * INCH_M,
     ...(x.k === "d" ? { kind: "door" as const } : {}),
     ...(x.f === "a" ? { shape: "arch" as const } : x.f === "s" ? { shape: "semi" as const } : x.f === "o" ? { shape: "oval" as const } : {}),
+    ...(x.c === 1 ? { corner: true as const } : {}),
   }));
 }
 

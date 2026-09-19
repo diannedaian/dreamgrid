@@ -46,7 +46,19 @@ export type WindowSpec = {
   kind?: "window" | "door";
   /** Window outline within its rectangle: rectangle (default), arched top, semicircle, or oval. */
   shape?: WindowShape;
+  /** Half of a corner window: runs to the corner (uM = 0) and pairs with the one on the other wall. */
+  corner?: true;
 };
+
+/** Build the two halves of a corner window from one pick on each wall (cells are inch indices). */
+export function cornerWindowFromCells(a: { surface: WallSurface; cell: Cell }, b: { surface: WallSurface; cell: Cell }): [WindowSpec, WindowSpec] | null {
+  if (a.surface === b.surface) return null;
+  const j0 = Math.min(a.cell.j, b.cell.j), j1 = Math.max(a.cell.j, b.cell.j) + 1;
+  const half = (p: { surface: WallSurface; cell: Cell }): WindowSpec => ({
+    surface: p.surface, uM: 0, vM: j0 * INCH_M, widthM: (p.cell.i + 1) * INCH_M, heightM: (j1 - j0) * INCH_M, corner: true,
+  });
+  return [half(a), half(b)];
+}
 
 export type WindowShape = "rect" | "arch" | "semi" | "oval";
 export const WINDOW_SHAPES: Array<{ key: WindowShape; label: string }> = [
