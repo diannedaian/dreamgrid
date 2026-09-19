@@ -74,7 +74,7 @@ export type Look = {
   sky: string; ground: string; hemiIntensity: number;
   fill: string; fillIntensity: number;
   spill: string; spillIntensity: number;
-  bloom: number; bloomThreshold: number; exposure: number;
+  bloom: number; bloomThreshold: number; bloomRadius: number; exposure: number;
   lampsOn: boolean;
   /** Body class for the page palette (nearest checkpoint). */
   bodyClass: string;
@@ -83,11 +83,12 @@ export type Look = {
 };
 
 export const LOOKS: Record<TimeOfDay, Look> = {
-  // Golden-hour bias throughout: amber sun, peach ambient, warm spill. Strongest at sunrise/sunset.
-  sunrise: { sun: "#ffaa55", sunIntensity: 3.4, sky: "#ffd9b0", ground: "#bd8a5a", hemiIntensity: 1.05, fill: "#ffcfa3", fillIntensity: 0.85, spill: "#ffb870", spillIntensity: 2.2, bloom: 0.34, bloomThreshold: 0.78, exposure: 1.02, lampsOn: false, bodyClass: "t-sunrise", pane: ["#ffd29a", "#ffe6bf", "#9cb861"] },
-  noon: { sun: "#ffcc82", sunIntensity: 2.7, sky: "#fff0d4", ground: "#caa26f", hemiIntensity: 1.4, fill: "#ffdeb2", fillIntensity: 1.2, spill: "#ffd28f", spillIntensity: 2.4, bloom: 0.22, bloomThreshold: 0.86, exposure: 1.05, lampsOn: false, bodyClass: "t-noon", pane: ["#ffefcd", "#f7e8ba", "#98bf62"] },
-  sunset: { sun: "#ff8f3f", sunIntensity: 3.6, sky: "#ffbe8a", ground: "#925a38", hemiIntensity: 0.9, fill: "#ffac78", fillIntensity: 0.65, spill: "#ff9a4a", spillIntensity: 2.4, bloom: 0.3, bloomThreshold: 0.8, exposure: 0.98, lampsOn: true, bodyClass: "t-sunset", pane: ["#f79c5c", "#ffcf9a", "#66763f"] },
-  midnight: { sun: "#a9b6f0", sunIntensity: 0.9, sky: "#7580b0", ground: "#332c44", hemiIntensity: 0.55, fill: "#93a0d8", fillIntensity: 0.2, spill: "#93a3f5", spillIntensity: 0.9, bloom: 0.38, bloomThreshold: 0.7, exposure: 0.85, lampsOn: true, bodyClass: "t-midnight", pane: ["#1c2551", "#33427a", "#1f2a3a"] },
+  // Soft, hazy golden light: wide bloom that spills off sunlit surfaces, yellow-green daylight,
+  // gentle contrast. Strongest at sunrise/sunset; midnight stays cool and dim.
+  sunrise: { sun: "#ffc070", sunIntensity: 2.8, sky: "#ffe6bd", ground: "#c9a86a", hemiIntensity: 1.1, fill: "#ffdcae", fillIntensity: 0.85, spill: "#ffcf86", spillIntensity: 2.4, bloom: 0.42, bloomThreshold: 0.74, bloomRadius: 0.9, exposure: 1.0, lampsOn: false, bodyClass: "t-sunrise", pane: ["#ffe2a8", "#fff1cc", "#a9c565"] },
+  noon: { sun: "#ffe59a", sunIntensity: 2.5, sky: "#fff7d2", ground: "#d3c27c", hemiIntensity: 1.3, fill: "#fff0bf", fillIntensity: 1.1, spill: "#ffe8a6", spillIntensity: 2.4, bloom: 0.4, bloomThreshold: 0.76, bloomRadius: 0.9, exposure: 1.02, lampsOn: false, bodyClass: "t-noon", pane: ["#fff6d2", "#f9efb9", "#a5c96a"] },
+  sunset: { sun: "#ffa455", sunIntensity: 3.0, sky: "#ffcf9a", ground: "#a8763f", hemiIntensity: 0.95, fill: "#ffc08a", fillIntensity: 0.7, spill: "#ffb060", spillIntensity: 2.4, bloom: 0.42, bloomThreshold: 0.74, bloomRadius: 0.9, exposure: 0.98, lampsOn: true, bodyClass: "t-sunset", pane: ["#f9ab68", "#ffd9a6", "#7a8a45"] },
+  midnight: { sun: "#a9b6f0", sunIntensity: 0.9, sky: "#7580b0", ground: "#332c44", hemiIntensity: 0.55, fill: "#93a0d8", fillIntensity: 0.2, spill: "#93a3f5", spillIntensity: 0.9, bloom: 0.45, bloomThreshold: 0.65, bloomRadius: 0.8, exposure: 0.85, lampsOn: true, bodyClass: "t-midnight", pane: ["#1c2551", "#33427a", "#1f2a3a"] },
 };
 
 /** The look for any time of day, blended between the two nearest checkpoints. */
@@ -99,7 +100,7 @@ export function lookAt(t: number): Look {
     sky: lerpColor(A.sky, B.sky, f), ground: lerpColor(A.ground, B.ground, f), hemiIntensity: lerp(A.hemiIntensity, B.hemiIntensity, f),
     fill: lerpColor(A.fill, B.fill, f), fillIntensity: lerp(A.fillIntensity, B.fillIntensity, f),
     spill: lerpColor(A.spill, B.spill, f), spillIntensity: lerp(A.spillIntensity, B.spillIntensity, f),
-    bloom: lerp(A.bloom, B.bloom, f), bloomThreshold: lerp(A.bloomThreshold, B.bloomThreshold, f), exposure: lerp(A.exposure, B.exposure, f),
+    bloom: lerp(A.bloom, B.bloom, f), bloomThreshold: lerp(A.bloomThreshold, B.bloomThreshold, f), bloomRadius: lerp(A.bloomRadius, B.bloomRadius, f), exposure: lerp(A.exposure, B.exposure, f),
     lampsOn: t >= 0.55, // lamps come on in the late afternoon
     bodyClass: LOOKS[nearestTime(t)].bodyClass,
     pane: [lerpColor(A.pane[0], B.pane[0], f), lerpColor(A.pane[1], B.pane[1], f), lerpColor(A.pane[2], B.pane[2], f)],

@@ -272,8 +272,8 @@ function buildLights(room: RoomSpec) {
   sun.shadow.mapSize.set(4096, 4096);
   sun.shadow.bias = -0.0004;
   sun.shadow.normalBias = 0.01;
-  sun.shadow.radius = 3;
-  sun.shadow.blurSamples = 12;
+  sun.shadow.radius = 9; // very soft, hazy shadow edges
+  sun.shadow.blurSamples = 18;
   Object.assign(sun.shadow.camera, { left: -reach * 1.3, right: reach * 1.3, top: reach * 1.3, bottom: -reach * 1.3, near: 0.1, far: reach * 6 });
 
   return { hemi, fill, sun };
