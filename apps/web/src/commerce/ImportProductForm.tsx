@@ -18,8 +18,23 @@ export type ImportProductFormProps = {
   /** Prefill from a search result or a previous fetch. */
   draft?: ProductDraft;
   /** Injected for tests; defaults to the real API adapter. */
-  fetchDraft?: (url: string) => Promise<ProductDraft>;
+  fetchDraft?: (url: string, options: { titleHint?: string }) => Promise<ProductDraft>;
 };
+
+function mergeEmptyFields(
+  current: ProductFormFields,
+  fetched: ProductFormFields,
+): ProductFormFields {
+  const merged = { ...current };
+  for (const key of Object.keys(fetched) as (keyof ProductFormFields)[]) {
+    if (key === "unit" || key === "category") continue;
+    if (!String(merged[key]).trim() && String(fetched[key]).trim()) {
+      merged[key] = fetched[key];
+    }
+  }
+  if (merged.category === "decor" && fetched.category !== "decor") merged.category = fetched.category;
+  return merged;
+}
 
 const EXTRACTION_LABEL = {
   "structured-data": "Read from the page's structured product data.",
@@ -59,13 +74,18 @@ export function ImportProductForm({
     setFields((current) => ({ ...current, [key]: value }));
   }
 
+  /**
+   * Read the link and fill only the fields that are still empty. What the user
+   * already has (a listing price, a typed title) is never overwritten by a
+   * fetch, so a lookup can add dimensions without replacing a real price.
+   */
   async function handleFetch() {
     if (!url.trim()) return;
     setFetching(true);
     try {
-      const next = await fetchDraft(url.trim());
+      const next = await fetchDraft(url.trim(), { titleHint: fields.title.trim() || undefined });
       setSource(next);
-      setFields(fieldsFromDraft(next, fields.unit));
+      setFields((current) => mergeEmptyFields(current, fieldsFromDraft(next, current.unit)));
       setErrors({});
     } finally {
       setFetching(false);

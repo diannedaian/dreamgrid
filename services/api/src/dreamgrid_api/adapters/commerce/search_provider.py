@@ -384,26 +384,29 @@ def draft_from_search_hit(item: Any, category: ProductCategory) -> ProductDraft 
         name
         for name, value in (
             ("title", title),
-            ("priceUsd", price),
+            ("priceUsd", None),  # model-reported prices are hints, never prices
             ("imageUrl", image),
             ("dimensionsM", dimensions),
         )
         if value is None
     )
+    note = "Found by AI web search; confirm price and size on the store page."
+    if price is not None:
+        note += f" AI-reported price about ${price:.2f} (unverified)."
     return ProductDraft(
         source_url=url,
         title=title,
-        price_usd=Decimal(str(round(price, 2))) if price is not None else None,
+        price_usd=None,
         merchant=merchant or (urlsplit(url).hostname or "").removeprefix("www.") or None,
         image_url=image,
         dimensions_m=dimensions,
         category=category,
         style_tags=_tags(item.get("styleTags")),
         color_tags=_tags(item.get("colorTags")),
-        confidence=min(0.7, round((4 - len(missing)) / 4, 2)),
+        confidence=min(0.6, round((4 - len(missing)) / 4, 2)),
         extraction_method="llm",
         missing=missing,
-        note="Found by AI web search; confirm price and size on the store page.",
+        note=note,
     )
 
 

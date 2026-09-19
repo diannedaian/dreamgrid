@@ -30,6 +30,8 @@ class CamelModel(BaseModel):
 
 class ImportProductRequest(CamelModel):
     url: str = Field(min_length=1, max_length=2048)
+    """Listing title from a search result; helps a lookup identify the product."""
+    title_hint: str | None = Field(default=None, max_length=300)
 
 
 class ProductDraftResponse(CamelModel):
@@ -90,7 +92,7 @@ async def import_product(
 ) -> ProductDraftResponse:
     """Read a product page. An unreadable page yields a manual draft, not an error."""
 
-    draft = await gateway.import_from_url(request.url)
+    draft = await gateway.import_from_url(request.url, title_hint=request.title_hint)
     return ProductDraftResponse.from_draft(draft)
 
 

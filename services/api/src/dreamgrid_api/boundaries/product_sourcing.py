@@ -68,8 +68,12 @@ class SearchOutcome:
 class ProductSourcingGateway(Protocol):
     """Port implemented by the scraping/search adapter or a fixture stand-in."""
 
-    async def import_from_url(self, url: str) -> ProductDraft:
-        """Read one product page. Must not raise for an unreadable page."""
+    async def import_from_url(self, url: str, *, title_hint: str | None = None) -> ProductDraft:
+        """Read one product page. Must not raise for an unreadable page.
+
+        ``title_hint`` (e.g. from a search listing) helps identify the product
+        when the store blocks direct reading and a lookup is needed.
+        """
         ...
 
     async def search(self, query: ProductQuery, *, limit: int = 8) -> SearchOutcome:

@@ -116,11 +116,17 @@ async function postJson(
  */
 export async function importProductFromUrl(
   url: string,
-  signal?: AbortSignal,
+  options: { titleHint?: string; signal?: AbortSignal } = {},
   config: AppConfig = appConfig,
 ): Promise<ProductDraft> {
+  const { titleHint, signal } = options;
   try {
-    const payload = await postJson("/api/v1/products/import", { url }, signal, config);
+    const payload = await postJson(
+      "/api/v1/products/import",
+      titleHint ? { url, titleHint } : { url },
+      signal,
+      config,
+    );
     if (!isDraft(payload)) {
       throw new Error("Import returned an invalid draft.");
     }

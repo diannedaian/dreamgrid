@@ -30,7 +30,7 @@ describe("ImportProductForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Read details from link" }));
 
     await waitFor(() => expect(screen.getByLabelText("Title")).toHaveValue("Scraped Desk"));
-    expect(fetchDraft).toHaveBeenCalledWith("https://shop.example/desk");
+    expect(fetchDraft).toHaveBeenCalledWith("https://shop.example/desk", { titleHint: undefined });
     expect(screen.getByRole("status")).toHaveTextContent("structured product data");
     expect(screen.getByLabelText("Width")).toHaveValue(47.24);
 
@@ -84,6 +84,50 @@ describe("ImportProductForm", () => {
 
     expect(onProductCreated).toHaveBeenCalledTimes(1);
     expect(onProductCreated.mock.calls[0][0].merchant).toBe("amazon.com");
+  });
+});
+
+describe("ImportProductForm reading a link for a picked search result", () => {
+  it("keeps the listing price and title, adds the fetched dimensions, and sends the title as a hint", async () => {
+    const listing: ProductDraft = {
+      sourceUrl: "https://www.google.com/search?ibp=oshop&prds=catalogid:1",
+      title: "BestOffice Computer Desk",
+      priceUsd: 36.99,
+      merchant: "Walmart",
+      category: "desk",
+      styleTags: [],
+      colorTags: [],
+      confidence: 0.8,
+      extractionMethod: "structured-data",
+      missing: ["dimensionsM"],
+    };
+    const lookup: ProductDraft = {
+      sourceUrl: listing.sourceUrl,
+      title: "BestOffice 39 in. Desk (AI)",
+      merchant: "Walmart",
+      dimensionsM: [1.0, 0.75, 0.5],
+      category: "desk",
+      styleTags: [],
+      colorTags: [],
+      confidence: 0.5,
+      extractionMethod: "llm",
+      missing: ["priceUsd", "imageUrl"],
+      note: "AI-reported price about $29.00 (unverified); enter the real price.",
+    };
+    const fetchDraft = vi.fn().mockResolvedValue(lookup);
+    const onProductCreated = vi.fn();
+    render(<ImportProductForm draft={listing} onProductCreated={onProductCreated} fetchDraft={fetchDraft} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Read details from link" }));
+
+    await waitFor(() => expect(screen.getByLabelText("Width")).toHaveValue(39.37));
+    expect(fetchDraft).toHaveBeenCalledWith(listing.sourceUrl, { titleHint: "BestOffice Computer Desk" });
+    expect(screen.getByLabelText("Title")).toHaveValue("BestOffice Computer Desk");
+    expect(screen.getByLabelText("Price (USD)")).toHaveValue(36.99);
+    expect(screen.getByRole("status")).toHaveTextContent("about $29.00 (unverified)");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add to catalog" }));
+    expect(onProductCreated.mock.calls[0][0].priceUsd).toBe(36.99);
   });
 });
 

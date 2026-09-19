@@ -31,11 +31,14 @@ describe("importProductFromUrl", () => {
     } as Response);
     vi.stubGlobal("fetch", fetchMock);
 
-    const draft = await importProductFromUrl("https://shop.example/desk", undefined, config);
+    const draft = await importProductFromUrl("https://shop.example/desk", { titleHint: "Desk" }, config);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "http://api.test/api/v1/products/import",
-      expect.objectContaining({ method: "POST", body: JSON.stringify({ url: "https://shop.example/desk" }) }),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ url: "https://shop.example/desk", titleHint: "Desk" }),
+      }),
     );
     expect(draft.title).toBe("Desk");
     expect(draft.extractionMethod).toBe("structured-data");
@@ -44,7 +47,7 @@ describe("importProductFromUrl", () => {
   it("falls back to a manual draft when the API is offline", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
 
-    const draft = await importProductFromUrl("https://www.ikea.com/x", undefined, config);
+    const draft = await importProductFromUrl("https://www.ikea.com/x", {}, config);
 
     expect(draft.extractionMethod).toBe("manual");
     expect(draft.merchant).toBe("ikea.com");
@@ -55,7 +58,7 @@ describe("importProductFromUrl", () => {
   it("falls back on a non-2xx response", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 } as Response));
 
-    const draft = await importProductFromUrl("https://shop.example/x", undefined, config);
+    const draft = await importProductFromUrl("https://shop.example/x", {}, config);
 
     expect(draft.extractionMethod).toBe("manual");
     expect(draft.note).toMatch(/500/);

@@ -74,7 +74,7 @@ class ProductSourcingService:
         self._import_cache: _LruCache[str, ProductDraft] = _LruCache()
         self._search_cache: _LruCache[tuple[object, ...], SearchOutcome] = _LruCache()
 
-    async def import_from_url(self, url: str) -> ProductDraft:
+    async def import_from_url(self, url: str, *, title_hint: str | None = None) -> ProductDraft:
         key = url.strip()
         cached = self._import_cache.get(key)
         if cached is not None:
@@ -84,21 +84,21 @@ class ProductSourcingService:
             validate_public_http_url(key)
             page = await self._fetcher.fetch(key)
         except PageFetchError as error:
-            return await self._blocked(key, f"{error} Enter the details by hand.")
+            return await self._blocked(key, f"{error} Enter the details by hand.", title_hint)
 
         draft = parse_product_page(page.html, page.final_url or key)
         if draft.extraction_method == "manual":
             # A bot wall or JavaScript shell: nothing to extract from, try a lookup.
-            return await self._blocked(key, draft.note or "Enter the details by hand.")
+            return await self._blocked(key, draft.note or "Enter the details by hand.", title_hint)
         if draft.missing:
             draft = await self._extractor.extract(draft, visible_text(page.html))
         self._import_cache.put(key, draft)
         return draft
 
-    async def _blocked(self, url: str, note: str) -> ProductDraft:
+    async def _blocked(self, url: str, note: str, title_hint: str | None) -> ProductDraft:
         """The page could not be read directly; try a web-search lookup if one is configured."""
 
-        found = await self._url_lookup.lookup(url)
+        found = await self._url_lookup.lookup(url, title_hint)
         if found is None:
             return manual_draft(url, note)
         self._import_cache.put(url, found)

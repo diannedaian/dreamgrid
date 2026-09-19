@@ -6,7 +6,6 @@ and specs, so the model is asked to find them for the exact URL. The result is
 labeled as AI-found and the user confirms it.
 """
 
-from decimal import Decimal
 from typing import Any, Protocol
 from urllib.parse import urlsplit
 
@@ -66,13 +65,13 @@ LOOKUP_INSTRUCTIONS = (
 
 
 class UrlLookup(Protocol):
-    async def lookup(self, url: str) -> ProductDraft | None: ...
+    async def lookup(self, url: str, title_hint: str | None = None) -> ProductDraft | None: ...
 
 
 class NullUrlLookup:
     """Placeholder when no model key is configured."""
 
-    async def lookup(self, url: str) -> ProductDraft | None:
+    async def lookup(self, url: str, title_hint: str | None = None) -> ProductDraft | None:
         return None
 
 
@@ -81,11 +80,14 @@ class OpenAIUrlLookup:
         self._model = model
         self._tool_type = tool_type
 
-    async def lookup(self, url: str) -> ProductDraft | None:
+    async def lookup(self, url: str, title_hint: str | None = None) -> ProductDraft | None:
+        user_input = f"Product URL: {url}"
+        if title_hint:
+            user_input += f"\nListing title: {title_hint}"
         try:
             raw = await self._model.complete(
                 instructions=LOOKUP_INSTRUCTIONS,
-                user_input=f"Product URL: {url}",
+                user_input=user_input,
                 output=JsonSchemaFormat(name="product_lookup", schema=LOOKUP_SCHEMA),
                 tools=({"type": self._tool_type},),
             )
@@ -154,10 +156,18 @@ def draft_from_lookup(url: str, facts: dict[str, Any]) -> ProductDraft | None:
         if value is None
     )
     host = (urlsplit(url).hostname or "").removeprefix("www.")
+    # A model-reported price is a hint, never a price: it goes in the note only.
+    note = (
+        "The store blocked direct reading, so these details were found by AI web search. "
+        "Check them against the store page."
+    )
+    if price is not None:
+        note += f" AI-reported price about ${price:.2f} (unverified); enter the real price."
+    missing = tuple(dict.fromkeys((*missing, "priceUsd")))
     return ProductDraft(
         source_url=url,
         title=title,
-        price_usd=Decimal(str(round(price, 2))) if price is not None else None,
+        price_usd=None,
         merchant=_text(facts.get("merchant")) or host or None,
         image_url=image,
         dimensions_m=dimensions,
@@ -167,8 +177,5 @@ def draft_from_lookup(url: str, facts: dict[str, Any]) -> ProductDraft | None:
         confidence=min(0.6, round((5 - len(missing)) / 5, 2)),
         extraction_method="llm",
         missing=missing,
-        note=(
-            "The store blocked direct reading, so these details were found by AI web search. "
-            "Check them against the store page."
-        ),
+        note=note,
     )

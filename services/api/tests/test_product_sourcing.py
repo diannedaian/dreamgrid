@@ -206,7 +206,7 @@ async def test_llm_rung_fills_only_missing_fields(monkeypatch: pytest.MonkeyPatc
     draft = await service.import_from_url("https://shop.example/chair")
 
     assert draft.title == "Sage Task Chair"  # structured data wins
-    assert draft.price_usd == Decimal("89")
+    assert draft.price_usd == Decimal("89")  # page price kept; the model's $1 is ignored
     assert draft.dimensions_m == (0.58, 0.92, 0.61)
     assert draft.extraction_method == "llm"
     assert draft.missing == ()
@@ -236,6 +236,17 @@ def test_merge_llm_facts_ignores_garbage() -> None:
     assert merged.dimensions_m is None
     assert merged.category is None
     assert merged.extraction_method == "manual"
+
+
+def test_llm_price_is_a_note_not_a_price() -> None:
+    base = ProductDraft(source_url="https://x.example", missing=("priceUsd", "dimensionsM"))
+    merged = merge_llm_facts(
+        base, {"priceUsd": 89.5, "widthCm": 100, "heightCm": 75, "depthCm": 50}
+    )
+    assert merged.price_usd is None
+    assert "priceUsd" in merged.missing
+    assert merged.dimensions_m == (1.0, 0.75, 0.5)
+    assert merged.note is not None and "about $89.50" in merged.note and "unverified" in merged.note
 
 
 # --- OpenAI client helpers ------------------------------------------------------
@@ -355,8 +366,9 @@ async def test_openai_search_maps_hits_and_skips_bad_urls() -> None:
     hit = outcome.results[0]
     assert hit.merchant == "a.example"
     assert hit.dimensions_m == (1.2, 0.75, 0.6)
-    assert hit.price_usd == Decimal("120")
-    assert hit.missing == ("imageUrl",)
+    assert hit.price_usd is None  # hint only
+    assert hit.note is not None and "about $120.00" in hit.note
+    assert set(hit.missing) == {"priceUsd", "imageUrl"}
     # Call 1: text-mode research with the search tool. Call 2: structuring, no tools.
     assert model.calls[0]["tools"] == ({"type": "web_search"},)
     assert model.calls[0]["schema"] is None
@@ -560,12 +572,12 @@ async def test_blocked_fetch_falls_back_to_lookup(monkeypatch: pytest.MonkeyPatc
     again = await service.import_from_url(url)
 
     assert draft.title == "SONGMICS Computer Desk"
-    assert draft.price_usd == Decimal("89.99")
+    assert draft.price_usd is None  # AI-reported prices are never used as prices
     assert draft.dimensions_m == (1.2, 0.75, 0.6)
     assert draft.category == "desk"
     assert draft.extraction_method == "llm"
-    assert draft.missing == ()
-    assert draft.note is not None and "blocked" in draft.note
+    assert draft.missing == ("priceUsd",)
+    assert draft.note is not None and "blocked" in draft.note and "about $89.99" in draft.note
     assert "B07ABCDEFG" in model.calls[0]["input"]
     assert model.calls[0]["tools"] == ({"type": "web_search"},)
     assert again is draft and len(model.calls) == 1  # cached
@@ -670,7 +682,8 @@ def test_factory_uses_openai_when_live_and_key_present() -> None:
 
 
 class FakeGateway:
-    async def import_from_url(self, url: str) -> ProductDraft:
+    async def import_from_url(self, url: str, *, title_hint: str | None = None) -> ProductDraft:
+        assert title_hint in (None, "Desk from a listing")
         return ProductDraft(
             source_url=url,
             title="Desk",
@@ -725,6 +738,32 @@ def test_import_route_returns_camel_case_draft(client: TestClient) -> None:
 
 def test_import_route_rejects_empty_url(client: TestClient) -> None:
     assert client.post("/api/v1/products/import", json={"url": ""}).status_code == 422
+
+
+def test_import_route_passes_title_hint(client: TestClient) -> None:
+    response = client.post(
+        "/api/v1/products/import",
+        json={"url": "https://shop.example/desk", "titleHint": "Desk from a listing"},
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.anyio
+async def test_lookup_receives_the_title_hint(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "dreamgrid_api.adapters.commerce.product_sourcing_service.validate_public_http_url",
+        lambda url: url,
+    )
+    url = "https://www.google.com/search?ibp=oshop&prds=catalogid:1"
+    fetcher = FakeFetcher({}, fail={url: "The store answered with HTTP 403."})
+    model = FakeModel(LOOKUP_REPLY)
+    service = ProductSourcingService(
+        fetcher, NullProductExtractor(), fixture_search(), OpenAIUrlLookup(model)
+    )
+
+    await service.import_from_url(url, title_hint="SONGMICS Computer Desk")
+
+    assert "Listing title: SONGMICS Computer Desk" in model.calls[0]["input"]
 
 
 def test_search_route_translates_query_and_results(client: TestClient) -> None:

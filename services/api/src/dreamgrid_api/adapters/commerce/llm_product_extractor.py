@@ -6,7 +6,6 @@ beyond being shown to the user as an AI-extracted draft to confirm.
 """
 
 from dataclasses import replace
-from decimal import Decimal
 from typing import Any, Protocol
 
 from dreamgrid_api.adapters.commerce.openai_client import (
@@ -123,11 +122,8 @@ def merge_llm_facts(draft: ProductDraft, facts: dict[str, Any]) -> ProductDraft:
         updates["title"] = facts["title"].strip()
         filled_by_llm = True
 
-    if "priceUsd" in draft.missing:
-        price = _number(facts.get("priceUsd"))
-        if price is not None:
-            updates["price_usd"] = Decimal(str(round(price, 2)))
-            filled_by_llm = True
+    # Prices are never taken from the model; a reported figure becomes a note.
+    price_hint = _number(facts.get("priceUsd")) if "priceUsd" in draft.missing else None
 
     if "dimensionsM" in draft.missing:
         width, height, depth = (
@@ -154,6 +150,10 @@ def merge_llm_facts(draft: ProductDraft, facts: dict[str, Any]) -> ProductDraft:
     if not draft.color_tags:
         updates["color_tags"] = _tags(facts.get("colorTags"))
 
+    if price_hint is not None:
+        hint = f"AI-reported price about ${price_hint:.2f} (unverified); enter the real price."
+        updates["note"] = f"{draft.note} {hint}" if draft.note else hint
+
     if not filled_by_llm:
         return replace(draft, **updates)
 
@@ -169,10 +169,13 @@ def merge_llm_facts(draft: ProductDraft, facts: dict[str, Any]) -> ProductDraft:
         )
         if value is None
     )
+    note = "Some fields were extracted by AI; please check them."
+    if price_hint is not None:
+        note += f" AI-reported price about ${price_hint:.2f} (unverified); enter the real price."
     return replace(
         merged,
         missing=still_missing,
         extraction_method="llm",
         confidence=min(0.7, round((5 - len(still_missing)) / 5, 2)),
-        note="Some fields were extracted by AI; please check them.",
+        note=note,
     )
