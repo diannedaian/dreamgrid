@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LOOKS, TIME_T, headingLabel, lookAt, nearestTime, snapT, sunAzElAt, toSunVector } from "./sun";
+import { LOOKS, TIME_T, headingLabel, lookAt, nearestTime, snapT, sunAzEl, sunAzElAt, toSunVector } from "./sun";
 
 describe("sun direction", () => {
   it("puts the sunrise sun to the east of a north-facing far wall (room's +X side)", () => {
@@ -27,7 +27,7 @@ describe("time slider", () => {
   it("interpolates between checkpoints", () => {
     const mid = sunAzElAt(1 / 6, false); // halfway from sunrise to noon
     expect(mid.azDeg).toBeCloseTo(135, 6);
-    expect(mid.elDeg).toBeCloseTo(39, 6);
+    expect(mid.elDeg).toBeCloseTo((sunAzEl("sunrise", false).elDeg + sunAzEl("noon", false).elDeg) / 2, 6);
     expect(lookAt(1 / 6).sunIntensity).toBeCloseTo((LOOKS.sunrise.sunIntensity + LOOKS.noon.sunIntensity) / 2, 6);
   });
 
