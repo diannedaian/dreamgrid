@@ -104,7 +104,7 @@ export class WallPicker {
   private onUp(e: PointerEvent) {
     const d = this.down;
     this.down = null;
-    if (this.canvas.dataset.busy) return; // a furniture drag/select owns this gesture
+    if (this.canvas.dataset.busy || this.canvas.dataset.measuring) return; // another tool owns this gesture
     if (!d || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 4) return; // it was an orbit drag
     const h = this.hit(e);
 

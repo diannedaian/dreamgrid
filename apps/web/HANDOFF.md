@@ -36,12 +36,16 @@ src/interactions/windowMesh.ts window dressing (pane + shadow-only leaf proxy + 
 src/interactions/models.ts     GLB loading, GLB sanitizing, pivot/scale normalization, procedural stand-ins
 src/interactions/modelStates.ts  hinged fridge open/close pose; per-instance, cabinet stays fixed
 src/interactions/lamps.ts      lamp registry (GLB bulb rigs, or fixture point light, at sunset/midnight)
+src/interactions/measure.ts    Measure tool: two clicks on floor/walls/furniture → distance (inch-snapped)
+src/interactions/specBuilder.ts FurnitureSpec → geometry (Dianne's schema), plus tidySpec fixes
 src/interactions/share.ts      plan ⇄ URL encoding (base64url JSON)
 src/interactions/units.ts      inch/meter helpers, snapping
 src/catalog/catalog.ts         catalog store (fixtures + public/demo-assets/catalog.json)
 src/catalog/sidebar.ts         bottom bar: catalog cards, paint, floor, sun, outside view
 src/catalog/detail.ts          product detail sheet (has the "shopping info" slot)
 src/catalog/thumbnails.ts      offscreen thumbnail renderer for cards
+src/catalog/shopBar.ts         right drawer: furniture "browser" (search / paste a link) + ★ shopping agent
+server/shop.mjs                shopping agent (OpenAI web_search, strict JSON) + page previews
 src/measure/*                  Safari phone rangefinder page (measure.html)
 public/demo-assets/            Dianne's GLBs (college-bed/desk/chair) + catalog.json
 ```
@@ -102,6 +106,34 @@ The product detail sheet (`src/catalog/detail.ts`) has a dashed "Shopping info c
 **Phone measuring.** `measure.html` (alias `/m`) uses the camera + tilt sensor over https and POSTs
 `{ w, d, h }` inches to `/api/measurement`; the open desktop form polls it. The native ARKit app in
 `ios/` is the higher-accuracy alternative and needs Xcode once.
+
+## Add furniture from a link (OpenAI)
+
+`server/import-product.mjs` + the `shopApi` plugin in `vite.config.ts` expose `POST /api/import-product { url }`.
+It scrapes the page (JSON-LD, meta tags, dimension mentions, up to 3 product images inlined as data URLs), asks
+OpenAI (`OPENAI_MODEL`, default `gpt-4o-mini`, strict JSON schema) for catalog data plus a **FurnitureSpec** in
+Dianne's schema, writes the spec to `public/demo-assets/generated/`, appends the product+asset to `catalog.json`,
+and caches the whole result by URL under `.cache/imports/`. Assets use `glbUrl: "spec:/demo-assets/generated/<id>.spec.json"`,
+which `src/interactions/specBuilder.ts` turns into geometry (box / rounded-box / cylinder / shade, repeats).
+Cost guard: each call's tokens are priced and tallied in `.cache/openai-usage.json`; calls refuse past
+`OPENAI_SESSION_BUDGET_USD` (default $5). One import is ~$0.001. Keys live in `apps/web/.env` (gitignored).
+Never call the API from unit tests. To regenerate an item, delete its `.cache/imports/<hash>.json`.
+
+## Shop drawer + ★ shopping agent (OpenAI web search)
+
+The ⌕ button (top right) opens `#rightbar` (`src/catalog/shopBar.ts`, 340px, pushes the stage/bottom bar like the
+left drawer). The address bar takes a search or a pasted product link; results are cards with "Add to room"
+(runs the importer above). The ★ in the drawer head switches to the agent: a plain-language request plus optional
+"fits within" W/D/H in inches — typed, or filled by the "measure" links which run `MeasureTool.measureOnce`
+(two clicks in the room → inches). Endpoints in `server/shop.mjs` via the same `shopApi` plugin:
+- `GET /api/search-products?q=` — the same agent as ★ with no size limits (every search in the app goes through
+  OpenAI web search; free engines — DuckDuckGo/Bing/Brave/Mojeek — were tried and dropped: rate-limited or degraded).
+- `GET /api/preview-product?url=` — scrape only (title/price/image/dims), in-memory cache, no API cost. Cards call
+  it lazily to fill images; big retailers (Amazon, Home Depot, Target) block it, so cards may stay imageless.
+- `POST /api/shop-agent { prompt, fitsIn:{w,d,h} }` — ONE `OPENAI_SEARCH_MODEL` (default `gpt-4.1-mini`) call with
+  web search + strict JSON: up to 5 real product pages with price, `[w,d,h]` inches, fit verdict and a reason;
+  then a free scrape per pick. ~$0.015/run, cached by prompt+limits under `.cache/shop/`. Shares the session
+  budget/tally with the importer (`createUsage` in `import-product.mjs`; search tool calls counted at $0.01 each).
 
 ## Known gaps / ideas
 

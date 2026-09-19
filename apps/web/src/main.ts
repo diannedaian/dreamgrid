@@ -5,25 +5,29 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import type { RoomSpec } from "@contracts";
+import type { ModelAsset, Product, RoomSpec } from "@contracts";
 import { RoomShell } from "./room/buildRoom";
 import { DEFAULT_SUN, lookAt, type SunSettings } from "./room/sun";
 import { DEFAULT_FLOOR, DEFAULT_PAINT } from "./room/floors";
 import type { OutsideView } from "./room/outside";
-import { createCamera } from "./interactions/camera";
+import { animateTo, createCamera, presetView, type ViewPreset } from "./interactions/camera";
 import { INCH_M } from "./interactions/units";
 import { WallPicker } from "./interactions/wallPicker";
 import { copyText, decodePlan, planFromState, planUrl, roomFromPlan, sunFromPlan, windowsFromPlan, type Plan } from "./interactions/share";
 import { doorArc, type WindowSpec } from "./interactions/wallGrid";
 import { LampRegistry } from "./interactions/lamps";
 import { PlacementController } from "./interactions/placement";
+import { MeasureTool } from "./interactions/measure";
 import { Catalog } from "./catalog/catalog";
 import QRCode from "qrcode";
 import { mountSidebar } from "./catalog/sidebar";
 import { ThumbnailRenderer } from "./catalog/thumbnails";
 import { mountDetail } from "./catalog/detail";
+import { mountImporter } from "./catalog/importer";
 import { createDesignStore } from "./interactions/designs";
 import { mountDesignsBar } from "./catalog/designsBar";
+import { mountShopBar } from "./catalog/shopBar";
+import { importProductUrl } from "./catalog/importer";
 
 const overlay = document.getElementById("dims") as HTMLDivElement;
 const form = document.getElementById("dims-form") as HTMLFormElement;
@@ -126,6 +130,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
   };
   layout();
   const { camera, controls } = createCamera(room, canvas);
+  const frameHooks: Array<() => void> = [];
 
   // Gentle bloom so the window panes and sunlit floor glow like a diorama render.
   const composer = new EffectComposer(renderer);
@@ -143,6 +148,17 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
   };
   window.addEventListener("resize", onResize);
 
+  // View snaps (subtle text links, bottom-right of the stage).
+  let viewAnim: (() => boolean) | null = null;
+  const viewsEl = document.getElementById("views")!;
+  viewsEl.hidden = false;
+  viewsEl.querySelectorAll<HTMLButtonElement>("button").forEach((b) => b.addEventListener("click", () => {
+    viewAnim = animateTo(camera, controls, presetView(room, b.dataset.view as ViewPreset));
+    viewsEl.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+  }));
+  controls.addEventListener("start", () => { viewAnim = null; viewsEl.querySelectorAll("button").forEach((x) => x.classList.remove("on")); });
+  frameHooks.push(() => { if (viewAnim && viewAnim()) viewAnim = null; });
+
   // ---- chrome ------------------------------------------------------------
   document.getElementById("chrome")!.hidden = false;
   document.getElementById("dims-chip")!.textContent = `${ftIn(room.widthM)} × ${ftIn(room.depthM)} × ${ftIn(room.heightM)}`;
@@ -153,7 +169,6 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
 
   const lamps = new LampRegistry();
   const catalog = await Catalog.load();
-  const frameHooks: Array<() => void> = [];
   let picker: WallPicker | null = null;
   let placement: PlacementController | null = null;
 
@@ -245,11 +260,18 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       thumbnail: (entry, size) => thumbs.render(entry, size),
       onAdd: (entry) => placement!.add(entry.product, entry.asset, [0, 0, 0]),
     });
+    const onImported = (r: { product: Product; asset: ModelAsset }) => {
+      catalog.add([r.product], [r.asset]);
+      const entry = catalog.get(r.product.id);
+      if (entry) detail.open(entry);
+    };
+    const importer = mountImporter(document.getElementById("import-popup")!, onImported);
     mountSidebar(sidebar, {
       catalog,
       drag: { start: (entry, e) => placement!.beginCatalogDrag(entry, e) },
       thumbnail: (entry, size) => thumbs.render(entry, size),
       onOpen: (entry) => detail.open(entry),
+      onImport: () => importer.open(),
       paint: shell.paint,
       floor: shell.floor,
       sun,
@@ -280,6 +302,31 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       onNewRoom: ({ w, d, h }) => { location.href = `${location.pathname}?w=${w}&d=${d}&h=${h}`; },
     });
     void bar;
+    // Measure: two clicks anywhere in the room → distance.
+    const measureBtn = document.getElementById("measure")!;
+    const measureLabel = document.getElementById("measure-label")!;
+    measureBtn.hidden = false;
+    const measure = new MeasureTool(scene, camera, canvas, room, () => placement!.objects(), measureLabel, (on) => {
+      measureBtn.textContent = on ? "Measuring… click two points (Esc to stop)" : "Measure";
+      measureBtn.classList.toggle("on", on);
+      hint.hidden = true;
+    });
+    measureBtn.addEventListener("click", () => measure.toggle());
+    frameHooks.push(() => {
+      const a = measure.labelAnchor();
+      if (!a) return;
+      const v = a.point.clone().project(camera);
+      const r = canvas.getBoundingClientRect();
+      measureLabel.style.left = `${r.left + ((v.x + 1) / 2) * r.width}px`;
+      measureLabel.style.top = `${r.top + ((1 - v.y) / 2) * r.height - 14}px`;
+    });
+
+    // Right drawer: furniture browser + shopping agent.
+    mountShopBar(document.getElementById("rightbar")!, {
+      addFromUrl: async (url) => { const r = await importProductUrl(url); onImported(r); return { title: r.product.title }; },
+      measure: (cb) => measure.measureOnce(cb),
+    });
+
     // Reset: back to an empty room with the same measurements (two clicks, no dialog).
     const reset = document.getElementById("reset-design")!;
     reset.hidden = false;

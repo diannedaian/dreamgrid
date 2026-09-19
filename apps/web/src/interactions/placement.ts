@@ -187,6 +187,9 @@ export class PlacementController {
     this.canvas.style.cursor = p ? "grab" : "";
   }
 
+  /** Placed objects, for other tools that need to raycast furniture surfaces. */
+  objects(): Object3D[] { return [...this.placed.values()].map((p) => p.object); }
+
   /** Sidebar drag: a ghost follows the pointer on the floor; release over the room to place. */
   beginCatalogDrag(entry: CatalogEntry, _e: PointerEvent) {
     this.onDragging(true);
@@ -318,7 +321,7 @@ export class PlacementController {
   }
 
   private onDown(e: PointerEvent) {
-    if (e.button !== 0 || this.canvas.dataset.picking) return;
+    if (e.button !== 0 || this.canvas.dataset.picking || this.canvas.dataset.measuring) return;
     const p = this.pick(e);
     if (!p) return;
     const hit = this.floorHit(e);
@@ -333,7 +336,7 @@ export class PlacementController {
 
   private onMove(e: PointerEvent) {
     if (!this.drag) {
-      if (this.canvas.dataset.picking) { if (this.hovered) this.refreshHover(null); return; }
+      if (this.canvas.dataset.picking || this.canvas.dataset.measuring) { if (this.hovered) this.refreshHover(null); return; }
       if (!this.canvas.dataset.busy) this.refreshHover(this.pick(e));
       return;
     }

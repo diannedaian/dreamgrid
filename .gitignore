@@ -33,3 +33,6 @@ venv/
 
 # Local generation experiments; only curated web assets belong in Git.
 artifacts/
+
+# OpenAI import cache and spend tally
+.cache/

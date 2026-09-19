@@ -1,4 +1,6 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
+import { createImporter } from "./server/import-product.mjs";
+import { createShopAgent, preview } from "./server/shop.mjs";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import { fileURLToPath } from "node:url";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -73,10 +75,60 @@ function measureRelay(): Plugin {
   };
 }
 
-export default defineConfig({
+/** POST /api/import-product { url } → { product, asset, spec } (dev/preview only). */
+/**
+ * Shopping endpoints (dev/preview only):
+ *   POST /api/import-product   { url }                  → catalog entry + FurnitureSpec (OpenAI, vision)
+ *   GET  /api/search-products?q=                        → agent picks for a plain query (OpenAI web search)
+ *   GET  /api/preview-product?url=                      → scraped title/price/image/dims (no API cost)
+ *   POST /api/shop-agent       { prompt, fitsIn }       → ranked picks (OpenAI, text only)
+ */
+function shopApi(env: Record<string, string>): Plugin {
+  const cfg = { root: process.cwd(), apiKey: env.OPENAI_API_KEY, model: env.OPENAI_MODEL || "gpt-4o-mini", budgetUsd: Number(env.OPENAI_SESSION_BUDGET_USD || 5) };
+  const importer = createImporter(cfg);
+  const searchCfg = { ...cfg, model: env.OPENAI_SEARCH_MODEL || "gpt-4.1-mini" }; // web_search tool needs the 4.1/5 family
+  const agent = createShopAgent(searchCfg);
+  const send = (res: ServerResponse, status: number, obj: unknown) => res.writeHead(status, { "Content-Type": "application/json" }).end(JSON.stringify(obj));
+  const readBody = (req: IncomingMessage) => new Promise<Record<string, unknown>>((resolve) => { let b = ""; req.on("data", (c) => (b += c)); req.on("end", () => { try { resolve(JSON.parse(b || "{}")); } catch { resolve({}); } }); });
+  const handle = async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+    const url = new URL(req.url ?? "/", "http://x");
+    if (!url.pathname.startsWith("/api/")) return next();
+    try {
+      if (url.pathname === "/api/import-product" && req.method === "POST") {
+        const { url: target } = await readBody(req);
+        if (!/^https?:\/\//.test(String(target))) throw new Error("Paste a full http(s) link");
+        return send(res, 200, await importer.importProduct(String(target)));
+      }
+      if (url.pathname === "/api/search-products" && req.method === "GET") {
+        const q = (url.searchParams.get("q") || "").trim().slice(0, 200);
+        if (!q) throw new Error("Empty search");
+        return send(res, 200, await agent.find({ prompt: q })); // same agent as ★, no size limits
+      }
+      if (url.pathname === "/api/preview-product" && req.method === "GET") {
+        const target = url.searchParams.get("url") || "";
+        if (!/^https?:\/\//.test(target)) throw new Error("Bad url");
+        return send(res, 200, await preview(target));
+      }
+      if (url.pathname === "/api/shop-agent" && req.method === "POST") {
+        const { prompt, fitsIn } = await readBody(req);
+        return send(res, 200, await agent.find({ prompt, fitsIn: fitsIn as { w?: number; d?: number; h?: number } | undefined }));
+      }
+      return next();
+    } catch (e) {
+      return send(res, 400, { error: (e as Error).message });
+    }
+  };
+  return { name: "dreamgrid-shop-api", configureServer: (s) => void s.middlewares.use(handle), configurePreviewServer: (s) => void s.middlewares.use(handle) };
+}
+
+export default defineConfig(({ mode }) => ({
+  ...baseConfig(loadEnv(mode, process.cwd(), "")),
+}));
+
+function baseConfig(env: Record<string, string>) { return ({
   // https by default (self-signed): iOS Safari only allows the camera and motion sensors used by
   // /measure.html over https. Accept the certificate warning once per device. DREAMGRID_HTTP=1 disables.
-  plugins: [measureRelay(), ...(process.env.DREAMGRID_HTTP ? [] : [basicSsl()])],
+  plugins: [measureRelay(), shopApi(env), ...(process.env.DREAMGRID_HTTP ? [] : [basicSsl()])],
   resolve: {
     alias: {
       "@contracts": fileURLToPath(new URL("../../packages/contracts/index.ts", import.meta.url)),
@@ -84,4 +136,4 @@ export default defineConfig({
   },
   server: { host: true, fs: { allow: ["../.."] } },
   build: { rollupOptions: { input: { main: "index.html", measure: "measure.html" } } },
-});
+}); }
