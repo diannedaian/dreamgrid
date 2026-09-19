@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dreamgrid.dev/schemas/scene-item.schema.json",
+  "title": "SceneItem",
+  "description": "One placed instance of a normalized model asset.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "productId", "modelAssetId", "positionM", "rotationYDeg"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "productId": { "type": "string", "minLength": 1 },
+    "modelAssetId": { "type": "string", "minLength": 1 },
+    "positionM": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "rotationYDeg": { "enum": [0, 90, 180, 270] }
+  }
+}

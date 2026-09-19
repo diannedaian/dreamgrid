@@ -1,0 +1,33 @@
+{
+  "room": {
+    "widthM": 4,
+    "depthM": 4.5,
+    "heightM": 2.6,
+    "gridSizeM": 0.25,
+    "lightingMode": "day"
+  },
+  "budgetUsd": 450,
+  "items": [
+    {
+      "id": "scene-bed-1",
+      "productId": "product-bed-compact-twin",
+      "modelAssetId": "asset-bed-compact-twin",
+      "positionM": [-1.25, 0, 0.75],
+      "rotationYDeg": 0
+    },
+    {
+      "id": "scene-desk-1",
+      "productId": "product-desk-birch",
+      "modelAssetId": "asset-desk-birch",
+      "positionM": [1.25, 0, -1.5],
+      "rotationYDeg": 90
+    },
+    {
+      "id": "scene-shelf-1",
+      "productId": "product-shelf-cube",
+      "modelAssetId": "asset-shelf-cube",
+      "positionM": [1.5, 0, 1.75],
+      "rotationYDeg": 0
+    }
+  ]
+}

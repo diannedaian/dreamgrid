@@ -5,6 +5,8 @@
 
 # Dependencies and builds
 node_modules/
+.pnpm-store/
+*.tsbuildinfo
 dist/
 build/
 .next/
@@ -21,7 +23,9 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 *.blend1
 *.blend2
 *.blend@
-

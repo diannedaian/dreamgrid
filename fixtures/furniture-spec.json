@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "name": "Mushroom Desk Lamp",
+  "category": "lamp",
+  "dimensionsM": [0.28, 0.38, 0.28],
+  "materials": [
+    {
+      "id": "cream-ceramic",
+      "name": "Cream ceramic",
+      "baseColorHex": "#F4E8D0",
+      "roughness": 0.62,
+      "metallic": 0
+    },
+    {
+      "id": "coral-metal",
+      "name": "Coral painted metal",
+      "baseColorHex": "#E98770",
+      "roughness": 0.38,
+      "metallic": 0.1
+    }
+  ],
+  "parts": [
+    {
+      "id": "base",
+      "primitive": "cylinder",
+      "role": "body",
+      "dimensionsM": [0.16, 0.04, 0.16],
+      "positionM": [0, 0.02, 0],
+      "rotationDeg": [0, 0, 0],
+      "materialId": "cream-ceramic"
+    },
+    {
+      "id": "stem",
+      "primitive": "cylinder",
+      "role": "support",
+      "dimensionsM": [0.05, 0.24, 0.05],
+      "positionM": [0, 0.16, 0],
+      "rotationDeg": [0, 0, 0],
+      "materialId": "cream-ceramic"
+    },
+    {
+      "id": "shade",
+      "primitive": "shade",
+      "role": "accent",
+      "dimensionsM": [0.28, 0.1, 0.28],
+      "positionM": [0, 0.33, 0],
+      "rotationDeg": [0, 0, 0],
+      "materialId": "coral-metal",
+      "cornerRadiusM": 0.02
+    }
+  ]
+}

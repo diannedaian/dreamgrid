@@ -1,0 +1,50 @@
+[
+  {
+    "id": "asset-bed-compact-twin",
+    "productId": "product-bed-compact-twin",
+    "glbUrl": "/demo-assets/models/compact-twin-bed.glb",
+    "previewUrl": "/demo-assets/previews/compact-twin-bed.webp",
+    "dimensionsM": [1.05, 0.55, 2.03],
+    "pivot": "bottom-center",
+    "forwardAxis": "+Z",
+    "generationMethod": "public-preset",
+    "status": "ready",
+    "disclosure": "Demo fixture metadata for a cached public-preset model; replace with the final asset credit before submission."
+  },
+  {
+    "id": "asset-desk-birch",
+    "productId": "product-desk-birch",
+    "glbUrl": "/demo-assets/models/birch-study-desk.glb",
+    "previewUrl": "/demo-assets/previews/birch-study-desk.webp",
+    "dimensionsM": [1.2, 0.75, 0.6],
+    "pivot": "bottom-center",
+    "forwardAxis": "+Z",
+    "generationMethod": "gpt-blender",
+    "status": "ready",
+    "disclosure": "Demo fixture representing a cached GLB built by the trusted Blender interpreter from a schema-validated FurnitureSpec."
+  },
+  {
+    "id": "asset-shelf-cube",
+    "productId": "product-shelf-cube",
+    "glbUrl": "/demo-assets/models/cube-shelf.glb",
+    "previewUrl": "/demo-assets/previews/cube-shelf.webp",
+    "dimensionsM": [0.78, 0.78, 0.3],
+    "pivot": "bottom-center",
+    "forwardAxis": "+Z",
+    "generationMethod": "gpt-blender",
+    "status": "ready",
+    "disclosure": "Demo fixture representing a cached GLB built by the trusted Blender interpreter from a schema-validated FurnitureSpec."
+  },
+  {
+    "id": "asset-lamp-mushroom",
+    "productId": "product-lamp-mushroom",
+    "glbUrl": "/demo-assets/models/mushroom-lamp.glb",
+    "previewUrl": "/demo-assets/previews/mushroom-lamp.webp",
+    "dimensionsM": [0.28, 0.38, 0.28],
+    "pivot": "bottom-center",
+    "forwardAxis": "+Z",
+    "generationMethod": "gpt-blender",
+    "status": "ready",
+    "disclosure": "Demo fixture representing a cached GLB built by the trusted Blender interpreter from a schema-validated FurnitureSpec."
+  }
+]

@@ -1,4 +1,3 @@
-/Users/dianne/.zprofile:1: no such file or directory: /opt/homebrew/bin/brew
 # DreamGrid Project Manifesto
 
 Status: Source of truth for the HackMIT 2026 build  
@@ -344,10 +343,11 @@ apps/web/src/room/             Dianne: room geometry, grid, lighting
 apps/web/src/interactions/     Cindy: selection, dragging, rotation, camera
 apps/web/src/catalog/          Cindy: catalog and import UI
 apps/web/src/commerce/         Linda: budget, alternatives, approval UI
-services/model-generation/     Dianne: OpenAI, Blender, GLB validation
-services/commerce/             Linda: recommendations and Visa sandbox
+services/api/src/dreamgrid_api/adapters/model_generation/  Dianne: provider adapters
+services/api/src/dreamgrid_api/adapters/commerce/          Linda: commerce adapters
+services/api/src/dreamgrid_api/boundaries/                Typed provider interfaces
 packages/contracts/            Shared and locked after T+1
-public/demo-assets/            Cached, disclosed demo assets
+apps/web/public/demo-assets/   Cached, disclosed demo assets
 ```
 
 ## 14. Definition of Done
