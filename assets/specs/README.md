@@ -1,5 +1,7 @@
 # College bed generation test
 
+For the matching chair and right-pedestal desk, see [STUDY_SET.md](STUDY_SET.md).
+
 This is Dianne's first original, reproducible Blender asset. It is not a live
 image-to-model API feature, and it does not change Cindy's interactions or
 Linda's budget code. No catalog prices or existing product IDs were changed.

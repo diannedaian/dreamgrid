@@ -24,6 +24,7 @@ def args():
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--glb", required=True, type=Path)
     parser.add_argument("--no-render", action="store_true")
+    parser.add_argument("--fuse-material", help="Optional offline union of one material's parts")
     return parser.parse_args(sys.argv[sys.argv.index("--") + 1 :])
 
 
@@ -151,14 +152,60 @@ def assert_normalized(report, dimensions):
         if any(abs(actual - wanted) > 0.00001 for actual, wanted in zip(report[key], expected)):
             raise ValueError(f"Physical bounding box mismatch: {report}")
     if report["triangles"] > MAX_TRIANGLES:
-        raise ValueError("Triangle budget exceeded")
+        raise ValueError(f"Triangle budget exceeded: {report['triangles']} > {MAX_TRIANGLES}")
+
+
+def fuse_material(objects, material):
+    """Soften touching primitive joints without changing the declared envelope.
+
+    This is a fixed local mesh operation, not instructions evaluated from a spec.
+    It is opt-in so the original bed and desk geometry remain unchanged.
+    """
+    selected = [obj for obj in objects if obj.data.materials[0] == material]
+    remaining = [obj for obj in objects if obj not in selected]
+    if len(selected) < 2:
+        raise ValueError("Material fusion requires at least two mesh parts")
+    before = measure(selected)
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in selected:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = selected[0]
+    bpy.ops.object.join()
+    fused = bpy.context.object
+    fused.name = "Continuous_" + material.name.replace(" ", "_")
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    remesh = fused.modifiers.new("Union overlapping wood joints", "REMESH")
+    remesh.mode = "VOXEL"
+    remesh.voxel_size = .0016
+    remesh.use_smooth_shade = True
+    bpy.ops.object.modifier_apply(modifier=remesh.name)
+    smooth = fused.modifiers.new("Soften joined corners", "SMOOTH")
+    smooth.factor = .75
+    smooth.iterations = 16
+    bpy.ops.object.modifier_apply(modifier=smooth.name)
+    fused.data.calc_loop_triangles()
+    decimate = fused.modifiers.new("Web mesh budget", "DECIMATE")
+    decimate.ratio = min(1.0, 18000 / len(fused.data.loop_triangles))
+    bpy.ops.object.modifier_apply(modifier=decimate.name)
+    after = measure([fused])
+    for vertex in fused.data.vertices:
+        point = AXES.inverted() @ vertex.co
+        for axis in range(3):
+            normalized = (point[axis] - after["minM"][axis]) / after["dimensionsM"][axis]
+            point[axis] = before["minM"][axis] + normalized * before["dimensionsM"][axis]
+        vertex.co = AXES @ point
+    # Normal smoothing removes voxel facets while preserving the physical silhouette.
+    for polygon in fused.data.polygons:
+        polygon.use_smooth = True
+    fused.data.update()
+    return [*remaining, fused]
 
 
 def point_at(obj, target):
     obj.rotation_euler = (Vector(target) - obj.location).to_track_quat("-Z", "Y").to_euler()
 
 
-def studio(scene):
+def studio(scene, dimensions):
     """Preview-only stage. Added after GLB export, never part of furniture."""
     stage = bpy.data.collections.new("STUDIO — not exported")
     scene.collection.children.link(stage)
@@ -190,10 +237,11 @@ def studio(scene):
     camera_data = bpy.data.cameras.new("Product preview")
     camera = bpy.data.objects.new("Product preview", camera_data)
     stage.objects.link(camera)
-    camera.location = (3.6, -4.5, 3.1)
-    point_at(camera, (0, 0, .44))
+    target_height = dimensions[1] * .47
+    camera.location = (3.6, -4.5, target_height + 2.66)
+    point_at(camera, (0, 0, target_height))
     camera_data.type = "ORTHO"
-    camera_data.ortho_scale = 3.35
+    camera_data.ortho_scale = max(dimensions) * 1.64
     camera_data.lens = 50
     scene.camera = camera
     scene.world.use_nodes = True
@@ -214,6 +262,7 @@ def studio(scene):
 
 def main():
     options = args()
+    asset_name = options.spec.stem
     spec = json.loads(options.spec.read_text())
     validate_input(spec)
     output = options.output.resolve()
@@ -226,9 +275,9 @@ def main():
     scene = bpy.context.scene
     scene.unit_settings.system = "METRIC"
     scene.unit_settings.scale_length = 1
-    collection = bpy.data.collections.new("ASSET — college bed")
+    collection = bpy.data.collections.new("ASSET — " + asset_name)
     scene.collection.children.link(collection)
-    root = bpy.data.objects.new("DreamGrid_CollegeBed", None)
+    root = bpy.data.objects.new("DreamGrid_" + asset_name.replace("-", "_"), None)
     collection.objects.link(root)
     root["dimensionsM"] = spec["dimensionsM"]
     root["pivot"] = "bottom-center"
@@ -240,6 +289,10 @@ def main():
         for part in spec["parts"]
         for index in range(part.get("repeat", {}).get("count", 1))
     ]
+    if options.fuse_material:
+        if options.fuse_material not in materials:
+            raise ValueError("Unknown material requested for fusion")
+        objects = fuse_material(objects, materials[options.fuse_material])
     report = measure(objects)
     assert_normalized(report, spec["dimensionsM"])
     bpy.ops.object.select_all(action="DESELECT")
@@ -258,7 +311,7 @@ def main():
     report["blenderVersion"] = bpy.app.version_string
     report["dimensionToleranceM"] = .00001
     (output / "validation.json").write_text(json.dumps(report, indent=2) + "\n")
-    camera = studio(scene)
+    camera = studio(scene, spec["dimensionsM"])
     bpy.ops.object.select_all(action="DESELECT")
     root.select_set(True)
     bpy.context.view_layer.objects.active = root
@@ -268,13 +321,14 @@ def main():
             if area.type == "VIEW_3D":
                 area.spaces.active.region_3d.view_perspective = "CAMERA"
                 area.spaces.active.shading.type = "MATERIAL"
-    scene.render.filepath = str(output / "college-bed-preview.png")
-    bpy.ops.wm.save_as_mainfile(filepath=str(output / "college-bed.blend"))
+                area.spaces.active.overlay.show_overlays = False
+    scene.render.filepath = str(output / f"{asset_name}-preview.png")
+    bpy.ops.wm.save_as_mainfile(filepath=str(output / f"{asset_name}.blend"))
     if not options.no_render:
         bpy.ops.render.render(write_still=True)
         camera.location = (3.5, -4.5, 5.2)
-        point_at(camera, (0, 0, .38))
-        scene.render.filepath = str(output / "college-bed-top-preview.png")
+        point_at(camera, (0, 0, spec["dimensionsM"][1] * .41))
+        scene.render.filepath = str(output / f"{asset_name}-top-preview.png")
         bpy.ops.render.render(write_still=True)
     print("DREAMGRID_VALIDATION " + json.dumps(report))
 

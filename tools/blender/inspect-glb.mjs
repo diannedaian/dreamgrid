@@ -26,6 +26,13 @@ size.forEach((value, i) => near(value, expected[i], `dimension ${i}`));
 near(bounds.min.y, 0, 'floor pivot');
 near(bounds.max.x + bounds.min.x, 0, 'X centering');
 near(bounds.max.z + bounds.min.z, 0, 'Z centering');
+const seat = gltf.scene.getObjectByName('seat-cushion');
+if (seat) {
+  const seatBounds = new Box3().setFromObject(seat, true);
+  near(seatBounds.max.y, .4699, 'Campus chair seat height');
+  near(seatBounds.max.x - seatBounds.min.x, .4445, 'Campus chair seat width');
+  near(seatBounds.max.z - seatBounds.min.z, .4445, 'Campus chair seat depth');
+}
 let meshCount = 0;
 let triangles = 0;
 gltf.scene.traverse(object => {

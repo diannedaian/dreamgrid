@@ -28,3 +28,14 @@ See [`assets/specs/README.md`](../../../../../assets/specs/README.md) for exact
 sources, measurement assumptions, generation disclosure, and reproduction steps.
 The model is self-contained; the preview studio is excluded. This does not
 replace the compact-platform-bed fixture or implement the live generation API.
+
+## College study furniture
+
+- `campus-chair.glb`: Campus 2 inspired blue-upholstered chair, 0.48895 W x
+  0.8382 H x 0.5588 D meters.
+- `dorm-desk.glb`: right-pedestal oak dorm desk, 1.0668 W x 0.762 H x 0.6096 D meters.
+
+Both are original, self-contained Blender reconstructions with a bottom-center
+origin and +Z front. See [the study-set notes](../../../../../assets/specs/STUDY_SET.md)
+for sources, approved dimensions, visual estimates, and regeneration commands.
+They do not alter existing catalog products or implement interactive drawers.
