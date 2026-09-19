@@ -3,6 +3,19 @@
   "hiddenProductIds": ["p-bed-twin", "p-desk", "p-chair", "p-shelf", "p-rug"],
   "products": [
     {
+      "id": "campus-drawer-chest",
+      "title": "Campus 4-drawer chest",
+      "category": "misc",
+      "priceUsd": 0,
+      "merchant": "DCI Furniture",
+      "sourceUrl": "https://dcifurn.com/campus-4-drawer-chest/",
+      "imageUrl": "",
+      "dimensionsM": [0.762, 0.9652, 0.4572],
+      "styleTags": ["dorm", "storage", "four drawers", "price-not-provided"],
+      "colorTags": ["oak"],
+      "modelAssetId": "asset-campus-drawer-chest"
+    },
+    {
       "id": "p-mini-fridge",
       "title": "Whirlpool mini fridge",
       "category": "misc",
@@ -168,6 +181,17 @@
     }
   ],
   "assets": [
+    {
+      "id": "asset-campus-drawer-chest",
+      "productId": "campus-drawer-chest",
+      "glbUrl": "/demo-assets/campus-drawer-chest.glb",
+      "dimensionsM": [0.762, 0.9652, 0.4572],
+      "pivot": "bottom-center",
+      "forwardAxis": "+Z",
+      "generationMethod": "gpt-blender",
+      "status": "ready",
+      "disclosure": "User-supplied offline Blender visualization of the DCI Campus 4 Drawer Chest, not an official manufacturer mesh. Selected size: 30 W x 18 D x 38 H inches, matching a published DCI option. Oak-grain textures by Jenelle van Heerden / Poly Haven (CC0). Drawer interiors and runners are simplified visual details. Shown closed; drawer hierarchy is retained for future interaction. Price not provided: the numeric catalog placeholder is not a claim that this item is free."
+    },
     {
       "id": "m-mini-fridge",
       "productId": "p-mini-fridge",
