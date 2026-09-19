@@ -1,4 +1,4 @@
-// Product detail panel: bigger preview, facts, disclosure, and a slot for Linda's shopping info.
+// Product detail panel: bigger preview, size and price, and a slot for Linda's shopping info.
 import type { CatalogEntry } from "./catalog";
 
 export type DetailOptions = {
@@ -28,11 +28,7 @@ export function mountDetail(root: HTMLElement, o: DetailOptions): { open: (entry
           <div class="price">${product.styleTags.includes("price-not-provided") ? "Price not provided" : `$${product.priceUsd}`}<span> · ${esc(product.merchant || "Catalog")}</span></div>
           <dl>
             <dt>Size</dt><dd>${inches(w)}″ W × ${inches(d)}″ D × ${inches(h)}″ H</dd>
-            ${product.styleTags.length ? `<dt>Style</dt><dd>${product.styleTags.map(esc).join(", ")}</dd>` : ""}
-            ${product.colorTags.length ? `<dt>Color</dt><dd>${product.colorTags.map(esc).join(", ")}</dd>` : ""}
-            ${asset ? `<dt>Model</dt><dd>${esc(asset.generationMethod)} · ${esc(asset.status)}</dd>` : ""}
           </dl>
-          ${asset?.disclosure ? `<p class="disclosure">${esc(asset.disclosure)}</p>` : ""}
           <div class="shop"><span>Shopping info coming soon</span>${product.sourceUrl ? `<a href="${esc(product.sourceUrl)}" target="_blank" rel="noopener">View listing</a>` : ""}</div>
           <button type="button" class="add">Add to room</button>
         </div>

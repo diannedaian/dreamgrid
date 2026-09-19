@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DreamGrid · Shopping list</title>
+    <style>
+      :root { --sage: #adbc9c; --cream: #fbf5ea; --cream-2: #f3ead9; --ink: #3f3a2e; --ink-soft: #6f6858; --honey: #c68a4e; --honey-deep: #a86f3b; --lavender: #8f7fc9;
+        --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif; --sans: system-ui, -apple-system, "Segoe UI", sans-serif; }
+      html, body { margin: 0; background: var(--sage); color: var(--ink); font-family: var(--sans); }
+      main { max-width: 760px; margin: 0 auto; padding: 36px 20px 60px; box-sizing: border-box; }
+      .brand { font-family: var(--serif); font-size: 18px; margin-bottom: 18px; } .brand span { color: var(--lavender); }
+      h1 { font-family: var(--serif); font-weight: 500; font-size: 32px; margin: 0 0 4px; }
+      .sub { color: var(--ink); opacity: 0.8; font-size: 14px; margin: 0 0 22px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+      .sub a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+      .row { display: grid; grid-template-columns: 96px 1fr auto; gap: 16px; align-items: center; background: var(--cream); border-radius: 16px; padding: 12px 16px 12px 12px; margin-bottom: 10px; box-shadow: 0 6px 20px rgba(40,50,30,0.12); }
+      .pic { width: 96px; height: 96px; border-radius: 12px; overflow: hidden; display: grid; place-items: center; color: rgba(60,50,40,0.6); font-size: 12px; text-transform: capitalize; }
+      .pic img { width: 100%; height: 100%; object-fit: cover; display: block; background: #fff; }
+      .title { font-weight: 600; font-size: 15px; }
+      .meta { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; }
+      .buy { margin-top: 6px; font-size: 13px; } .buy a { color: var(--honey-deep); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; } .nolink { color: var(--ink-soft); }
+      .price { text-align: right; } .each { font-weight: 600; font-size: 16px; } .qty { font-size: 12px; color: var(--ink-soft); }
+      .total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 18px; padding: 14px 16px; border-top: 1px solid rgba(60,50,40,0.25); font-family: var(--serif); font-size: 20px; }
+      .total small { font-family: var(--sans); font-size: 12px; color: var(--ink); opacity: 0.75; }
+      .empty { background: var(--cream); border-radius: 16px; padding: 20px; }
+      @media (max-width: 520px) { .row { grid-template-columns: 72px 1fr; } .pic { width: 72px; height: 72px; } .price { grid-column: 2; text-align: left; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand">Dream<span>Grid</span></div>
+      <h1>Shopping list</h1>
+      <p class="sub"><span id="room"></span><a id="open-room" href="#" target="_blank" rel="noopener">Open the room ↗</a></p>
+      <div id="list"></div>
+    </main>
+    <script type="module" src="/src/list/main.ts"></script>
+  </body>
+</html>

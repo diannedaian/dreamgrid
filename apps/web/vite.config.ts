@@ -138,5 +138,5 @@ function baseConfig(env: Record<string, string>) { return ({
       "@contracts": fileURLToPath(new URL("../../packages/contracts/index.ts", import.meta.url)),
     },
   },
-  build: { rollupOptions: { input: { main: "index.html", measure: "measure.html" } } },
+  build: { rollupOptions: { input: { main: "index.html", measure: "measure.html", list: "list.html" } } },
 }); }

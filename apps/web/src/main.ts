@@ -13,7 +13,7 @@ import type { OutsideView } from "./room/outside";
 import { animateTo, createCamera, presetView, type ViewPreset } from "./interactions/camera";
 import { INCH_M } from "./interactions/units";
 import { WallPicker } from "./interactions/wallPicker";
-import { copyText, decodePlan, planFromState, planUrl, roomFromPlan, sunFromPlan, windowsFromPlan, type Plan } from "./interactions/share";
+import { copyText, decodePlan, encodePlan, planFromState, planUrl, roomFromPlan, sunFromPlan, windowsFromPlan, type Plan } from "./interactions/share";
 import { doorArc, type WindowSpec } from "./interactions/wallGrid";
 import { LampRegistry } from "./interactions/lamps";
 import { PlacementController } from "./interactions/placement";
@@ -27,6 +27,7 @@ import { mountImporter } from "./catalog/importer";
 import { createDesignStore } from "./interactions/designs";
 import { mountDesignsBar } from "./catalog/designsBar";
 import { mountShopBar } from "./catalog/shopBar";
+import { mountSharePopup } from "./catalog/sharePopup";
 import { saveGeneratedEntry } from "./catalog/generatedCatalog";
 
 const overlay = document.getElementById("dims") as HTMLDivElement;
@@ -350,11 +351,11 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       const inches = (m: number) => Math.round(m / INCH_M);
       location.href = `${location.pathname}?w=${inches(room.widthM)}&d=${inches(room.depthM)}&h=${inches(room.heightM)}`;
     });
-    share.addEventListener("click", async () => {
-      const ok = await copyText(planUrl(currentPlan(), true));
-      share.textContent = ok ? "Link copied" : "Copy failed";
-      setTimeout(() => (share.textContent = "Share"), 1800);
+    const sharePopup = mountSharePopup(document.getElementById("share-popup")!, {
+      link: () => planUrl(currentPlan(), true),
+      listUrl: () => `${new URL("/list.html", location.href)}?plan=${encodePlan(currentPlan())}`,
     });
+    share.addEventListener("click", () => void sharePopup.open());
     if (plan?.items.length) await placement.loadItems(plan.items, plan.openItems, plan.ign);
   }
 
