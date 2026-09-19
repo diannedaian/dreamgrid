@@ -54,23 +54,29 @@
       #menu-toggle { position: fixed; left: 20px; top: 14px; z-index: 9; font: inherit; font-size: 22px; line-height: 1; border: 0; background: none; cursor: pointer; color: var(--ink); padding: 4px; }
       #menu-toggle:hover { color: var(--honey-deep); }
       #menu-toggle[hidden] { display: none; }
-      /* logo floats on a soft cloud: iridescent pastel wash, masked into overlapping puffs with feathered edges */
-      .chip.brand { left: 52px; top: 12px; font-family: var(--serif); font-size: 17px; padding: 10px 18px; background: none; }
-      .chip.brand::before { content: ""; position: absolute; inset: -12px -18px -8px; z-index: -1; opacity: 0.96;
-        background:
-          radial-gradient(ellipse 55% 70% at 22% 45%, rgba(255,214,235,1), transparent 72%),
-          radial-gradient(ellipse 50% 65% at 68% 30%, rgba(205,225,255,1), transparent 72%),
-          radial-gradient(ellipse 60% 55% at 50% 85%, rgba(255,240,205,1), transparent 72%),
-          radial-gradient(ellipse 45% 60% at 90% 70%, rgba(210,250,235,1), transparent 72%),
-          #fff;
+      /* logo floats on a liquid-glass cloud: translucent, backdrop-blurred, faint iridescence, glossy highlight */
+      .chip.brand { left: 52px; top: 12px; font-family: var(--serif); font-size: 17px; padding: 10px 18px; background: none;
         --puffs:
           radial-gradient(circle at 22% 60%, #000 0 15px, transparent 25px),
           radial-gradient(circle at 35% 46%, #000 0 12px, transparent 21px),
           radial-gradient(circle at 48% 40%, #000 0 22px, transparent 33px),
           radial-gradient(circle at 63% 44%, #000 0 13px, transparent 22px),
           radial-gradient(circle at 76% 55%, #000 0 17px, transparent 27px),
-          radial-gradient(ellipse 42% 26% at 50% 72%, #000 0 70%, transparent 100%);
-        -webkit-mask: var(--puffs); mask: var(--puffs); }
+          radial-gradient(ellipse 42% 26% at 50% 72%, #000 0 70%, transparent 100%); }
+      .chip.brand::before, .chip.brand::after { content: ""; position: absolute; inset: -12px -18px -8px; z-index: -1; -webkit-mask: var(--puffs); mask: var(--puffs); }
+      .chip.brand::before {
+        background:
+          radial-gradient(ellipse 55% 70% at 22% 45%, rgba(255,190,225,0.38), transparent 72%),
+          radial-gradient(ellipse 50% 65% at 68% 30%, rgba(180,210,255,0.38), transparent 72%),
+          radial-gradient(ellipse 60% 55% at 50% 85%, rgba(255,235,180,0.32), transparent 72%),
+          linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.30) 55%, rgba(255,255,255,0.50));
+        -webkit-backdrop-filter: blur(10px) saturate(1.6) brightness(1.08); backdrop-filter: blur(10px) saturate(1.6) brightness(1.08); }
+      .chip.brand::after {
+        background:
+          radial-gradient(ellipse 42% 26% at 38% 20%, rgba(255,255,255,0.95), rgba(255,255,255,0) 70%),
+          radial-gradient(ellipse 30% 18% at 74% 42%, rgba(255,255,255,0.6), rgba(255,255,255,0) 70%),
+          radial-gradient(ellipse 60% 22% at 50% 96%, rgba(255,255,255,0.55), rgba(255,255,255,0) 70%);
+        mix-blend-mode: screen; }
       .chip.brand span { color: #8f7fc9; } /* lavender "Grid" */
       .chip.dims { right: 62px; font-variant-numeric: tabular-nums; }
       /* top-right actions: small lavender glyph, soft cream pill on hover; text stays underlined */

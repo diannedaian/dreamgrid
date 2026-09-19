@@ -37,7 +37,7 @@ export function mountDesignsBar(bar: HTMLElement, popup: HTMLElement, o: Designs
   const render = () => {
     list.replaceChildren();
     const designs = o.store.list();
-    if (!designs.length) { list.innerHTML = `<p class="empty">No saved layouts yet. Save this one to come back to it.</p>`; return; }
+    if (!designs.length) { list.innerHTML = `<p class="empty">No saved layouts.</p>`; return; }
     for (const d of designs) {
       const el = document.createElement("div");
       el.className = "design" + (d.id === currentId ? " current" : "");
