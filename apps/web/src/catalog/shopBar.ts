@@ -1,6 +1,7 @@
 // Collapsible right drawer: a small "browser" for furniture. Type a search or paste a product link;
-// results show as cards you can open or add to the room. The ★ opens the shopping agent, which takes
-// a plain-language request plus optional size limits (typed, or measured with two clicks in the room).
+// results show as cards you can open or add to the room. Every search runs through the shopping agent
+// (OpenAI web search → real product pages with price and size). The ★ pane adds size limits to the
+// request (typed, or measured with two clicks in the room).
 import { importProductUrl } from "./importer";
 
 export type ShopBarOptions = {
@@ -15,6 +16,7 @@ type Hit = { url: string; title: string; snippet?: string; host: string; price?:
 const INCH_M = 0.0254;
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 const money = (n?: number) => (n ? `$${Math.round(n).toLocaleString()}` : "");
+const dimsLine = (h: Hit) => h.dimensionsIn ? `${h.dimensionsIn.map((n) => Math.round(n)).join('" × ')}"` : (h.dimensionsText || "").replace(/\\"/g, '"').replace(/"\s*"/g, '"').split(" | ").slice(0, 2).join(" · ");
 
 export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): void {
   const toggle = document.getElementById("shop-toggle") as HTMLButtonElement;
@@ -72,7 +74,7 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): void {
         <a class="title" href="${esc(h.url)}" target="_blank" rel="noopener">${esc(h.title || h.url)}</a>
         <div class="meta"><span class="host">${esc(h.host)}</span> <span class="price">${money(h.price)}</span> ${fit}</div>
         ${h.why ? `<div class="why">${esc(h.why)}</div>` : h.snippet ? `<div class="why">${esc(h.snippet.slice(0, 140))}</div>` : ""}
-        <div class="dims">${esc((h.dimensionsIn ? `${h.dimensionsIn.map((n) => Math.round(n)).join('" × ')}"` : h.dimensionsText?.split(" | ").slice(0, 2).join(" · ")) || "")}</div>
+        <div class="dims">${esc(dimsLine(h))}</div>
         <div class="actions"><button type="button" class="add">Add to room</button><span class="st"></span></div>
       </div>`;
     const add = el.querySelector<HTMLButtonElement>(".add")!, st = el.querySelector<HTMLElement>(".st")!;
@@ -93,7 +95,7 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): void {
       if (p.image) el.querySelector(".pic")!.innerHTML = `<img src="${esc(p.image)}" alt="" loading="lazy" />`;
       if (p.price) el.querySelector(".price")!.textContent = money(p.price);
       if (p.title) el.querySelector(".title")!.textContent = p.title;
-      if (p.dimensionsText) el.querySelector(".dims")!.textContent = p.dimensionsText.split(" | ").slice(0, 2).join(" · ");
+      if (p.dimensionsText && !h.dimensionsIn) el.querySelector(".dims")!.textContent = dimsLine(p);
     } catch { /* leave the plain card */ }
   };
 
@@ -103,7 +105,7 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): void {
     const v = address.value.trim();
     if (!v) return;
     if (agentOn) star.click();
-    browse.innerHTML = `<p class="empty">Searching…</p>`;
+    browse.innerHTML = `<p class="empty">Searching the web and reading listings…</p>`;
     try {
       if (/^https?:\/\//.test(v)) {
         const res = await fetch(`/api/preview-product?url=${encodeURIComponent(v)}`);
@@ -113,10 +115,12 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): void {
         return;
       }
       const res = await fetch(`/api/search-products?q=${encodeURIComponent(v)}`);
-      const json = (await res.json()) as { hits: Hit[]; error?: string };
+      const json = (await res.json()) as { summary: string; picks: Hit[]; cost?: number; cached?: boolean; error?: string };
       if (!res.ok || json.error) throw new Error(json.error || "Search failed");
-      if (!json.hits.length) { browse.innerHTML = `<p class="empty">Nothing found. Try different words.</p>`; return; }
-      browse.replaceChildren(...json.hits.map((h) => { const el = card(h); void enrich(h, el); return el; }));
+      if (!json.picks.length) { browse.innerHTML = `<p class="empty">${esc(json.summary || "Nothing found. Try different words.")}</p>`; return; }
+      const note = document.createElement("p"); note.className = "summary";
+      note.textContent = json.summary + (json.cached ? "" : json.cost != null ? ` (cost $${json.cost.toFixed(3)})` : "");
+      browse.replaceChildren(note, ...json.picks.map((h) => { const el = card(h); if (!h.image) void enrich(h, el); return el; }));
     } catch (err) {
       browse.innerHTML = `<p class="empty err">${esc((err as Error).message)}</p>`;
     }

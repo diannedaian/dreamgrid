@@ -1,6 +1,6 @@
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import { createImporter } from "./server/import-product.mjs";
-import { createAiSearch, createShopAgent, preview, webSearch } from "./server/shop.mjs";
+import { createShopAgent, preview } from "./server/shop.mjs";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import { fileURLToPath } from "node:url";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -79,7 +79,7 @@ function measureRelay(): Plugin {
 /**
  * Shopping endpoints (dev/preview only):
  *   POST /api/import-product   { url }                  → catalog entry + FurnitureSpec (OpenAI, vision)
- *   GET  /api/search-products?q=                        → web search hits (free DDG; OpenAI web search fallback)
+ *   GET  /api/search-products?q=                        → agent picks for a plain query (OpenAI web search)
  *   GET  /api/preview-product?url=                      → scraped title/price/image/dims (no API cost)
  *   POST /api/shop-agent       { prompt, fitsIn }       → ranked picks (OpenAI, text only)
  */
@@ -88,7 +88,6 @@ function shopApi(env: Record<string, string>): Plugin {
   const importer = createImporter(cfg);
   const searchCfg = { ...cfg, model: env.OPENAI_SEARCH_MODEL || "gpt-4.1-mini" }; // web_search tool needs the 4.1/5 family
   const agent = createShopAgent(searchCfg);
-  const aiSearch = createAiSearch(searchCfg);
   const send = (res: ServerResponse, status: number, obj: unknown) => res.writeHead(status, { "Content-Type": "application/json" }).end(JSON.stringify(obj));
   const readBody = (req: IncomingMessage) => new Promise<Record<string, unknown>>((resolve) => { let b = ""; req.on("data", (c) => (b += c)); req.on("end", () => { try { resolve(JSON.parse(b || "{}")); } catch { resolve({}); } }); });
   const handle = async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
@@ -103,8 +102,7 @@ function shopApi(env: Record<string, string>): Plugin {
       if (url.pathname === "/api/search-products" && req.method === "GET") {
         const q = (url.searchParams.get("q") || "").trim().slice(0, 200);
         if (!q) throw new Error("Empty search");
-        const hits = await webSearch(q, 12); // free path first; DDG rate-limits bursts, then the paid search steps in
-        return send(res, 200, hits.length ? { hits, source: "ddg" } : await aiSearch(q));
+        return send(res, 200, await agent.find({ prompt: q })); // same agent as ★, no size limits
       }
       if (url.pathname === "/api/preview-product" && req.method === "GET") {
         const target = url.searchParams.get("url") || "";

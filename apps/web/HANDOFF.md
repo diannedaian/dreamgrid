@@ -44,7 +44,7 @@ src/catalog/sidebar.ts         bottom bar: catalog cards, paint, floor, sun, out
 src/catalog/detail.ts          product detail sheet (has the "shopping info" slot)
 src/catalog/thumbnails.ts      offscreen thumbnail renderer for cards
 src/catalog/shopBar.ts         right drawer: furniture "browser" (search / paste a link) + ★ shopping agent
-server/shop.mjs                web search (DDG free path, OpenAI web_search fallback), page previews, shopping agent
+server/shop.mjs                shopping agent (OpenAI web_search, strict JSON) + page previews
 src/measure/*                  Safari phone rangefinder page (measure.html)
 public/demo-assets/            Dianne's GLBs (college-bed/desk/chair) + catalog.json
 ```
@@ -102,9 +102,8 @@ left drawer). The address bar takes a search or a pasted product link; results a
 (runs the importer above). The ★ in the drawer head switches to the agent: a plain-language request plus optional
 "fits within" W/D/H in inches — typed, or filled by the "measure" links which run `MeasureTool.measureOnce`
 (two clicks in the room → inches). Endpoints in `server/shop.mjs` via the same `shopApi` plugin:
-- `GET /api/search-products?q=` — DuckDuckGo HTML scrape first (free; DDG rate-limits bursts and then returns an
-  "anomaly" page → empty), falling back to OpenAI's Responses API with the `web_search_preview` tool (~$0.012/call).
-  Bing/Brave/Mojeek were tried and dropped (first-word-only or blocked results for cookie-less requests).
+- `GET /api/search-products?q=` — the same agent as ★ with no size limits (every search in the app goes through
+  OpenAI web search; free engines — DuckDuckGo/Bing/Brave/Mojeek — were tried and dropped: rate-limited or degraded).
 - `GET /api/preview-product?url=` — scrape only (title/price/image/dims), in-memory cache, no API cost. Cards call
   it lazily to fill images; big retailers (Amazon, Home Depot, Target) block it, so cards may stay imageless.
 - `POST /api/shop-agent { prompt, fitsIn:{w,d,h} }` — ONE `OPENAI_SEARCH_MODEL` (default `gpt-4.1-mini`) call with
