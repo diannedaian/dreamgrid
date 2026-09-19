@@ -43,3 +43,33 @@ describe("CommerceDemo", () => {
     expect(screen.getByTestId("budget-subtotal")).toHaveTextContent("$367");
   });
 });
+
+describe("CommerceDemo swap lifecycle", () => {
+  it("clears a stale fit message when the budget changes", () => {
+    render(<CommerceDemo />);
+
+    fireEvent.change(screen.getByLabelText("Budget (USD)"), { target: { value: "300" } });
+    fireEvent.click(screen.getByRole("button", { name: "Make this room fit my budget" }));
+    expect(screen.getByText(/but the room is still/)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Budget (USD)"), { target: { value: "450" } });
+
+    expect(screen.queryByText(/but the room is still/)).not.toBeInTheDocument();
+    expect(screen.getByText("Under budget")).toBeInTheDocument();
+  });
+
+  it("swaps everything back to the original products", () => {
+    render(<CommerceDemo />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Slim Arc Floor Lamp" }));
+    fireEvent.click(screen.getByRole("button", { name: "Make this room fit my budget" }));
+    expect(screen.getByText(/swaps? applied, saving/)).toBeInTheDocument();
+    expect(screen.getByTestId("budget-subtotal")).not.toHaveTextContent("$469");
+
+    fireEvent.click(screen.getByRole("button", { name: "Swap everything back" }));
+
+    expect(screen.getByTestId("budget-subtotal")).toHaveTextContent("$469");
+    expect(screen.queryByText(/swaps? applied, saving/)).not.toBeInTheDocument();
+    expect(screen.getByText("Over budget")).toBeInTheDocument();
+  });
+});

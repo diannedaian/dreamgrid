@@ -9,6 +9,7 @@ import {
   applySwap,
   fitToBudget,
   rankAlternatives,
+  revertSwaps,
   type Alternative,
 } from "./alternatives";
 import { summarizeBudget } from "./budget";
@@ -38,6 +39,12 @@ export function CommerceDemo({
   const summary = useMemo(() => summarizeBudget(roomState, products), [roomState, products]);
   const alternatives = useMemo(() => rankAlternatives(roomState, products), [roomState, products]);
 
+  /** Any room edit outside the fit flow makes the last fit message stale. */
+  function changeRoom(next: RoomState) {
+    setRoomState(next);
+    setFitMessage(undefined);
+  }
+
   function addProduct(product: Product) {
     const item: SceneItem = {
       id: `scene-${product.id}-${roomState.items.length + 1}`,
@@ -46,17 +53,21 @@ export function CommerceDemo({
       positionM: [0, 0, 0],
       rotationYDeg: 0,
     };
-    setRoomState({ ...roomState, items: [...roomState.items, item] });
+    changeRoom({ ...roomState, items: [...roomState.items, item] });
   }
 
   function removeItem(sceneItemId: string) {
-    setRoomState({ ...roomState, items: roomState.items.filter((i) => i.id !== sceneItemId) });
+    changeRoom({ ...roomState, items: roomState.items.filter((i) => i.id !== sceneItemId) });
   }
 
   function handleApplySwap(alternative: Alternative) {
-    setRoomState(applySwap(roomState, alternative));
+    changeRoom(applySwap(roomState, alternative));
     setSwapsApplied([...swapsApplied, alternative]);
-    setFitMessage(undefined);
+  }
+
+  function handleUndoSwaps() {
+    changeRoom(revertSwaps(roomState, swapsApplied));
+    setSwapsApplied([]);
   }
 
   function handleFitToBudget() {
@@ -112,7 +123,7 @@ export function CommerceDemo({
 
       <BudgetPanel
         summary={summary}
-        onBudgetChange={(budgetUsd) => setRoomState({ ...roomState, budgetUsd })}
+        onBudgetChange={(budgetUsd) => changeRoom({ ...roomState, budgetUsd })}
       />
 
       <AlternativesList
@@ -121,6 +132,8 @@ export function CommerceDemo({
         onApplySwap={handleApplySwap}
         onFitToBudget={handleFitToBudget}
         fitMessage={fitMessage}
+        appliedSwaps={swapsApplied}
+        onUndoSwaps={handleUndoSwaps}
       />
 
       <button

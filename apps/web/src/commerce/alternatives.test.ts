@@ -8,6 +8,7 @@ import {
   applySwap,
   fitToBudget,
   rankAlternatives,
+  revertSwaps,
 } from "./alternatives";
 import { summarizeBudget } from "./budget";
 import { loadProducts, loadRoomState, sceneItem, testProduct } from "./testFixtures";
@@ -165,5 +166,40 @@ describe("fitToBudget", () => {
     expect(result.fitsBudget).toBe(false);
     expect(result.remainingUsd).toBeLessThan(0);
     expect(result.state.items).toHaveLength(state.items.length);
+  });
+});
+
+describe("revertSwaps", () => {
+  it("restores the original products after fitToBudget", async () => {
+    const state = await roomWithArcLamp();
+    const products = await loadProducts();
+    const fit = fitToBudget(state, products);
+    expect(fit.swaps.length).toBeGreaterThan(0);
+
+    const reverted = revertSwaps(fit.state, fit.swaps);
+
+    expect(reverted.items).toEqual(state.items);
+    expect(summarizeBudget(reverted, products).subtotalUsd).toBe(469);
+  });
+
+  it("skips items that were removed or changed after the swap", async () => {
+    const state = await roomWithArcLamp();
+    const products = await loadProducts();
+    const fit = fitToBudget(state, products);
+    const [firstSwap] = fit.swaps;
+
+    const withoutItem = {
+      ...fit.state,
+      items: fit.state.items.filter((item) => item.id !== firstSwap.sceneItemId),
+    };
+    const reverted = revertSwaps(withoutItem, fit.swaps);
+
+    expect(reverted.items.some((item) => item.id === firstSwap.sceneItemId)).toBe(false);
+    expect(reverted.items).toHaveLength(withoutItem.items.length);
+  });
+
+  it("returns the same state when there is nothing to revert", async () => {
+    const state = await loadRoomState();
+    expect(revertSwaps(state, [])).toBe(state);
   });
 });

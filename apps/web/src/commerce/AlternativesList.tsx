@@ -8,6 +8,9 @@ export type AlternativesListProps = {
   onFitToBudget: () => void;
   /** Message from the last "fit to budget" attempt, if any. */
   fitMessage?: string;
+  /** Swaps already applied this session, oldest first. */
+  appliedSwaps?: Alternative[];
+  onUndoSwaps?: () => void;
 };
 
 /** Preview cheaper swaps; nothing changes until the user clicks Apply. */
@@ -17,7 +20,11 @@ export function AlternativesList({
   onApplySwap,
   onFitToBudget,
   fitMessage,
+  appliedSwaps = [],
+  onUndoSwaps,
 }: AlternativesListProps) {
+  const savedUsd = appliedSwaps.reduce((sum, swap) => sum + swap.savingsUsd, 0);
+
   return (
     <section className="commerce-alternatives" aria-labelledby="commerce-alternatives-title">
       <h2 id="commerce-alternatives-title">Cheaper alternatives</h2>
@@ -34,6 +41,27 @@ export function AlternativesList({
         <p className="commerce-alternatives__fit-message" role="status">
           {fitMessage}
         </p>
+      )}
+
+      {appliedSwaps.length > 0 && (
+        <div className="commerce-alternatives__applied">
+          <p>
+            {appliedSwaps.length === 1 ? "1 swap applied" : `${appliedSwaps.length} swaps applied`}, saving{" "}
+            {formatUsd(savedUsd)}:
+          </p>
+          <ul>
+            {appliedSwaps.map((swap) => (
+              <li key={`${swap.sceneItemId}:${swap.to.id}`}>
+                {swap.from.title} → {swap.to.title} ({formatUsd(swap.savingsUsd)})
+              </li>
+            ))}
+          </ul>
+          {onUndoSwaps && (
+            <button type="button" onClick={onUndoSwaps}>
+              Swap everything back
+            </button>
+          )}
+        </div>
       )}
 
       {alternatives.length === 0 ? (

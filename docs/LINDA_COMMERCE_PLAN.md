@@ -392,3 +392,10 @@ Not done / next:
 - Step 6 (manual product entry + `units.ts`) is the next item.
 - Ask Cindy about `PLACEHOLDER_MODEL_ASSET_ID`, deletion semantics, and who
   renders prices in the inventory panel.
+
+Review feedback applied (same day): the fit message went stale after a
+budget change, and there was no way back after a swap. Added `revertSwaps`
+plus an "applied swaps" section with a "Swap everything back" button in
+`AlternativesList`; `CommerceDemo` clears the fit message on any room edit.
+The compositor must do the same: keep `swapsApplied` next to `roomState` and
+reset the message whenever it sets the room outside the fit flow.

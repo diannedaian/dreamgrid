@@ -63,6 +63,8 @@ move, rotate, swap, or delete with no events to subscribe to.
 - `fitToBudget(state, products): { state, swaps, fitsBudget, remainingUsd }`
   — greedy best swap until not over budget; one swap per item; never removes
   anything, so `fitsBudget` can be `false`.
+- `revertSwaps(state, swaps): RoomState` — puts the original products back
+  for applied swaps; skips items the user removed or changed since.
 - `PLACEHOLDER_MODEL_ASSET_ID` — used when the cheaper product has no
   `modelAssetId` (the contract forbids an empty string). **Cindy:** the
   loader should render the backbone cube for this id.
@@ -81,7 +83,7 @@ move, rotate, swap, or delete with no events to subscribe to.
 | Component | Props |
 |---|---|
 | `BudgetPanel` | `summary`, `onBudgetChange?` |
-| `AlternativesList` | `alternatives`, `isOverBudget`, `onApplySwap`, `onFitToBudget`, `fitMessage?` |
+| `AlternativesList` | `alternatives`, `isOverBudget`, `onApplySwap`, `onFitToBudget`, `fitMessage?`, `appliedSwaps?`, `onUndoSwaps?` |
 | `PlanSummary` | `plan` |
 | `ApprovalScreen` | `plan`, `onApprove`, `onBack` |
 

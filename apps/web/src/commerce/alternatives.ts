@@ -117,3 +117,22 @@ export function fitToBudget(
     swappedItemIds.add(next.sceneItemId);
   }
 }
+
+/**
+ * Put the original products back for every applied swap, newest first. An
+ * item the user has since removed, or swapped again by hand, is left alone.
+ */
+export function revertSwaps(state: RoomState, swaps: readonly Alternative[]): RoomState {
+  let items = state.items;
+  for (const swap of [...swaps].reverse()) {
+    items = items.map((item): SceneItem => {
+      if (item.id !== swap.sceneItemId || item.productId !== swap.to.id) return item;
+      return {
+        ...item,
+        productId: swap.from.id,
+        modelAssetId: swap.from.modelAssetId ?? PLACEHOLDER_MODEL_ASSET_ID,
+      };
+    });
+  }
+  return items === state.items ? state : { ...state, items };
+}
