@@ -10,7 +10,7 @@ import { RoomShell } from "./room/buildRoom";
 import { DEFAULT_SUN, lookAt, type SunSettings } from "./room/sun";
 import { DEFAULT_FLOOR, DEFAULT_PAINT } from "./room/floors";
 import type { OutsideView } from "./room/outside";
-import { createCamera } from "./interactions/camera";
+import { animateTo, createCamera, presetView, type ViewPreset } from "./interactions/camera";
 import { INCH_M } from "./interactions/units";
 import { WallPicker } from "./interactions/wallPicker";
 import { copyText, decodePlan, planFromState, planUrl, roomFromPlan, sunFromPlan, windowsFromPlan, type Plan } from "./interactions/share";
@@ -123,6 +123,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
   };
   layout();
   const { camera, controls } = createCamera(room, canvas);
+  const frameHooks: Array<() => void> = [];
 
   // Gentle bloom so the window panes and sunlit floor glow like a diorama render.
   const composer = new EffectComposer(renderer);
@@ -140,6 +141,17 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
   };
   window.addEventListener("resize", onResize);
 
+  // View snaps (subtle text links, bottom-right of the stage).
+  let viewAnim: (() => boolean) | null = null;
+  const viewsEl = document.getElementById("views")!;
+  viewsEl.hidden = false;
+  viewsEl.querySelectorAll<HTMLButtonElement>("button").forEach((b) => b.addEventListener("click", () => {
+    viewAnim = animateTo(camera, controls, presetView(room, b.dataset.view as ViewPreset));
+    viewsEl.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+  }));
+  controls.addEventListener("start", () => { viewAnim = null; viewsEl.querySelectorAll("button").forEach((x) => x.classList.remove("on")); });
+  frameHooks.push(() => { if (viewAnim && viewAnim()) viewAnim = null; });
+
   // ---- chrome ------------------------------------------------------------
   document.getElementById("chrome")!.hidden = false;
   document.getElementById("dims-chip")!.textContent = `${ftIn(room.widthM)} × ${ftIn(room.depthM)} × ${ftIn(room.heightM)}`;
@@ -150,7 +162,6 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
 
   const lamps = new LampRegistry();
   const catalog = await Catalog.load();
-  const frameHooks: Array<() => void> = [];
   let picker: WallPicker | null = null;
   let placement: PlacementController | null = null;
 

@@ -167,6 +167,11 @@
 
       #hint { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); padding: 0; background: none; color: var(--ink-soft); font-size: 13px; white-space: nowrap; }
       #hint[hidden] { display: none; }
+      #views { position: absolute; right: 20px; bottom: 16px; display: flex; gap: 14px; pointer-events: auto; }
+      #views[hidden] { display: none; }
+      #views button { font: inherit; font-size: 12px; border: 0; background: none; padding: 0; color: var(--ink-soft); cursor: pointer; opacity: 0.75; }
+      #views button:hover { color: var(--ink); opacity: 1; text-decoration: underline; text-underline-offset: 3px; }
+      #views button.on { color: var(--ink); opacity: 1; font-weight: 600; }
       #warn { position: absolute; left: 50%; top: 70px; transform: translateX(-50%); padding: 0; background: none; color: #c8412c; font-size: 14px; font-weight: 700; white-space: nowrap; }
       #warn[hidden] { display: none; }
       #item-tools { position: absolute; transform: translate(-50%, -100%); display: flex; gap: 14px; padding: 0; background: none; pointer-events: auto; }
@@ -244,6 +249,12 @@
       <button class="chip action measure" id="measure" type="button" hidden>Measure</button>
       <div id="measure-label" hidden></div>
       <button class="chip action" id="shared" type="button" hidden>Shared plan · Edit a copy</button>
+      <div id="views" hidden>
+        <button type="button" data-view="corner">Corner</button>
+        <button type="button" data-view="top">Top</button>
+        <button type="button" data-view="front">Front</button>
+        <button type="button" data-view="side">Side</button>
+      </div>
       <div id="hint">Drag furniture in from the right, or click a wall to add a window or door</div>
       <div id="warn" hidden></div>
       <div id="item-tools" hidden>
