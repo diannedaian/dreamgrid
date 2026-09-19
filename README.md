@@ -2,7 +2,9 @@
 
 DreamGrid is a HackMIT 2026 project for planning a dorm room in 3D before buying furniture. It turns room dimensions and product images into a game-like room where users can arrange furniture, understand total cost, and adjust the plan to fit a budget.
 
-This repository currently provides the shared backbone, contracts, and ownership boundaries. It intentionally does not implement the judged product features.
+This branch includes the shared backbone and a laptop-run image-to-model pipeline.
+See [the model pipeline handoff](docs/MODEL_PIPELINE_HANDOFF.md) for Cindy's integration
+instructions and the distinction between live AI analysis, procedural templates, and presets.
 
 ## Quick start
 

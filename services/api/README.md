@@ -1,9 +1,9 @@
 # DreamGrid API
 
-Minimal FastAPI backbone for DreamGrid. It currently exposes only a health
-check and defines typed boundaries for future model-generation and commerce
-adapters. It does not call OpenAI, Blender, Meshy, Tripo, Visa, or any other
-external service.
+FastAPI backend for DreamGrid. This branch includes health checks plus the
+image-first GPT/Blender generation pipeline. Commerce remains a separate boundary.
+See [Cindy's model-pipeline handoff](../../docs/MODEL_PIPELINE_HANDOFF.md) for setup,
+endpoint contracts, supported templates, dimension confirmation, and deployment limits.
 
 ## Ownership
 
@@ -25,7 +25,8 @@ Then open:
 - Health: <http://localhost:8000/api/v1/health>
 - API docs: <http://localhost:8000/docs>
 
-No credentials are needed for the backbone. Optional API environment overrides go
+Health checks and explicit preset mode need no OpenAI credentials. Live preparation
+requires a server-side `OPENAI_API_KEY`; generation needs Blender. Environment overrides go
 in `services/api/.env` (use `.env.example` as a template); `dev:api` runs from that
 directory. Environment variables supplied by a deployment also work.
 

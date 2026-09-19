@@ -1,9 +1,10 @@
 """Application settings loaded from environment variables."""
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,6 +29,19 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     cors_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://localhost:5173"]
+    )
+    openai_api_key: SecretStr = Field(default=SecretStr(""), validation_alias="OPENAI_API_KEY")
+    openai_model: str = "gpt-4.1-mini-2025-04-14"
+    openai_max_calls: int = Field(default=30, ge=0, le=1000)
+    blender_path: str = "/Applications/Blender.app/Contents/MacOS/Blender"
+    project_root: Path = Path(__file__).resolve().parents[4]
+    model_data_dir: Path | None = None
+    product_hosts: list[str] = Field(
+        default_factory=lambda: [
+            "mitylite.com",
+            "www.ikea.com",
+            "www.target.com",
+        ]
     )
 
 

@@ -25,6 +25,9 @@ def args():
     parser.add_argument("--glb", required=True, type=Path)
     parser.add_argument("--no-render", action="store_true")
     parser.add_argument("--fuse-material", help="Optional offline union of one material's parts")
+    parser.add_argument("--fit-envelope", action="store_true",
+                        help="Fit a stylized template to confirmed outer dimensions")
+    parser.add_argument("--asset-only", action="store_true", help="Skip studio and editable-scene save")
     return parser.parse_args(sys.argv[sys.argv.index("--") + 1 :])
 
 
@@ -52,8 +55,8 @@ def validate_input(spec):
         if part["id"] in ids:
             raise ValueError("Duplicate part ID")
         ids.add(part["id"])
-        if part["primitive"] not in {"box", "rounded-box", "cylinder"}:
-            raise ValueError("This interpreter slice only supports boxes and cylinders")
+        if part["primitive"] not in {"box", "rounded-box", "cylinder", "shade"}:
+            raise ValueError("Unsupported primitive")
         if part["materialId"] not in materials:
             raise ValueError("Unknown material")
         if not finite_vector(part["dimensionsM"]) or not all(
@@ -95,6 +98,8 @@ def make_part(part, index, material, root, collection):
     width, height, depth = part["dimensionsM"]
     if part["primitive"] == "cylinder":
         bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=1, depth=2)
+    elif part["primitive"] == "shade":
+        bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=1, radius2=.65, depth=2)
     else:
         bpy.ops.mesh.primitive_cube_add(size=2)
     obj = bpy.context.object
@@ -293,6 +298,15 @@ def main():
         if options.fuse_material not in materials:
             raise ValueError("Unknown material requested for fusion")
         objects = fuse_material(objects, materials[options.fuse_material])
+    if options.fit_envelope:
+        initial = measure(objects)
+        ratio = [spec["dimensionsM"][i] / initial["dimensionsM"][i] for i in range(3)]
+        root.scale = (ratio[0], ratio[2], ratio[1])
+        root.location = (
+            -(initial["maxM"][0] + initial["minM"][0]) * ratio[0] / 2,
+            (initial["maxM"][2] + initial["minM"][2]) * ratio[2] / 2,
+            -initial["minM"][1] * ratio[1],
+        )
     report = measure(objects)
     assert_normalized(report, spec["dimensionsM"])
     bpy.ops.object.select_all(action="DESELECT")
@@ -311,6 +325,9 @@ def main():
     report["blenderVersion"] = bpy.app.version_string
     report["dimensionToleranceM"] = .00001
     (output / "validation.json").write_text(json.dumps(report, indent=2) + "\n")
+    if options.asset_only:
+        print("DREAMGRID_VALIDATION " + json.dumps(report))
+        return
     camera = studio(scene, spec["dimensionsM"])
     bpy.ops.object.select_all(action="DESELECT")
     root.select_set(True)

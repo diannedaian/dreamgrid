@@ -5,6 +5,7 @@ import {
 } from "ajv/dist/2020.js";
 
 import { contractSchemas } from "./schemas.js";
+import type { PrepareRequest, PreparedImport, GenerateRequest, GenerationJob } from './modelPipeline.js';
 import type {
   FurnitureSpec,
   ModelAsset,
@@ -49,6 +50,12 @@ export const validateRoomState = validatorFor<RoomState>(
 export const validateFurnitureSpec = validatorFor<FurnitureSpec>(
   "https://dreamgrid.dev/schemas/furniture-spec.schema.json",
 );
+
+const pipelineId = 'https://dreamgrid.dev/schemas/model-pipeline.schema.json#/$defs/';
+export const validatePrepareRequest = validatorFor<PrepareRequest>(pipelineId + 'PrepareRequest');
+export const validatePreparedImport = validatorFor<PreparedImport>(pipelineId + 'PreparedImport');
+export const validateGenerateRequest = validatorFor<GenerateRequest>(pipelineId + 'GenerateRequest');
+export const validateGenerationJob = validatorFor<GenerationJob>(pipelineId + 'GenerationJob');
 
 export class ContractValidationError extends Error {
   readonly contract: string;

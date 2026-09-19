@@ -188,6 +188,13 @@ type RoomState = {
 
 ## 6. Model-Generation Contract
 
+Approved pipeline refinement (September 19, 2026): image-first import may use an
+optional product URL or pasted specifications as dimension evidence. Missing sizes
+may use explicitly confirmed, visibly labeled example presets. GPT selects bounded
+template parameters; trusted code compiles the canonical FurnitureSpec. This is a
+stylized approximation, not arbitrary reconstruction. See
+[MODEL_PIPELINE_HANDOFF.md](MODEL_PIPELINE_HANDOFF.md) for the implemented interface.
+
 The default generation path is constrained and testable:
 
 1. The user supplies a clean product image.
