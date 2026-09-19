@@ -69,15 +69,24 @@ export function mountSidebar(root: HTMLElement, o: SidebarOptions): void {
   swatches.className = "swatches";
   let paint = o.paint.toLowerCase();
   const paintButtons: HTMLButtonElement[] = [];
+  const paintInfo = document.createElement("div");
+  paintInfo.className = "paint-info";
+  const showPaint = () => {
+    const c = PAINT_COLORS.find((x) => x.key.toLowerCase() === paint);
+    paintInfo.innerHTML = c
+      ? `<b>${escapeHtml(c.label)}</b> · ${escapeHtml(c.brand)}<br><a href="${escapeHtml(c.url)}" target="_blank" rel="noopener">Buy at Home Depot ↗</a>`
+      : `Custom color ${escapeHtml(paint)}`;
+  };
   const setPaint = (hex: string) => {
     paint = hex.toLowerCase();
     for (const b of paintButtons) b.classList.toggle("on", b.dataset.hex === paint);
     custom.value = paint;
+    showPaint();
     o.onPaint(paint);
   };
   for (const c of PAINT_COLORS) {
     const b = document.createElement("button");
-    b.type = "button"; b.className = "swatch-btn"; b.title = c.label; b.dataset.hex = c.key.toLowerCase();
+    b.type = "button"; b.className = "swatch-btn"; b.title = `${c.label} · ${c.brand}`; b.dataset.hex = c.key.toLowerCase();
     b.style.background = c.key;
     b.classList.toggle("on", c.key.toLowerCase() === paint);
     b.addEventListener("click", () => setPaint(c.key));
@@ -89,6 +98,8 @@ export function mountSidebar(root: HTMLElement, o: SidebarOptions): void {
   custom.addEventListener("input", () => setPaint(custom.value));
   swatches.appendChild(custom);
   paintEl.appendChild(swatches);
+  showPaint();
+  paintEl.appendChild(paintInfo);
 
   // Floor
   const floorEl = section(root, "Floor", "floor");
@@ -107,7 +118,7 @@ export function mountSidebar(root: HTMLElement, o: SidebarOptions): void {
   floorEl.appendChild(floors);
 
   // Sun
-  const sunEl = section(root, "Sun", "sun");
+  const sunEl = section(root, "Lighting", "sun");
   const sun: SunSettings = { ...o.sun };
   // Time of day: a slider with four checkpoints; light blends between them.
   const times = document.createElement("div");
@@ -142,7 +153,7 @@ export function mountSidebar(root: HTMLElement, o: SidebarOptions): void {
 
   const compassRow = document.createElement("div");
   compassRow.className = "row";
-  compassRow.innerHTML = `<span class="lbl">Which way does the <b>far wall</b> face?</span>`;
+  compassRow.innerHTML = `<span class="lbl">Orientation</span>`;
   const compass = document.createElement("div");
   compass.className = "compass";
   const headingButtons = HEADINGS.map((h, i) => {
@@ -157,9 +168,9 @@ export function mountSidebar(root: HTMLElement, o: SidebarOptions): void {
   compassRow.addEventListener("pointerleave", () => o.onHighlightWall(null));
   sunEl.appendChild(compassRow);
 
+  const sceneryEl = section(root, "Scenery", "scenery");
   const viewRow = document.createElement("div");
   viewRow.className = "row";
-  viewRow.innerHTML = `<span class="lbl">Outside the windows</span>`;
   const views = document.createElement("div");
   views.className = "seg";
   const viewButtons = VIEWS.map((v) => {
@@ -170,7 +181,7 @@ export function mountSidebar(root: HTMLElement, o: SidebarOptions): void {
     return b;
   });
   viewRow.appendChild(views);
-  sunEl.appendChild(viewRow);
+  sceneryEl.appendChild(viewRow);
 
   const hemi = document.createElement("div");
   hemi.className = "seg";

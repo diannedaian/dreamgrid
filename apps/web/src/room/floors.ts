@@ -117,11 +117,13 @@ export function floorSwatchDataUrl(preset: FloorPreset, px = 64): string {
   return c.toDataURL();
 }
 
-export const PAINT_COLORS: Array<{ key: string; label: string }> = [
-  { key: "#f4e6d2", label: "Cream" }, { key: "#faf7f2", label: "Warm white" }, { key: "#efe9dc", label: "Linen" },
-  { key: "#cfd8c4", label: "Sage" }, { key: "#b9c9bf", label: "Eucalyptus" }, { key: "#c9d6dd", label: "Dusty blue" },
-  { key: "#e9cfc6", label: "Blush" }, { key: "#d8a58a", label: "Terracotta" }, { key: "#f2dfa4", label: "Butter" },
-  { key: "#d9cfe4", label: "Lavender" }, { key: "#dfe8d3", label: "Mint" }, { key: "#e0b95c", label: "Mustard" },
-  { key: "#5b6f5c", label: "Forest" }, { key: "#33415c", label: "Navy" }, { key: "#4a4744", label: "Charcoal" },
+/** Real paints you can buy. Hex values are the manufacturers' published RGB (PPG for Glidden). */
+export const PAINT_COLORS: Array<{ key: string; label: string; brand: string; url: string }> = [
+  { key: "#eee6db", label: "Pearls And Lace", brand: "Glidden Diamond · PPG1074-1", url: "https://www.homedepot.com/p/Glidden-Diamond-5-gal-PPG1074-1-Pearls-And-Lace-Ultra-Flat-Interior-Paint-with-Primer-PPG1074-1D-05UF/324948281" },
+  { key: "#dacfba", label: "Toasted Almond", brand: "Glidden Diamond · PPG1097-3", url: "https://www.homedepot.com/p/Glidden-Diamond-5-gal-PPG1097-3-Toasted-Almond-Eggshell-Interior-Paint-with-Primer-PPG1097-3D-05E/309074183" },
+  { key: "#a3bbcd", label: "Heavenly Blue", brand: "Glidden Diamond · PPG1159-3", url: "https://www.homedepot.com/p/Glidden-Diamond-5-gal-PPG1159-3-Heavenly-Blue-Semi-Gloss-Interior-Paint-with-Primer-PPG1159-3D-05SG/309532292" },
+  { key: "#848585", label: "Dover Gray", brand: "Glidden Diamond · PPG1001-5", url: "https://www.homedepot.com/p/Glidden-Diamond-1-gal-PPG1001-5-Dover-Gray-Satin-Interior-Paint-with-Primer-PPG1001-5D-01SA/309703430" },
+  // The Behr link is a brand page, not one color; Polar Bear 75 stands in as its warm white.
+  { key: "#f2ede4", label: "Polar Bear 75", brand: "Behr Dynasty", url: "https://www.homedepot.com/b/Paint-Paint-Colors/BEHR-DYNASTY/N-5yc1vZcaw8Zsxl" },
 ];
-export const DEFAULT_PAINT = "#f4e6d2";
+export const DEFAULT_PAINT = "#eee6db";

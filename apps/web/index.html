@@ -74,7 +74,7 @@
       .chip.brand span { color: #8f7fc9; } /* lavender "Grid" */
       .chip.dims { right: 62px; font-variant-numeric: tabular-nums; }
       /* top-right actions: small lavender glyph, soft cream pill on hover; text stays underlined */
-      .chip.action { right: 10px; top: 42px; padding: 4px 10px; border-radius: 999px; pointer-events: auto; font-weight: 600; font-family: var(--sans); transition: background 0.18s ease, color 0.18s ease; }
+      .chip.action { right: 10px; top: 42px; padding: 4px 10px; border-radius: 999px; text-decoration: none; pointer-events: auto; font-weight: 600; font-family: var(--sans); transition: background 0.18s ease, color 0.18s ease; }
       .chip.action:hover { background: rgba(251,245,234,0.8); box-shadow: 0 2px 8px rgba(40,50,30,0.10); }
       .chip.action::before { display: inline-block; margin-right: 6px; color: #8f7fc9; font-weight: 500; font-size: 13px; transform: translateY(-0.5px); }
       #share::before { content: "⤴"; } #shared::before { content: "⤴"; }
@@ -209,6 +209,8 @@
       .swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; align-items: center; }
       .swatch-btn { width: 100%; aspect-ratio: 1; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.12); cursor: pointer; padding: 0; }
       .swatch-btn.on { box-shadow: 0 0 0 2px var(--honey); }
+      .paint-info { margin-top: 8px; font-size: 11px; color: var(--ink-soft); line-height: 1.45; } .paint-info b { color: var(--ink); font-weight: 600; }
+      .paint-info a { color: var(--honey-deep); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
       .swatches input[type=color] { width: 100%; aspect-ratio: 1; border: 0; padding: 0; background: none; cursor: pointer; border-radius: 50%; }
       .floors { display: grid; grid-template-columns: repeat(5, 62px); gap: 6px; }
       .floor-btn { border: 2px solid transparent; border-radius: 9px; background: #fff; padding: 3px; cursor: pointer; display: grid; gap: 2px; font: inherit; font-size: 9px; color: var(--ink-soft); }
@@ -217,8 +219,8 @@
       .col.sun .section { display: grid; grid-template-columns: 300px 230px; column-gap: 22px; row-gap: 4px; align-content: start; }
       .col.sun .section > .time { grid-column: 1; grid-row: 1; }
       .col.sun .section > .row:nth-of-type(1) { grid-column: 1; grid-row: 2; }
-      .col.sun .section > .row:nth-of-type(2) { grid-column: 2; grid-row: 1; }
-      .col.sun .section > .seg:last-child { grid-column: 2; grid-row: 2; align-self: start; }
+      .col.sun .section > .seg:last-child { grid-column: 2; grid-row: 1 / span 2; align-self: start; }
+      .col.sun .section { grid-template-columns: 300px 150px; }
       .seg { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
       .seg button, .compass button { font: inherit; font-size: 11px; padding: 5px 9px; border-radius: 999px; border: 1px solid #d9cdb8; background: #fff; color: var(--ink); cursor: pointer; }
       .seg button.on, .compass button.on { background: var(--honey); border-color: var(--honey); color: #fff; }
