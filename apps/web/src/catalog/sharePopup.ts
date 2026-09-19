@@ -22,13 +22,19 @@ export function mountSharePopup(root: HTMLElement, o: SharePopupOptions): { open
     root.innerHTML = `
       <div class="sheet" role="dialog" aria-label="Share your room">
         <button type="button" class="close" aria-label="Close">✕</button>
-        <h2>Share your room</h2>
-        <p class="status ${copied ? "ok" : "warn"}">${copied ? "✓ Link copied to your clipboard" : "Copy the link below"}</p>
-        <code class="link">${esc(link)}</code>
-        <div class="actions"><button type="button" class="primary copy">${copied ? "Copy again" : "Copy link"}</button></div>
-        <h3>Shopping list</h3>
-        <p class="sub">Everything in the room with real store links, prices and product photos. Its link is shareable too.</p>
-        <div class="actions"><a class="primary list" href="${esc(list)}" target="_blank" rel="noopener">Open shopping list ↗</a><button type="button" class="ghost copy-list">Copy list link</button></div>
+        <div class="cols">
+          <section>
+            <h2>Share your room</h2>
+            <p class="status ${copied ? "ok" : "warn"}">${copied ? "✓ Link copied to your clipboard" : "Copy the link below"}</p>
+            <code class="link">${esc(link)}</code>
+            <div class="actions"><button type="button" class="primary copy">${copied ? "Copy again" : "Copy link"}</button></div>
+          </section>
+          <section>
+            <h2>Shopping list</h2>
+            <p class="sub">Everything in the room with real store links, prices and product photos. Its link is shareable too.</p>
+            <div class="actions"><a class="primary list" href="${esc(list)}" target="_blank" rel="noopener">Open shopping list ↗</a><button type="button" class="ghost copy-list">Copy list link</button></div>
+          </section>
+        </div>
       </div>`;
     const q = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
     q(".close").addEventListener("click", close);
