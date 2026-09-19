@@ -279,21 +279,19 @@ function glassMaterial(map: Texture, width: number, height: number): ShaderMater
       uniform vec2 texel;
       varying vec2 vUv;
       void main() {
-        // 0 at the side edges → 1 in the middle 50%
-        float side = smoothstep(0.0, 0.28, min(vUv.x, 1.0 - vUv.x));
-        float blur = (1.0 - side) * 6.0; // blur radius in texels
+        // A light, even sheet of glass: gentle blur and faint frost across the whole pane.
+        float blur = 1.6; // blur radius in texels
         vec3 c = vec3(0.0);
         float wsum = 0.0;
-        for (int i = -3; i <= 3; i++) for (int j = -3; j <= 3; j++) {
+        for (int i = -2; i <= 2; i++) for (int j = -2; j <= 2; j++) {
           vec2 o = vec2(float(i), float(j)) * texel * blur;
-          float wgt = 1.0 / (1.0 + float(i * i + j * j) * 0.35);
+          float wgt = 1.0 / (1.0 + float(i * i + j * j) * 0.5);
           c += texture2D(map, vUv + o).rgb * wgt;
           wsum += wgt;
         }
         c /= wsum;
-        // frost toward the edges and a faint diagonal sheen
-        float frost = (1.0 - side) * 0.14;
-        float sheen = smoothstep(0.35, 0.65, vUv.x * 0.6 + vUv.y * 0.4) * 0.05;
+        float frost = 0.05;
+        float sheen = smoothstep(0.35, 0.65, vUv.x * 0.6 + vUv.y * 0.4) * 0.04;
         c = mix(c, vec3(1.0), frost + sheen);
         gl_FragColor = vec4(c, 1.0);
         #include <tonemapping_fragment>

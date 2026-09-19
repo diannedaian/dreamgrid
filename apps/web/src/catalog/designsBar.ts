@@ -23,12 +23,13 @@ export function mountDesignsBar(bar: HTMLElement, popup: HTMLElement, o: Designs
   let currentId = o.currentId;
   let currentName = o.currentName;
   const list = bar.querySelector<HTMLElement>(".designs")!;
-  const toggle = bar.querySelector<HTMLButtonElement>(".toggle")!;
+  const toggle = document.getElementById("menu-toggle") as HTMLButtonElement;
+  toggle.hidden = false;
   const saveBtn = bar.querySelector<HTMLButtonElement>(".save")!;
 
-  const setOpen = (open: boolean) => { document.body.classList.toggle("leftbar-open", open); toggle.textContent = open ? "‹" : "›"; toggle.title = open ? "Collapse" : "Saved designs"; try { localStorage.setItem("dreamgrid.leftbar", open ? "1" : "0"); } catch { /* ignore */ } };
-  let open = true;
-  try { open = localStorage.getItem("dreamgrid.leftbar") !== "0"; } catch { /* ignore */ }
+  const setOpen = (open: boolean) => { document.body.classList.toggle("leftbar-open", open); toggle.textContent = open ? "✕" : "☰"; toggle.title = open ? "Close designs" : "Saved designs"; try { localStorage.setItem("dreamgrid.leftbar", open ? "1" : "0"); } catch { /* ignore */ } };
+  let open = false;
+  try { open = localStorage.getItem("dreamgrid.leftbar") === "1"; } catch { /* ignore */ }
   setOpen(open);
   toggle.addEventListener("click", () => setOpen(!document.body.classList.contains("leftbar-open")));
 

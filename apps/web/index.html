@@ -16,7 +16,7 @@
       body.t-sunset { background: #b9a487; }
       body.t-midnight { background: #3f4a5e; }
       #stage { position: fixed; inset: 0; bottom: var(--panel-h, 0px); left: var(--left-w, 0px); z-index: 0; transition: left 0.25s ease; }
-      body.has-leftbar { --left-w: 28px; }
+      body.has-leftbar { --left-w: 0px; }
       body.has-leftbar.leftbar-open { --left-w: 250px; }
       #stage canvas { position: absolute; inset: 0; }
       body.has-sidebar { --panel-h: 236px; }
@@ -35,10 +35,8 @@
       .unit { color: var(--ink-soft); font-size: 13px; }
       #dims input { width: 100%; box-sizing: border-box; padding: 8px 10px; font: inherit; border: 1px solid #d9cdb8; border-radius: 9px; background: #fff; color: var(--ink); }
       #dims input:focus { outline: 2px solid var(--sage-deep); outline-offset: 1px; }
-      #dims button { margin-top: 12px; padding: 11px 16px; font: inherit; font-weight: 600; border: 0; border-radius: 11px; background: var(--honey); color: #fff; cursor: pointer; box-shadow: 0 6px 16px rgba(160,100,50,0.28); }
-      #dims button:hover { background: var(--honey-deep); }
-      #dims button.ghost { background: transparent; color: var(--ink); box-shadow: none; margin-top: 8px; font-weight: 500; }
-      #dims button.ghost:hover { background: var(--cream-2); }
+      #dims button { margin-top: 14px; font-weight: 700; font-size: 16px; justify-self: start; }
+      #dims button.ghost { margin-top: 10px; font-weight: 500; font-size: 14px; }
       .phone-out { margin-top: 12px; text-align: center; font-size: 12px; color: var(--ink-soft); }
       .phone-out[hidden] { display: none; }
       .phone-out canvas { display: block; margin: 10px auto 4px; border-radius: 12px; }
@@ -50,27 +48,30 @@
       /* In-room chrome ----------------------------------------------- */
       #chrome { position: fixed; inset: 0; bottom: var(--panel-h, 0px); left: var(--left-w, 0px); pointer-events: none; z-index: 5; transition: left 0.25s ease; }
       #chrome[hidden] { display: none; }
-      .chip { position: absolute; top: 18px; padding: 8px 14px; border-radius: 999px; background: rgba(251,245,234,0.9); color: var(--ink); font-size: 13px; box-shadow: 0 4px 14px rgba(40,50,30,0.18); backdrop-filter: blur(6px); }
-      .chip.brand { left: 20px; font-family: var(--serif); font-size: 17px; }
+      .chip { position: absolute; top: 18px; padding: 0; background: none; color: var(--ink); font-size: 13px; }
+      .textbtn, .chip.action, #leftbar .save, .time-labels button, #dims button, #detail .add, #save-popup .primary, #save-popup .ghost, #menu button, #item-tools button { font: inherit; border: 0; background: none; padding: 0; color: var(--ink); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+      .textbtn:hover, .chip.action:hover, #leftbar .save:hover, .time-labels button:hover, #dims button:hover, #detail .add:hover, #save-popup .primary:hover, #save-popup .ghost:hover, #menu button:hover, #item-tools button:hover { color: var(--honey-deep); }
+      #menu-toggle { position: fixed; left: 20px; top: 14px; z-index: 9; font: inherit; font-size: 22px; line-height: 1; border: 0; background: none; cursor: pointer; color: var(--ink); padding: 4px; }
+      #menu-toggle:hover { color: var(--honey-deep); }
+      #menu-toggle[hidden] { display: none; }
+      body.t-midnight #menu-toggle { color: #eef0fa; }
+      .chip.brand { left: 56px; font-family: var(--serif); font-size: 17px; }
       .chip.brand span { color: var(--honey); }
       .chip.dims { right: 20px; font-variant-numeric: tabular-nums; }
-      .chip.action { right: 20px; top: 62px; pointer-events: auto; cursor: pointer; background: var(--honey); color: #fff; font-weight: 600; border: 0; font-family: var(--sans); box-shadow: 0 6px 16px rgba(160,100,50,0.28); }
-      .chip.action:hover { background: var(--honey-deep); }
+      .chip.action { right: 20px; top: 46px; pointer-events: auto; font-weight: 600; font-family: var(--sans); }
       .chip.action[hidden] { display: none; }
       .chip.mode { left: 20px; top: 62px; pointer-events: auto; cursor: pointer; border: 0; font-family: var(--sans); }
-      body.t-midnight .chip { background: rgba(40, 46, 66, 0.85); color: #eef0fa; box-shadow: 0 4px 14px rgba(0,0,0,0.35); }
+      body.t-midnight .chip, body.t-midnight #hint, body.t-midnight #item-tools button { color: #eef0fa; }
       body.t-midnight .chip.brand span { color: #f0b46a; }
-      body.t-midnight .chip.action { background: #d9954f; color: #fff; }
       .chip.mode { display: none; }
 
       /* Left drawer: saved designs -------------------------------------- */
-      #leftbar { position: fixed; top: 0; bottom: var(--panel-h, 0px); left: 0; width: 250px; z-index: 7; box-sizing: border-box; background: var(--cream); box-shadow: 8px 0 30px rgba(40,50,30,0.14); transform: translateX(-222px); transition: transform 0.25s ease; display: flex; flex-direction: column; }
+      #leftbar { position: fixed; top: 0; bottom: var(--panel-h, 0px); left: 0; width: 250px; z-index: 7; box-sizing: border-box; background: var(--cream); box-shadow: 8px 0 30px rgba(40,50,30,0.14); transform: translateX(-100%); transition: transform 0.25s ease; display: flex; flex-direction: column; }
       #leftbar[hidden] { display: none; }
       body.leftbar-open #leftbar { transform: none; }
-      #leftbar .toggle { position: absolute; right: -14px; top: 50%; width: 28px; height: 44px; margin-top: -22px; border: 0; border-radius: 0 12px 12px 0; background: var(--honey); color: #fff; font-size: 18px; cursor: pointer; box-shadow: 4px 0 12px rgba(40,50,30,0.2); }
-      #leftbar .head { padding: 16px 16px 10px; display: flex; align-items: center; justify-content: space-between; }
+      #leftbar .head { padding: 16px 16px 10px 56px; display: flex; align-items: center; justify-content: space-between; }
       #leftbar h2 { font-family: var(--serif); font-weight: 500; font-size: 18px; margin: 0; }
-      #leftbar .save { padding: 7px 12px; font: inherit; font-size: 12px; font-weight: 600; border: 0; border-radius: 999px; background: var(--honey); color: #fff; cursor: pointer; }
+      #leftbar .save { font-size: 13px; font-weight: 600; color: var(--honey-deep); }
       #leftbar .designs { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
       #leftbar .design { display: grid; grid-template-columns: 64px 1fr 22px; gap: 8px; align-items: center; padding: 8px; border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(40,50,30,0.12); margin-bottom: 8px; cursor: pointer; }
       #leftbar .design:hover { box-shadow: 0 4px 12px rgba(40,50,30,0.18); }
@@ -92,8 +93,9 @@
       #save-popup label { display: block; font-size: 13px; color: var(--ink-soft); }
       #save-popup .name { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 10px 12px; font: inherit; font-size: 16px; border: 1px solid #d9cdb8; border-radius: 10px; background: #fff; color: var(--ink); }
       #save-popup .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-      #save-popup .primary { padding: 10px 16px; font: inherit; font-weight: 600; border: 0; border-radius: 11px; background: var(--honey); color: #fff; cursor: pointer; }
-      #save-popup .ghost { padding: 10px 14px; font: inherit; border: 0; border-radius: 11px; background: transparent; color: var(--ink); cursor: pointer; } #save-popup .ghost:hover { background: var(--cream-2); }
+      #save-popup .actions { gap: 18px; }
+      #save-popup .primary { font-weight: 700; }
+      #save-popup .ghost { color: var(--ink-soft); }
       #save-popup .ok { color: #3f7d4e; font-weight: 600; margin: 8px 0 0; }
       #save-popup .sub { font-size: 12.5px; color: var(--ink-soft); margin: 0 0 8px; }
       #save-popup .dims { display: grid; gap: 8px; }
@@ -139,9 +141,9 @@
       .time { margin-bottom: 8px; }
       .time input[type=range] { width: 100%; accent-color: var(--honey); margin: 2px 0 0; }
       .time-labels { display: grid; grid-template-columns: repeat(4, 1fr); }
-      .time-labels button { font: inherit; font-size: 11px; padding: 2px 0; border: 0; background: none; color: var(--ink-soft); cursor: pointer; border-radius: 6px; }
+      .time-labels button { font-size: 11px; padding: 2px 0; color: var(--ink-soft); }
       .time-labels button:first-child { text-align: left; } .time-labels button:last-child { text-align: right; }
-      .time-labels button.on { color: var(--honey-deep); font-weight: 700; }
+      .time-labels button.on { color: var(--honey-deep); font-weight: 700; text-decoration: none; }
       .compass { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; margin-bottom: 8px; }
       .compass button { padding: 5px 0; }
       body.t-midnight #sidebar { background: #2c3242; color: #eef0fa; }
@@ -160,27 +162,27 @@
       #detail dl { display: grid; grid-template-columns: 5em 1fr; gap: 4px 10px; margin: 0 0 10px; font-size: 13px; } #detail dt { color: var(--ink-soft); } #detail dd { margin: 0; }
       #detail .disclosure { font-size: 11.5px; color: var(--ink-soft); line-height: 1.4; margin: 0 0 12px; }
       #detail .shop { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border: 1px dashed #d9cdb8; border-radius: 10px; font-size: 12px; color: var(--ink-soft); margin-bottom: 12px; } #detail .shop a { color: var(--honey-deep); }
-      #detail .add { padding: 11px 16px; font: inherit; font-weight: 600; border: 0; border-radius: 11px; background: var(--honey); color: #fff; cursor: pointer; }
+      #detail .add { font-weight: 700; font-size: 16px; }
       @media (max-width: 640px) { #detail .sheet { grid-template-columns: 1fr; } }
       body.t-midnight #detail .sheet { background: #2c3242; color: #eef0fa; } body.t-midnight #detail .preview { background: #3a4153; }
 
-      #hint { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); padding: 8px 14px; border-radius: 999px; background: rgba(63,58,46,0.72); color: #fbf5ea; font-size: 13px; }
+      #hint { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); padding: 0; background: none; color: var(--ink-soft); font-size: 13px; white-space: nowrap; }
       #hint[hidden] { display: none; }
-      #warn { position: absolute; left: 50%; top: 70px; transform: translateX(-50%); padding: 9px 16px; border-radius: 999px; background: #e0523c; color: #fff; font-size: 13px; font-weight: 600; box-shadow: 0 6px 18px rgba(160,40,20,0.35); }
+      #warn { position: absolute; left: 50%; top: 70px; transform: translateX(-50%); padding: 0; background: none; color: #c8412c; font-size: 14px; font-weight: 700; white-space: nowrap; }
       #warn[hidden] { display: none; }
-      #item-tools { position: absolute; transform: translate(-50%, -100%); display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(251,245,234,0.95); box-shadow: 0 6px 18px rgba(40,50,30,0.25); pointer-events: auto; }
+      #item-tools { position: absolute; transform: translate(-50%, -100%); display: flex; gap: 14px; padding: 0; background: none; pointer-events: auto; }
       #item-tools[hidden] { display: none; }
-      #item-tools button { width: 32px; height: 32px; border-radius: 50%; border: 0; background: #fff; color: var(--ink); font-size: 15px; cursor: pointer; }
-      #item-tools button:hover { background: var(--cream-2); }
-      #item-tools button:disabled { opacity: 0.35; cursor: not-allowed; }
+      #item-tools button { font-size: 18px; text-decoration: none; text-shadow: 0 1px 2px rgba(255,255,255,0.6); }
+      #item-tools button:hover { text-decoration: underline; }
+      #item-tools button:disabled { opacity: 0.35; cursor: not-allowed; text-decoration: none; }
       #item-tools #tool-delete { color: #c8412c; }
-      body.t-midnight #item-tools { background: rgba(40,46,66,0.9); } body.t-midnight #item-tools button { background: #3a4153; color: #eef0fa; }
 
       #menu { position: fixed; z-index: 20; display: grid; background: var(--cream); border: 0; border-radius: 12px; box-shadow: 0 10px 30px rgba(40,50,30,0.25); overflow: hidden; }
-      #menu button { padding: 10px 16px; font: inherit; border: 0; background: none; color: var(--ink); text-align: left; cursor: pointer; }
-      #menu button:hover { background: var(--cream-2); }
+      #menu { padding: 10px 14px; gap: 8px; }
+      #menu button { text-align: left; }
       #menu button[hidden] { display: none; }
       #menu [data-remove] { color: #c8412c; }
+      #menu [data-remove]:hover { color: #a83322; }
       #menu[hidden] { display: none; }
     </style>
   </head>
@@ -203,8 +205,8 @@
     </div>
 
     <div id="stage"></div>
+    <button type="button" id="menu-toggle" title="Saved designs" hidden>☰</button>
     <aside id="leftbar" hidden>
-      <button type="button" class="toggle" title="Saved designs">›</button>
       <div class="head"><h2>Designs</h2><button type="button" class="save">Save design</button></div>
       <div class="designs"></div>
     </aside>
