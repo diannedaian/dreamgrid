@@ -40,8 +40,15 @@ export function mountSidebar(root: HTMLElement, o: SidebarOptions): void {
   importBtn.type = "button"; importBtn.className = "add-furniture"; importBtn.textContent = "+ Add furniture";
   importBtn.addEventListener("click", () => o.onImport());
   catalogEl.parentElement!.querySelector("h2")!.appendChild(importBtn);
+  const showHidden = document.createElement("button");
+  showHidden.type = "button"; showHidden.className = "show-hidden"; showHidden.hidden = true;
+  showHidden.addEventListener("click", () => o.catalog.unhideAll());
+  catalogEl.parentElement!.querySelector("h2")!.appendChild(showHidden);
   const renderCatalog = () => {
     catalogEl.replaceChildren();
+    const n = o.catalog.hiddenCount();
+    showHidden.hidden = !n;
+    showHidden.textContent = `Show ${n} hidden`;
     for (const group of o.catalog.grouped()) {
       const col = document.createElement("div");
       col.className = "group";
@@ -202,8 +209,12 @@ function card(entry: CatalogEntry, o: SidebarOptions): HTMLElement {
       <div class="name">${escapeHtml(product.title)}</div>
       <div class="sub">${w}″ × ${d}″ × ${h}″ tall · ${product.styleTags.includes("price-not-provided") ? "Price not provided" : `$${product.priceUsd}`}</div>
       ${asset && asset.status !== "ready" ? `<div class="sub status">${asset.status}…</div>` : ""}
-    </div>`;
+    </div>
+    <button type="button" class="hide" title="Hide from the bar" aria-label="Hide ${escapeHtml(product.title)} from the bar">✕</button>`;
   el.title = "Drag into the room · click for details";
+  const hideBtn = el.querySelector<HTMLButtonElement>(".hide")!;
+  hideBtn.addEventListener("pointerdown", (e) => e.stopPropagation()); // don't start a drag
+  hideBtn.addEventListener("click", (e) => { e.stopPropagation(); o.catalog.hide(product.id); });
   const img = el.querySelector("img")!;
   o.thumbnail(entry, 128).then((url) => { if (url) { img.src = url; img.hidden = false; } });
 

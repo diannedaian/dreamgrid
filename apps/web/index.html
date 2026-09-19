@@ -73,10 +73,19 @@
         -webkit-mask: var(--puffs); mask: var(--puffs); }
       .chip.brand span { color: #8f7fc9; } /* lavender "Grid" */
       .chip.dims { right: 62px; font-variant-numeric: tabular-nums; }
-      .chip.action { right: 20px; top: 46px; pointer-events: auto; font-weight: 600; font-family: var(--sans); }
-      .chip.action.save-design { top: 72px; }
-      .chip.action.reset-design { top: 98px; color: var(--ink-soft); font-weight: 500; }
-      .chip.action.measure { top: 124px; font-weight: 500; white-space: nowrap; }
+      /* top-right actions: small lavender glyph, soft cream pill on hover; text stays underlined */
+      .chip.action { right: 10px; top: 42px; padding: 4px 10px; border-radius: 999px; pointer-events: auto; font-weight: 600; font-family: var(--sans); transition: background 0.18s ease, color 0.18s ease; }
+      .chip.action:hover { background: rgba(251,245,234,0.8); box-shadow: 0 2px 8px rgba(40,50,30,0.10); }
+      .chip.action::before { display: inline-block; margin-right: 6px; color: #8f7fc9; font-weight: 500; font-size: 13px; transform: translateY(-0.5px); }
+      #share::before { content: "⤴"; } #shared::before { content: "⤴"; }
+      #save-design::before { content: "✦"; }
+      #reset-design::before { content: "↺"; }
+      #measure::before { content: "⟷"; }
+      .chip.action.on { background: rgba(251,245,234,0.9); }
+      .chip.action.save-design { top: 68px; }
+      .chip.action.reset-design { top: 94px; color: var(--ink-soft); font-weight: 500; }
+      .chip.action.reset-design.armed { color: #c8412c; }
+      .chip.action.measure { top: 120px; font-weight: 500; white-space: nowrap; }
       .chip.action.measure.on { color: #4d78d6; font-weight: 700; }
       #measure-label { position: absolute; transform: translate(-50%, -100%); padding: 4px 10px; border-radius: 8px; background: #4d78d6; color: #fff; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; box-shadow: 0 4px 12px rgba(30,50,110,0.3); }
       #measure-label[hidden] { display: none; }
@@ -183,7 +192,7 @@
       #sidebar .section { flex: 1 1 auto; min-height: 0; }
       .col.catalog .section { display: flex; gap: 10px; overflow-x: auto; overflow-y: hidden; padding-bottom: 4px; }
       .col.catalog .group { flex: 0 0 auto; width: 176px; display: flex; flex-direction: column; overflow-y: auto; }
-      .item-card { display: grid; grid-template-columns: 34px 1fr; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 10px; background: #fff; box-shadow: 0 1px 3px rgba(40,50,30,0.12); margin-bottom: 6px; cursor: grab; user-select: none; touch-action: none; }
+      .item-card { position: relative; display: grid; grid-template-columns: 34px 1fr; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 10px; background: #fff; box-shadow: 0 1px 3px rgba(40,50,30,0.12); margin-bottom: 6px; cursor: grab; user-select: none; touch-action: none; }
       .item-card:hover { box-shadow: 0 4px 12px rgba(40,50,30,0.18); }
       .item-card.dragging { opacity: 0.6; cursor: grabbing; }
       .item-card.pending { opacity: 0.5; cursor: default; }
@@ -191,6 +200,10 @@
       .item-card .swatch img { width: 100%; height: 100%; object-fit: cover; }
       .item-card .name { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .item-card .sub { font-size: 10px; color: var(--ink-soft); white-space: nowrap; }
+      .item-card .hide { position: absolute; top: 3px; right: 4px; width: 18px; height: 18px; border: 0; border-radius: 50%; background: none; color: var(--ink-soft); font-size: 10px; line-height: 18px; padding: 0; cursor: pointer; opacity: 0; transition: opacity 0.15s; }
+      .item-card:hover .hide { opacity: 0.7; } .item-card .hide:hover { opacity: 1; background: var(--cream-2); color: #c8412c; }
+      .show-hidden { margin-left: 10px; font: inherit; font-size: 11.5px; border: 0; background: none; color: var(--ink-soft); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; vertical-align: middle; }
+      .show-hidden:hover { color: var(--ink); } .show-hidden[hidden] { display: none; }
       .empty { font-size: 13px; color: var(--ink-soft); }
       .col.paint .section { width: 176px; }
       .swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; align-items: center; }

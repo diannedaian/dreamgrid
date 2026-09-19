@@ -15,9 +15,11 @@ export class Catalog {
   private listeners = new Set<() => void>();
   // Hide retired demo cards without breaking previously saved room plans.
   private hiddenProductIds = new Set<string>();
+  // Cards the user dismissed with the × in the bottom bar (kept per browser; products stay loadable for saved plans).
+  private userHidden = new Set<string>(readHidden());
 
   entries(): CatalogEntry[] {
-    return [...this.products.values()].filter((p) => !this.hiddenProductIds.has(p.id)).map((product) => ({ product, asset: product.modelAssetId ? this.assets.get(product.modelAssetId) : undefined }));
+    return [...this.products.values()].filter((p) => !this.hiddenProductIds.has(p.id) && !this.userHidden.has(p.id)).map((product) => ({ product, asset: product.modelAssetId ? this.assets.get(product.modelAssetId) : undefined }));
   }
 
   get(productId: string): CatalogEntry | undefined {
@@ -46,6 +48,11 @@ export class Catalog {
     for (const a of assets) this.assets.set(a.id, a);
     this.listeners.forEach((l) => l());
   }
+
+  /** Hide a card from the bar (the product stays available so existing rooms still load). */
+  hide(productId: string): void { this.userHidden.add(productId); writeHidden(this.userHidden); this.listeners.forEach((l) => l()); }
+  unhideAll(): void { this.userHidden.clear(); writeHidden(this.userHidden); this.listeners.forEach((l) => l()); }
+  hiddenCount(): number { return [...this.userHidden].filter((id) => this.products.has(id)).length; }
 
   onChange(l: () => void): () => void {
     this.listeners.add(l);
@@ -79,3 +86,7 @@ export class Catalog {
     return generated();
   }
 }
+
+const HIDDEN_KEY = "dreamgrid.hiddenCards.v1";
+function readHidden(): string[] { try { const v = JSON.parse(localStorage.getItem(HIDDEN_KEY) ?? "[]"); return Array.isArray(v) ? v.filter((x) => typeof x === "string") : []; } catch { return []; } }
+function writeHidden(ids: Set<string>): void { try { localStorage.setItem(HIDDEN_KEY, JSON.stringify([...ids])); } catch { /* ignore */ } }
