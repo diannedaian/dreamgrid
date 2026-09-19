@@ -1,14 +1,17 @@
 // Share popup: copies the view link, explains how friends use it, and links to the shopping list page.
 import { copyText } from "../interactions/share";
+import { listHtml, type ShoppingRow } from "./shoppingList";
+
+const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 export type SharePopupOptions = {
   /** Read-only room link to copy. */
   link: () => string;
-  /** Shopping-list page for the current plan. */
+  /** Shopping-list page for the current plan (shareable). */
   listUrl: () => string;
+  /** What's in the room right now, grouped by product. */
+  rows: () => ShoppingRow[];
 };
-
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 export function mountSharePopup(root: HTMLElement, o: SharePopupOptions): { open: () => Promise<void> } {
   const close = () => { root.hidden = true; };
@@ -31,8 +34,8 @@ export function mountSharePopup(root: HTMLElement, o: SharePopupOptions): { open
           </section>
           <section>
             <h2>Shopping list</h2>
-            <p class="sub">Everything in the room with real store links, prices and product photos. Its link is shareable too.</p>
-            <div class="actions"><a class="primary list" href="${esc(list)}" target="_blank" rel="noopener">Open shopping list ↗</a><button type="button" class="ghost copy-list">Copy list link</button></div>
+            ${listHtml(o.rows())}
+            <div class="actions"><a class="ghost" href="${esc(list)}" target="_blank" rel="noopener">Open as a page ↗</a><button type="button" class="ghost copy-list">Copy list link</button></div>
           </section>
         </div>
       </div>`;

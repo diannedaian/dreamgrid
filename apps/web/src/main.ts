@@ -188,10 +188,18 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
   const designs = createDesignStore();
   let designId: string | null = new URLSearchParams(location.search).get("design");
   let designName = designId ? designs.get(designId)?.name ?? "" : "";
+  let refreshShopList: () => void = () => {};
   const syncUrl = () => {
     const u = new URL(planUrl(currentPlan(), view));
     if (designId) u.searchParams.set("design", designId);
     history.replaceState(null, "", u.toString());
+    refreshShopList();
+  };
+  const listUrl = () => `${new URL("/list.html", location.href)}?plan=${encodePlan(currentPlan())}`;
+  const shoppingRows = () => {
+    const counts = new Map<string, number>();
+    for (const it of currentPlan().items) counts.set(it.productId, (counts.get(it.productId) ?? 0) + 1);
+    return [...counts].flatMap(([id, qty]) => { const e = catalog.get(id); return e ? [{ product: e.product, qty }] : []; });
   };
 
   const applySun = (s: SunSettings) => {
@@ -333,10 +341,13 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     });
 
     // Right drawer: furniture browser + shopping agent.
-    mountShopBar(document.getElementById("rightbar")!, {
+    const shopBar = mountShopBar(document.getElementById("rightbar")!, {
+      rows: shoppingRows,
+      listUrl,
       addFromUrl: (url) => importer.open(url),
       measure: (cb) => measure.measureOnce(cb),
     });
+    refreshShopList = () => shopBar.refresh();
 
     // Reset: back to an empty room with the same measurements (two clicks, no dialog).
     const reset = document.getElementById("reset-design")!;
@@ -354,7 +365,8 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     });
     const sharePopup = mountSharePopup(document.getElementById("share-popup")!, {
       link: () => planUrl(currentPlan(), true),
-      listUrl: () => `${new URL("/list.html", location.href)}?plan=${encodePlan(currentPlan())}`,
+      listUrl,
+      rows: shoppingRows,
     });
     share.addEventListener("click", () => void sharePopup.open());
     if (plan?.items.length) await placement.loadItems(plan.items, plan.openItems, plan.ign);
