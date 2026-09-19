@@ -106,9 +106,15 @@ result, so the manual form always works.
   reaches the catalog). `priceUsd: 0` means "unpriced".
 - `productSearch.ts` — `rankSearchResults(query, drafts)`: 0.4 price fit +
   0.4 size fit + 0.2 style. Over-limit results sort last but are never hidden.
+- `productText.ts` — `parseProductText(text, unit)`: reads a pasted
+  "Product information" block (Amazon, IKEA, any store) in the browser:
+  selling price (ignores list price / savings), `W x D x H` dimensions with
+  their unit, a title, and a category guess. This is the path that always
+  works, even for stores that block the API's reader.
 - `ImportProductForm` props: `onProductCreated`, `draft?` (prefill),
-  `fetchDraft?` (test injection). Shows how each field was obtained
-  (structured data / page text / AI / fixture / by hand).
+  `fetchDraft?` (test injection). Three ways in: read a link, paste the
+  details, or type them. Shows how each field was obtained (structured data /
+  page text / AI / fixture / by hand).
 - `ProductSearchForm` props: `defaultMaxPriceUsd` (pass
   `summary.remainingUsd`), `onPickResult` (hand the draft to the import form),
   `search?` (test injection).
@@ -116,9 +122,12 @@ result, so the manual form always works.
 API contract (see `services/api/.../routes/products.py`): `POST
 /api/v1/products/import { url }` and `POST /api/v1/products/search
 { category, keywords?, targetDimensionsM?, maxPriceUsd?, styleTags?, limit? }`.
-Both return camelCase `ProductDraft`s, never `Product`s. With
-`DREAMGRID_PRODUCT_SOURCING=fixture` (default) search reads
-`fixtures/search-results.json` and no key is needed.
+Both return camelCase `ProductDraft`s, never `Product`s. Without an OpenAI
+key, search reads `fixtures/search-results.json` and import reads only what
+the page itself states. With a key (`OPENAI_KEY` in the repo-root `.env` is
+enough), import falls back to an AI web-search lookup when a store blocks
+direct reading (Amazon, IKEA, Wayfair, Target), the AI fills dimensions the
+page did not state, and search returns live US listings.
 
 **Ownership note:** the manifesto gives the import-product UI to Cindy. These
 two forms live here so the sourcing pipeline could be built end to end; Cindy

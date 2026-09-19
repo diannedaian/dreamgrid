@@ -77,6 +77,14 @@ function toNumber(raw: string): number {
   return Number(raw.replace(",", "."));
 }
 
+/** The numbers as written, before any unit conversion. */
+export type ParsedDimensionValues = {
+  width: number;
+  height: number;
+  depth: number;
+  unit: LengthUnit;
+};
+
 /**
  * Parse "W x D x H"-style text into meters. Axis letters win when present;
  * otherwise the order is assumed to be width, depth, height (the retail
@@ -86,6 +94,21 @@ export function parseDimensionString(
   text: string,
   fallbackUnit: LengthUnit = "in",
 ): ParsedDimensions | null {
+  const values = parseDimensionValues(text, fallbackUnit);
+  if (!values) return null;
+  return {
+    widthM: toMeters(values.width, values.unit),
+    depthM: toMeters(values.depth, values.unit),
+    heightM: toMeters(values.height, values.unit),
+    unit: values.unit,
+  };
+}
+
+/** Same parse as `parseDimensionString`, but keeps the numbers as written. */
+export function parseDimensionValues(
+  text: string,
+  fallbackUnit: LengthUnit = "in",
+): ParsedDimensionValues | null {
   const match = TRIPLE.exec(text);
   if (!match) return null;
 
@@ -110,12 +133,7 @@ export function parseDimensionString(
       ? [byAxis.get("W") ?? 0, byAxis.get("D") ?? 0, byAxis.get("H") ?? 0]
       : [entries[0].value, entries[1].value, entries[2].value];
 
-  return {
-    widthM: toMeters(width, unit),
-    depthM: toMeters(depth, unit),
-    heightM: toMeters(height, unit),
-    unit,
-  };
+  return { width, height, depth, unit };
 }
 
 export function toDimensionsM(parsed: ParsedDimensions): DimensionsM {

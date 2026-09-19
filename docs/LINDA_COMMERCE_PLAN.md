@@ -458,3 +458,33 @@ Not done / open:
 - `/demo-assets/previews/placeholder.webp` (used as the image for hand-entered
   products and fixture search results) does not exist yet; Dianne's asset PR
   should add a small placeholder image.
+
+### 2026-09-19 (evening): blocked-store fallbacks, live OpenAI verified
+
+Linda put `OPENAI_KEY` in the repo-root `.env` (git-ignored). Changes:
+
+- `config.py`: also loads the repo-root `.env`; accepts
+  `DREAMGRID_OPENAI_API_KEY` / `OPENAI_API_KEY` / `OPENAI_KEY`;
+  `product_sourcing` defaults to `auto` (live iff a key exists).
+- `adapters/commerce/url_lookup.py` (`OpenAIUrlLookup`): when a fetch is
+  blocked (4xx/5xx, timeout) or the page is a JavaScript shell, ask the model
+  with `web_search` to identify the exact listing from the URL. Labeled `llm`
+  with a "store blocked direct reading" note; `NullUrlLookup` without a key.
+- `productText.ts` + a textarea in `ImportProductForm`: paste the store's
+  product-details block; price/dimensions/title/category are parsed in the
+  browser. Works for every store, no key needed.
+- Search prompt now restricts to US retailers and USD prices (the first live
+  run returned Swiss/UK/Australian stores).
+
+Live results with the real key (API in auto mode):
+
+| Call | Time | Result |
+|---|---|---|
+| search desk ≤ $60, 100×75×50 cm | 6 s | 4 real listings with dims; first run non-US, fixed by prompt |
+| import amazon.com/dp/B0BW8S1N3C (IKEA MICKE) | 4 s | fetch blocked → lookup: title, 1.05×0.75×0.5 m, category desk; price not verified → user fills |
+
+Test counts: web 86, contracts 8, API 44. All checks pass.
+
+Cost/latency note: each live search or lookup is one Responses API call with
+web search, roughly 4 to 8 s. Results are cached per URL/query in the API
+process, so rehearsing the same demo inputs is free after the first run.

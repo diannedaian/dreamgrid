@@ -28,6 +28,7 @@ from dreamgrid_api.adapters.commerce.search_provider import (
     OpenAIWebSearchProvider,
     SearchProvider,
 )
+from dreamgrid_api.adapters.commerce.url_lookup import NullUrlLookup, OpenAIUrlLookup, UrlLookup
 from dreamgrid_api.boundaries.product_sourcing import ProductDraft, ProductQuery, SearchOutcome
 from dreamgrid_api.config import Settings
 
@@ -63,10 +64,12 @@ class ProductSourcingService:
         fetcher: PageFetcher,
         extractor: ProductExtractor,
         search_provider: SearchProvider,
+        url_lookup: UrlLookup | None = None,
     ) -> None:
         self._fetcher = fetcher
         self._extractor = extractor
         self._search_provider = search_provider
+        self._url_lookup = url_lookup or NullUrlLookup()
         self._import_cache: _LruCache[str, ProductDraft] = _LruCache()
         self._search_cache: _LruCache[tuple[object, ...], SearchOutcome] = _LruCache()
 
@@ -80,13 +83,25 @@ class ProductSourcingService:
             validate_public_http_url(key)
             page = await self._fetcher.fetch(key)
         except PageFetchError as error:
-            return manual_draft(key, f"{error} Enter the details by hand.")
+            return await self._blocked(key, f"{error} Enter the details by hand.")
 
         draft = parse_product_page(page.html, page.final_url or key)
+        if draft.extraction_method == "manual":
+            # A bot wall or JavaScript shell: nothing to extract from, try a lookup.
+            return await self._blocked(key, draft.note or "Enter the details by hand.")
         if draft.missing:
             draft = await self._extractor.extract(draft, visible_text(page.html))
         self._import_cache.put(key, draft)
         return draft
+
+    async def _blocked(self, url: str, note: str) -> ProductDraft:
+        """The page could not be read directly; try a web-search lookup if one is configured."""
+
+        found = await self._url_lookup.lookup(url)
+        if found is None:
+            return manual_draft(url, note)
+        self._import_cache.put(url, found)
+        return found
 
     async def search(self, query: ProductQuery, *, limit: int = 8) -> SearchOutcome:
         key = (
@@ -130,11 +145,13 @@ def build_product_sourcing(settings: Settings) -> ProductSourcingService:
 
     extractor: ProductExtractor = NullProductExtractor()
     search: SearchProvider = fixture_search
-    if settings.product_sourcing == "live" and settings.openai_api_key:
+    lookup: UrlLookup = NullUrlLookup()
+    if settings.sourcing_is_live and settings.openai_api_key:
         model = OpenAIResponsesModel(
             settings.openai_api_key.get_secret_value(), settings.openai_model
         )
         extractor = LlmProductExtractor(model)
         search = OpenAIWebSearchProvider(model, tool_type=settings.openai_web_search_tool)
+        lookup = OpenAIUrlLookup(model, tool_type=settings.openai_web_search_tool)
 
-    return ProductSourcingService(HttpxPageFetcher(), extractor, search)
+    return ProductSourcingService(HttpxPageFetcher(), extractor, search, lookup)

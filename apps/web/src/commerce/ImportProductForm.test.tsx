@@ -86,3 +86,42 @@ describe("ImportProductForm", () => {
     expect(onProductCreated.mock.calls[0][0].merchant).toBe("amazon.com");
   });
 });
+
+describe("ImportProductForm pasted text", () => {
+  it("fills price and dimensions from an Amazon-style paste and creates the product", () => {
+    const onProductCreated = vi.fn();
+    render(<ImportProductForm onProductCreated={onProductCreated} />);
+
+    fireEvent.change(screen.getByLabelText(/paste the product details/), {
+      target: {
+        value:
+          "SONGMICS Computer Desk, 47.2 Inch Home Office Desk\nList Price: $129.99\nPrice: $89.99\nProduct Dimensions: 23.6\"D x 47.2\"W x 29.5\"H",
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Read details from text" }));
+
+    expect(screen.getByText(/Read dimensions, priceUsd, title, category/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Title")).toHaveValue("SONGMICS Computer Desk, 47.2 Inch Home Office Desk");
+    expect(screen.getByLabelText("Price (USD)")).toHaveValue(89.99);
+    expect(screen.getByLabelText("Width")).toHaveValue(47.2);
+    expect(screen.getByLabelText("Depth")).toHaveValue(23.6);
+    expect(screen.getByLabelText("Height")).toHaveValue(29.5);
+    expect(screen.getByLabelText("Category")).toHaveValue("desk");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add to catalog" }));
+
+    expect(onProductCreated).toHaveBeenCalledTimes(1);
+    expect(onProductCreated.mock.calls[0][0].dimensionsM).toEqual([1.199, 0.749, 0.599]);
+  });
+
+  it("says so when nothing is recognized", () => {
+    render(<ImportProductForm onProductCreated={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText(/paste the product details/), {
+      target: { value: "hello there" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Read details from text" }));
+
+    expect(screen.getByText(/No title, price, or W x D x H/)).toBeInTheDocument();
+  });
+});

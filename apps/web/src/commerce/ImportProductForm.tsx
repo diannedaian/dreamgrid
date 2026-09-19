@@ -10,6 +10,7 @@ import {
   type FieldErrors,
   type ProductFormFields,
 } from "./draftToProduct";
+import { parseProductText } from "./productText";
 import { LENGTH_UNITS, type LengthUnit } from "./units";
 
 export type ImportProductFormProps = {
@@ -43,6 +44,8 @@ export function ImportProductForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [fetching, setFetching] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
+  const [pastedText, setPastedText] = useState("");
+  const [pasteMessage, setPasteMessage] = useState<string>();
 
   useEffect(() => {
     if (draft) {
@@ -67,6 +70,19 @@ export function ImportProductForm({
     } finally {
       setFetching(false);
     }
+  }
+
+  /** Runs in the browser, so it works even when the store blocks the API's reader. */
+  function handleReadPastedText() {
+    const parsed = parseProductText(pastedText, fields.unit);
+    const { found, ...values } = parsed;
+    if (found.length === 0) {
+      setPasteMessage("No title, price, or W x D x H dimensions were recognized in that text.");
+      return;
+    }
+    setFields((current) => ({ ...current, ...values }));
+    setErrors({});
+    setPasteMessage(`Read ${found.join(", ")} from the pasted text; please check the values.`);
   }
 
   function handleSubmit(event: FormEvent) {
@@ -118,6 +134,22 @@ export function ImportProductForm({
             : ""}
         </p>
       )}
+
+      <div className="commerce-import__paste">
+        <label>
+          Or paste the product details (title, price, dimensions) from the store page
+          <textarea
+            rows={4}
+            value={pastedText}
+            onChange={(event) => setPastedText(event.target.value)}
+            placeholder={'Product Dimensions: 23.6"D x 47.2"W x 29.5"H\nPrice: $89.99'}
+          />
+        </label>
+        <button type="button" onClick={handleReadPastedText} disabled={!pastedText.trim()}>
+          Read details from text
+        </button>
+        {pasteMessage && <p className="commerce-import__paste-message">{pasteMessage}</p>}
+      </div>
 
       <label>
         Title

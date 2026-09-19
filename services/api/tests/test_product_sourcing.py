@@ -32,6 +32,7 @@ from dreamgrid_api.adapters.commerce.search_provider import (
     FixtureSearchProvider,
     OpenAIWebSearchProvider,
 )
+from dreamgrid_api.adapters.commerce.url_lookup import OpenAIUrlLookup
 from dreamgrid_api.boundaries.product_sourcing import (
     ProductDraft,
     ProductQuery,
@@ -348,19 +349,144 @@ async def test_service_caches_non_empty_search_results() -> None:
     assert search.calls == 1
 
 
+# --- blocked page -> web-search lookup -------------------------------------------
+
+
+LOOKUP_REPLY = json.dumps(
+    {
+        "found": True,
+        "title": "SONGMICS Computer Desk",
+        "priceUsd": 89.99,
+        "merchant": "Amazon",
+        "imageUrl": "https://m.media-amazon.com/x.jpg",
+        "widthCm": 120,
+        "heightCm": 75,
+        "depthCm": 60,
+        "category": "desk",
+        "styleTags": ["Modern"],
+        "colorTags": ["black"],
+    }
+)
+
+NOT_FOUND_REPLY = json.dumps(
+    {
+        "found": False,
+        "title": None,
+        "priceUsd": None,
+        "merchant": None,
+        "imageUrl": None,
+        "widthCm": None,
+        "heightCm": None,
+        "depthCm": None,
+        "category": None,
+        "styleTags": [],
+        "colorTags": [],
+    }
+)
+
+
+@pytest.mark.anyio
+async def test_blocked_fetch_falls_back_to_lookup(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "dreamgrid_api.adapters.commerce.product_sourcing_service.validate_public_http_url",
+        lambda url: url,
+    )
+    url = "https://www.amazon.com/dp/B07ABCDEFG"
+    fetcher = FakeFetcher({}, fail={url: "The store answered with HTTP 503."})
+    model = FakeModel(LOOKUP_REPLY)
+    service = ProductSourcingService(
+        fetcher, NullProductExtractor(), fixture_search(), OpenAIUrlLookup(model)
+    )
+
+    draft = await service.import_from_url(url)
+    again = await service.import_from_url(url)
+
+    assert draft.title == "SONGMICS Computer Desk"
+    assert draft.price_usd == Decimal("89.99")
+    assert draft.dimensions_m == (1.2, 0.75, 0.6)
+    assert draft.category == "desk"
+    assert draft.extraction_method == "llm"
+    assert draft.missing == ()
+    assert draft.note is not None and "blocked" in draft.note
+    assert "B07ABCDEFG" in model.calls[0]["input"]
+    assert model.calls[0]["tools"] == ({"type": "web_search"},)
+    assert again is draft and len(model.calls) == 1  # cached
+
+
+@pytest.mark.anyio
+async def test_javascript_shell_also_triggers_lookup(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "dreamgrid_api.adapters.commerce.product_sourcing_service.validate_public_http_url",
+        lambda url: url,
+    )
+    url = "https://www.ikea.com/us/en/p/x"
+    shell = "<html><head><title>Products</title></head><body><div id=app></div></body></html>"
+    service = ProductSourcingService(
+        FakeFetcher({url: shell}),
+        NullProductExtractor(),
+        fixture_search(),
+        OpenAIUrlLookup(FakeModel(LOOKUP_REPLY)),
+    )
+
+    draft = await service.import_from_url(url)
+
+    assert draft.extraction_method == "llm"
+    assert draft.title == "SONGMICS Computer Desk"
+
+
+@pytest.mark.anyio
+async def test_lookup_not_found_or_failing_yields_manual_draft(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "dreamgrid_api.adapters.commerce.product_sourcing_service.validate_public_http_url",
+        lambda url: url,
+    )
+    url = "https://www.amazon.com/dp/B0NOTFOUND"
+    fetcher = FakeFetcher({}, fail={url: "The store answered with HTTP 503."})
+    service = ProductSourcingService(
+        fetcher,
+        NullProductExtractor(),
+        fixture_search(),
+        OpenAIUrlLookup(FakeModel(NOT_FOUND_REPLY)),
+    )
+    draft = await service.import_from_url(url)
+    assert draft.extraction_method == "manual"
+    assert draft.note is not None and "503" in draft.note
+
+    failing = OpenAIUrlLookup(FakeModel(OpenAIError("OpenAI answered HTTP 500.")))
+    service = ProductSourcingService(fetcher, NullProductExtractor(), fixture_search(), failing)
+    draft = await service.import_from_url(url)
+    assert draft.extraction_method == "manual"
+
+
 # --- settings / factory -----------------------------------------------------
 
 
 def test_factory_defaults_to_fixture_components_without_a_key() -> None:
-    service = build_product_sourcing(Settings(environment="test"))
+    settings = Settings(environment="test", product_sourcing="auto", openai_api_key=None)
+    service = build_product_sourcing(settings)
+    assert not settings.sourcing_is_live
     assert isinstance(service, ProductSourcingService)
     assert isinstance(service._extractor, NullProductExtractor)  # noqa: SLF001
     assert isinstance(service._search_provider, FixtureSearchProvider)  # noqa: SLF001
 
 
+def test_auto_mode_goes_live_when_a_key_is_present() -> None:
+    settings = Settings(environment="test", product_sourcing="auto", openai_api_key="sk-test")
+    assert settings.sourcing_is_live
+    service = build_product_sourcing(settings)
+    assert isinstance(service._url_lookup, OpenAIUrlLookup)  # noqa: SLF001
+
+
+def test_fixture_mode_ignores_a_present_key() -> None:
+    settings = Settings(environment="test", product_sourcing="fixture", openai_api_key="sk-test")
+    assert not settings.sourcing_is_live
+
+
 @pytest.mark.anyio
 async def test_default_fixture_path_points_at_the_repo_fixtures() -> None:
-    service = build_product_sourcing(Settings(environment="test"))
+    service = build_product_sourcing(Settings(environment="test", product_sourcing="fixture"))
     outcome = await service.search(ProductQuery(category="desk"))
     assert outcome.source == "fixture"
     assert len(outcome.results) == 3

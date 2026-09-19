@@ -1,24 +1,31 @@
 """Application settings loaded from environment variables."""
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_API_DIR = Path(__file__).resolve().parents[2]  # services/api
+_REPO_ROOT = _API_DIR.parents[1]
 
 
 class Settings(BaseSettings):
     """Runtime configuration for the API.
 
     Environment variables use the ``DREAMGRID_`` prefix. For example,
-    ``DREAMGRID_ENVIRONMENT=test`` overrides ``environment``.
+    ``DREAMGRID_ENVIRONMENT=test`` overrides ``environment``. Values are read
+    from the process environment, then ``services/api/.env``, then the
+    repository-root ``.env`` (earlier sources win).
     """
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(_REPO_ROOT / ".env", _API_DIR / ".env", ".env"),
         env_file_encoding="utf-8",
         env_prefix="DREAMGRID_",
         extra="ignore",
+        populate_by_name=True,
     )
 
     app_name: str = "DreamGrid API"
@@ -30,13 +37,22 @@ class Settings(BaseSettings):
         default_factory=lambda: ["http://localhost:3000", "http://localhost:5173"]
     )
 
-    # Linda: product sourcing (URL import + search). "fixture" needs no key and is
-    # the demo default; "live" uses OpenAI for extraction and web search.
-    product_sourcing: Literal["fixture", "live"] = "fixture"
-    openai_api_key: SecretStr | None = None
+    # Linda: product sourcing (URL import + search). "auto" is live when a key is
+    # present and fixture otherwise, so the demo never depends on a key.
+    product_sourcing: Literal["auto", "fixture", "live"] = "auto"
+    openai_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("DREAMGRID_OPENAI_API_KEY", "OPENAI_API_KEY", "OPENAI_KEY"),
+    )
     openai_model: str = "gpt-4.1-mini"
     openai_web_search_tool: str = "web_search"
     fixtures_dir: str | None = None
+
+    @property
+    def sourcing_is_live(self) -> bool:
+        if self.product_sourcing == "live":
+            return True
+        return self.product_sourcing == "auto" and self.openai_api_key is not None
 
 
 @lru_cache
