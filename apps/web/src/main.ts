@@ -27,7 +27,7 @@ import { mountImporter } from "./catalog/importer";
 import { createDesignStore } from "./interactions/designs";
 import { mountDesignsBar } from "./catalog/designsBar";
 import { mountShopBar } from "./catalog/shopBar";
-import { importProductUrl } from "./catalog/importer";
+import { saveGeneratedEntry } from "./catalog/generatedCatalog";
 
 const overlay = document.getElementById("dims") as HTMLDivElement;
 const form = document.getElementById("dims-form") as HTMLFormElement;
@@ -267,10 +267,12 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       thumbnail: (entry, size) => thumbs.render(entry, size),
       onAdd: (entry) => placement!.add(entry.product, entry.asset, [0, 0, 0]),
     });
-    const onImported = (r: { product: Product; asset: ModelAsset }) => {
+    const onImported = async (r: { product: Product; asset: ModelAsset }) => {
+      // Await the actual GLB before reporting success. No placeholder for live imports.
+      await placement!.add(r.product, r.asset, [0, 0, 0]);
       catalog.add([r.product], [r.asset]);
-      const entry = catalog.get(r.product.id);
-      if (entry) detail.open(entry);
+      try { saveGeneratedEntry(r); }
+      catch { hint.hidden = false; hint.textContent = "Model added, but browser storage is full. It may not survive a reload."; }
     };
     const importer = mountImporter(document.getElementById("import-popup")!, onImported);
     mountSidebar(sidebar, {
@@ -330,7 +332,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
 
     // Right drawer: furniture browser + shopping agent.
     mountShopBar(document.getElementById("rightbar")!, {
-      addFromUrl: async (url) => { const r = await importProductUrl(url); onImported(r); return { title: r.product.title }; },
+      addFromUrl: (url) => importer.open(url),
       measure: (cb) => measure.measureOnce(cb),
     });
 

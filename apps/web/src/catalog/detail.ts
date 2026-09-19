@@ -25,7 +25,7 @@ export function mountDetail(root: HTMLElement, o: DetailOptions): { open: (entry
         <div class="body">
           <div class="cat">${esc(product.category)}</div>
           <h2>${esc(product.title)}</h2>
-          <div class="price">$${product.priceUsd}<span> · ${esc(product.merchant || "Catalog")}</span></div>
+          <div class="price">${product.styleTags.includes("price-not-provided") ? "Price not provided" : `$${product.priceUsd}`}<span> · ${esc(product.merchant || "Catalog")}</span></div>
           <dl>
             <dt>Size</dt><dd>${inches(w)}″ W × ${inches(d)}″ D × ${inches(h)}″ H</dd>
             ${product.styleTags.length ? `<dt>Style</dt><dd>${product.styleTags.map(esc).join(", ")}</dd>` : ""}

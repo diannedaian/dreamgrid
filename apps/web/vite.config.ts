@@ -75,7 +75,7 @@ function measureRelay(): Plugin {
   };
 }
 
-/** POST /api/import-product { url } → { product, asset, spec } (dev/preview only). */
+/** Legacy spec importer is kept for old cached assets; the UI uses /api/v1/models. */
 /**
  * Shopping endpoints (dev/preview only):
  *   POST /api/import-product   { url }                  → catalog entry + FurnitureSpec (OpenAI, vision)
@@ -129,11 +129,14 @@ function baseConfig(env: Record<string, string>) { return ({
   // https by default (self-signed): iOS Safari only allows the camera and motion sensors used by
   // /measure.html over https. Accept the certificate warning once per device. DREAMGRID_HTTP=1 disables.
   plugins: [measureRelay(), shopApi(env), ...(process.env.DREAMGRID_HTTP ? [] : [basicSsl()])],
+  // Browser talks to this origin; only versioned API paths reach FastAPI.
+  // Sol analysis can take several minutes. This does not proxy shopping/phone routes.
+  server: { host: true, fs: { allow: ["../.."] }, proxy: { "/api/v1": { target: env.DREAMGRID_API_TARGET || "http://127.0.0.1:8000", timeout: 690_000, proxyTimeout: 690_000 } } },
+  preview: { proxy: { "/api/v1": { target: env.DREAMGRID_API_TARGET || "http://127.0.0.1:8000", timeout: 690_000, proxyTimeout: 690_000 } } },
   resolve: {
     alias: {
       "@contracts": fileURLToPath(new URL("../../packages/contracts/index.ts", import.meta.url)),
     },
   },
-  server: { host: true, fs: { allow: ["../.."] } },
   build: { rollupOptions: { input: { main: "index.html", measure: "measure.html" } } },
 }); }

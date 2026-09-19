@@ -60,6 +60,28 @@ export type ModelAsset = {
   generationMethod: GenerationMethod;
   status: ModelAssetStatus;
   disclosure: string;
+  lighting?: ModelLighting;
+};
+
+/** Local coordinates are final GLB meters, BEFORE SceneItem placement/rotation. */
+export type ModelLight = {
+  id: string;
+  type: "point" | "spot";
+  positionM: PositionM;
+  direction: PositionM;
+  colorHex: string;
+  intensityCd: number;
+  rangeM: number;
+  coneAngleRad: number;
+  penumbra: number;
+  emissiveMaterialNames: string[];
+};
+
+export type ModelLighting = {
+  coordinateSpace: "model-local";
+  activation: "night";
+  sources: ModelLight[];
+  disclosure: string;
 };
 
 export type SceneItem = {
@@ -80,7 +102,7 @@ export type RoomState = {
  * The restricted vocabulary accepted by the trusted Blender interpreter.
  * `dimensionsM` is always the part's width/height/depth bounding box.
  */
-export type FurniturePrimitive = "box" | "rounded-box" | "cylinder" | "shade";
+export type FurniturePrimitive = "box" | "rounded-box" | "cylinder" | "shade" | "sphere" | "lathe" | "tube";
 
 export type FurniturePartRole =
   | "body"
@@ -113,6 +135,9 @@ export type FurniturePart = {
   materialId: string;
   cornerRadiusM?: number;
   repeat?: PartRepeat;
+  profile?: [radius: number, height: number][];
+  pathM?: PositionM[];
+  tubeRadiusM?: number;
 };
 
 /**
@@ -126,4 +151,6 @@ export type FurnitureSpec = {
   dimensionsM: DimensionsM;
   materials: FurnitureMaterial[];
   parts: FurniturePart[];
+  lights?: { id: string; position: PositionM; direction: PositionM;
+    kind: "point" | "spot"; glowMaterials: string[] }[];
 };

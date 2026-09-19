@@ -1,0 +1,582 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dreamgrid.dev/schemas/model-pipeline.schema.json",
+  "title": "ModelPipeline",
+  "$defs": {
+    "PrepareRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "imageDataUrl": {
+          "maxLength": 8000000,
+          "minLength": 30,
+          "title": "Imagedataurl",
+          "type": "string"
+        },
+        "sourceUrl": {
+          "anyOf": [
+            {
+              "maxLength": 2048,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sourceurl"
+        },
+        "productText": {
+          "default": "",
+          "maxLength": 6000,
+          "title": "Producttext",
+          "type": "string"
+        },
+        "categoryHint": {
+          "anyOf": [
+            {
+              "enum": [
+                "bed",
+                "desk",
+                "chair",
+                "shelf",
+                "lamp",
+                "decor"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Categoryhint"
+        },
+        "mode": {
+          "default": "live",
+          "enum": [
+            "live",
+            "preset"
+          ],
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "required": [
+        "imageDataUrl"
+      ],
+      "title": "PrepareRequest",
+      "type": "object"
+    },
+    "DimensionReview": {
+      "additionalProperties": false,
+      "properties": {
+        "width": {
+          "$ref": "#/$defs/Measurement"
+        },
+        "height": {
+          "$ref": "#/$defs/Measurement"
+        },
+        "depth": {
+          "$ref": "#/$defs/Measurement"
+        }
+      },
+      "required": [
+        "width",
+        "height",
+        "depth"
+      ],
+      "title": "DimensionReview",
+      "type": "object"
+    },
+    "Measurement": {
+      "additionalProperties": false,
+      "properties": {
+        "valueM": {
+          "maximum": 5,
+          "minimum": 0.05,
+          "title": "Valuem",
+          "type": "number"
+        },
+        "source": {
+          "enum": [
+            "product_text",
+            "product_url",
+            "image_label",
+            "estimated",
+            "user"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "evidence": {
+          "maxLength": 240,
+          "title": "Evidence",
+          "type": "string"
+        }
+      },
+      "required": [
+        "valueM",
+        "source",
+        "evidence"
+      ],
+      "title": "Measurement",
+      "type": "object"
+    },
+    "Usage": {
+      "additionalProperties": false,
+      "properties": {
+        "inputTokens": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Inputtokens",
+          "type": "integer"
+        },
+        "outputTokens": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Outputtokens",
+          "type": "integer"
+        },
+        "cached": {
+          "default": false,
+          "title": "Cached",
+          "type": "boolean"
+        }
+      },
+      "title": "Usage",
+      "type": "object"
+    },
+    "PreparedImport": {
+      "additionalProperties": false,
+      "properties": {
+        "importId": {
+          "title": "Importid",
+          "type": "string"
+        },
+        "expiresAt": {
+          "title": "Expiresat",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "bed",
+            "desk",
+            "chair",
+            "shelf",
+            "lamp",
+            "decor"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "template": {
+          "anyOf": [
+            {
+              "enum": [
+                "bed",
+                "desk-pedestal",
+                "desk-table",
+                "chair",
+                "chair-sled",
+                "shelf",
+                "lamp"
+              ],
+              "type": "string"
+            },
+            {
+              "const": "custom",
+              "type": "string"
+            }
+          ],
+          "title": "Template"
+        },
+        "dimensions": {
+          "$ref": "#/$defs/DimensionReview"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        },
+        "analysisMethod": {
+          "enum": [
+            "gpt",
+            "preset"
+          ],
+          "title": "Analysismethod",
+          "type": "string"
+        },
+        "usage": {
+          "$ref": "#/$defs/Usage"
+        }
+      },
+      "required": [
+        "importId",
+        "expiresAt",
+        "title",
+        "category",
+        "template",
+        "dimensions",
+        "warnings",
+        "analysisMethod",
+        "usage"
+      ],
+      "title": "PreparedImport",
+      "type": "object"
+    },
+    "Dimensions": {
+      "additionalProperties": false,
+      "properties": {
+        "widthM": {
+          "maximum": 5,
+          "minimum": 0.05,
+          "title": "Widthm",
+          "type": "number"
+        },
+        "heightM": {
+          "maximum": 5,
+          "minimum": 0.05,
+          "title": "Heightm",
+          "type": "number"
+        },
+        "depthM": {
+          "maximum": 5,
+          "minimum": 0.05,
+          "title": "Depthm",
+          "type": "number"
+        }
+      },
+      "required": [
+        "widthM",
+        "heightM",
+        "depthM"
+      ],
+      "title": "Dimensions",
+      "type": "object"
+    },
+    "GenerateRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "importId": {
+          "pattern": "^[a-f0-9]{32}$",
+          "title": "Importid",
+          "type": "string"
+        },
+        "productId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Productid",
+          "type": "string"
+        },
+        "dimensions": {
+          "$ref": "#/$defs/Dimensions"
+        },
+        "confirmed": {
+          "const": true,
+          "title": "Confirmed",
+          "type": "boolean"
+        },
+        "acceptEstimated": {
+          "default": false,
+          "title": "Acceptestimated",
+          "type": "boolean"
+        },
+        "estimatedAxes": {
+          "items": {
+            "enum": [
+              "width",
+              "height",
+              "depth"
+            ],
+            "type": "string"
+          },
+          "maxItems": 3,
+          "title": "Estimatedaxes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "importId",
+        "productId",
+        "dimensions",
+        "confirmed"
+      ],
+      "title": "GenerateRequest",
+      "type": "object"
+    },
+    "GenerationJob": {
+      "additionalProperties": false,
+      "properties": {
+        "jobId": {
+          "title": "Jobid",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "queued",
+            "generating",
+            "ready",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "asset": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModelAsset"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "dimensions": {
+          "$ref": "#/$defs/DimensionReview"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "cached": {
+          "default": false,
+          "title": "Cached",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "jobId",
+        "status",
+        "dimensions"
+      ],
+      "title": "GenerationJob",
+      "type": "object"
+    },
+    "dimensionsM": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      ],
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "ModelLight": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "point",
+            "spot"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "positionM": {
+          "items": {
+            "maximum": 20,
+            "minimum": -20,
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Positionm",
+          "type": "array"
+        },
+        "direction": {
+          "items": {
+            "maximum": 20,
+            "minimum": -20,
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Direction",
+          "type": "array"
+        },
+        "colorHex": {
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "title": "Colorhex",
+          "type": "string"
+        },
+        "intensityCd": {
+          "maximum": 500,
+          "minimum": 0,
+          "title": "Intensitycd",
+          "type": "number"
+        },
+        "rangeM": {
+          "exclusiveMinimum": 0,
+          "maximum": 20,
+          "title": "Rangem",
+          "type": "number"
+        },
+        "coneAngleRad": {
+          "exclusiveMinimum": 0,
+          "maximum": 1.5708,
+          "title": "Coneanglerad",
+          "type": "number"
+        },
+        "penumbra": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Penumbra",
+          "type": "number"
+        },
+        "emissiveMaterialNames": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Emissivematerialnames",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "positionM",
+        "direction",
+        "colorHex",
+        "intensityCd",
+        "rangeM",
+        "coneAngleRad",
+        "penumbra",
+        "emissiveMaterialNames"
+      ],
+      "title": "ModelLight",
+      "type": "object"
+    },
+    "Lighting": {
+      "additionalProperties": false,
+      "properties": {
+        "coordinateSpace": {
+          "const": "model-local",
+          "title": "Coordinatespace",
+          "type": "string"
+        },
+        "activation": {
+          "const": "night",
+          "title": "Activation",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ModelLight"
+          },
+          "maxItems": 4,
+          "title": "Sources",
+          "type": "array"
+        },
+        "disclosure": {
+          "title": "Disclosure",
+          "type": "string"
+        }
+      },
+      "required": [
+        "coordinateSpace",
+        "activation",
+        "sources",
+        "disclosure"
+      ],
+      "title": "Lighting",
+      "type": "object"
+    },
+    "ModelAsset": {
+      "title": "ModelAsset",
+      "description": "A normalized GLB and a truthful description of how it was produced.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "productId",
+        "glbUrl",
+        "dimensionsM",
+        "pivot",
+        "forwardAxis",
+        "generationMethod",
+        "status",
+        "disclosure"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "productId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "glbUrl": {
+          "type": "string",
+          "minLength": 1
+        },
+        "previewUrl": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dimensionsM": {
+          "$ref": "#/$defs/dimensionsM"
+        },
+        "pivot": {
+          "const": "bottom-center"
+        },
+        "forwardAxis": {
+          "const": "+Z"
+        },
+        "generationMethod": {
+          "enum": [
+            "gpt-blender",
+            "meshy",
+            "tripo",
+            "public-preset"
+          ]
+        },
+        "status": {
+          "enum": [
+            "queued",
+            "generating",
+            "ready",
+            "failed"
+          ]
+        },
+        "disclosure": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lighting": {
+          "$ref": "#/$defs/Lighting"
+        }
+      }
+    }
+  }
+}

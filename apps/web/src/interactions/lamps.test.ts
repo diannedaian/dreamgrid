@@ -17,7 +17,7 @@ function lights(root: Object3D): (PointLight | SpotLight)[] {
 describe("lamp registry", () => {
   it("loads the real Sol GLB with two aligned, movable night lights and independent instances", async () => {
     const bytes = readFileSync(new URL("../../public/demo-assets/torchiere-task-lamp.glb", import.meta.url));
-    vi.stubGlobal("fetch", vi.fn(async () => ({ arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) })));
     const product = catalog.products.find((p) => p.id === "torchiere-task-lamp") as Product;
     const asset = catalog.assets.find((a) => a.id === product.modelAssetId) as ModelAsset;
     const lamp = await loadModel(product, asset);

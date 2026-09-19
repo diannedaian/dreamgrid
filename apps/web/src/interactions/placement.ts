@@ -175,13 +175,24 @@ export class PlacementController {
 
   async loadItems(items: SceneItem[], openItemIds: string[] = [], ignoredIds: string[] = []) {
     for (const id of ignoredIds) this.ignored.add(id);
+    let unavailable = 0;
     for (const it of items) {
       const entry = this.catalog.get(it.productId);
       if (!entry) continue;
-      await this.add(entry.product, entry.asset, it.positionM, it.rotationYDeg, it.id);
-      if (openItemIds.includes(it.id)) this.placed.get(it.id)?.state?.setOpen(true);
+      try {
+        await this.add(entry.product, entry.asset, it.positionM, it.rotationYDeg, it.id);
+        if (openItemIds.includes(it.id)) this.placed.get(it.id)?.state?.setOpen(true);
+      } catch {
+        // Preserve the saved placement for recovery; do not invent a mesh.
+        this.items.push({ ...it });
+        unavailable++;
+      }
     }
     this.emit();
+    if (unavailable && this.warn) {
+      this.warn.hidden = false;
+      this.warn.textContent = `${unavailable} generated model(s) could not load. Start the backend and reload. Saved placements are preserved.`;
+    }
   }
 
   /** Door swings to check furniture against (hover shows a red warning when something blocks one). */
@@ -386,7 +397,7 @@ export class PlacementController {
   }
 
   private onKey(e: KeyboardEvent) {
-    if (!this.selected || (e.target as HTMLElement)?.tagName === "INPUT") return;
+    if (!this.selected || (e.target as HTMLElement)?.closest("input, textarea, select, [contenteditable=true], [role=dialog]")) return;
     if (e.key === "r" || e.key === "R") this.rotate(this.selected);
     else if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); this.remove(this.selected); }
     else if (e.key === "ArrowUp") { e.preventDefault(); this.raise(this.selected, e.shiftKey ? 12 : 1); }

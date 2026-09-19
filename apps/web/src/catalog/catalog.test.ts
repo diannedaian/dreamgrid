@@ -32,6 +32,20 @@ describe("curated demo catalog", () => {
     expect(lamps.entries.some((item) => item.product.id === "p-floor-lamp")).toBe(true);
   });
 
+  it("includes the dimension-verified drawer chest with an explicitly unknown price", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => catalogData })));
+    const catalog = await Catalog.load();
+    const entry = catalog.entries().find((item) => item.product.id === "campus-drawer-chest")!;
+    expect(entry.product.title).toBe("Campus 4-drawer chest");
+    expect(entry.product.sourceUrl).toBe("https://dcifurn.com/campus-4-drawer-chest/");
+    expect(entry.product.dimensionsM).toEqual([0.762, 0.9652, 0.4572]);
+    expect(entry.product.styleTags).toContain("price-not-provided");
+    expect(entry.asset?.dimensionsM).toEqual(entry.product.dimensionsM);
+    expect(entry.asset?.glbUrl).toBe("/demo-assets/campus-drawer-chest.glb");
+    expect(entry.asset?.status).toBe("ready");
+    expect(entry.asset?.disclosure).toContain("not an official manufacturer mesh");
+  });
+
   it("replaces the mini-fridge placeholder using its existing saved-plan IDs", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => catalogData })));
     const catalog = await Catalog.load();

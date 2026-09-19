@@ -83,7 +83,8 @@ and rotation. It uses the rig's named emissive materials; fixture lamps still us
 original inferred single point light. See `lamps.test.ts` for a real-asset regression test.
 Generated light intensities use a 0.05 preview scale to match the stylized room's
 exposure/bloom; these are not measured lighting predictions.
-This is cached-asset support only; the live model-generation backend is not integrated yet.
+Live generated lamps use the same registry. The loader prefers `ModelAsset.lighting`
+from the backend, falls back to GLB extras, and never adds both rigs.
 
 The supplied **Whirlpool mini fridge** replaces `p-mini-fridge` / `m-mini-fridge`,
 so existing fridge placements load the finished asset. `modelStates.ts` binds its
@@ -107,7 +108,47 @@ The product detail sheet (`src/catalog/detail.ts`) has a dashed "Shopping info c
 `{ w, d, h }` inches to `/api/measurement`; the open desktop form polls it. The native ARKit app in
 `ios/` is the higher-accuracy alternative and needs Xcode once.
 
-## Add furniture from a link (OpenAI)
+## Add furniture: live Sol → Blender integration
+
+`+ Add furniture` opens `src/catalog/importer.ts`. Shop cards open that same panel
+with the URL prefilled; neither UI calls the legacy simplified importer anymore.
+
+1. Upload a PNG/JPEG/WebP image (<5 MB), optionally provide a link, specifications
+   and price. The current backend **requires the image**; URL-only image extraction
+   is not implemented. Blocked listings need pasted specifications.
+2. `/api/v1/models/prepare` runs one Sol analysis (may take minutes). Progress says
+   analyzing and shows elapsed time, not invented percentage/stages.
+3. Review width/height/depth in cm, provenance, warnings and estimates. Changes that
+   are guesses remain estimates; explicitly accept them before proceeding.
+4. `/generate` starts Blender; `/jobs/{id}` is polled every second. Actual job
+   states drive queued/building/ready/error UI. Resume reuses the same job and
+   analysis, not another paid call.
+5. Await the returned GLB via the existing `PlacementController.add`, insert at
+   floor center, and add to the catalog. Drag/rotate/light it using the normal room
+   controls. A failed generated GLB download throws, never becomes a dummy box.
+
+Vite proxies `/api/v1` to `DREAMGRID_API_TARGET` (default `http://127.0.0.1:8000`)
+in both dev and preview. The browser uses same-origin URLs, including GLB downloads,
+so HTTP and HTTPS frontend modes work without mixed content. Production static
+hosting must provide an equivalent reverse proxy. Start the API with
+`./scripts/dev-api.sh`; keys/model/Blender path stay in `services/api/.env`.
+The existing shop-search credentials/budget in `apps/web/.env` are separate.
+
+Generated catalog metadata is stored in localStorage (`dreamgrid.generated-catalog.v1`),
+up to 100 entries. Images are not retained there. GLBs live in the API's ignored
+`artifacts/generated-models/` directory. Reloads and saved designs work on the same
+browser/origin while this backend is running. Shared links on another browser do
+**not** carry these generated catalog entries yet; curated demo assets still work.
+Unknown prices use the existing numeric `priceUsd: 0` plus `price-not-provided` tag
+and visible disclosure, not a claim the product is free. Linda should exclude those
+from known-price totals and surface the incomplete budget.
+
+Shared types now come from `packages/contracts/src/`; the previous root `index.ts`
+is a compatibility re-export, with no Product/SceneItem field changes. Pipeline
+contracts and optional lamp metadata were brought over from the generation branch.
+Product source/image URL strings may be empty for image-only imports.
+
+## Legacy simple spec importer (not used by the import UI)
 
 `server/import-product.mjs` + the `shopApi` plugin in `vite.config.ts` expose `POST /api/import-product { url }`.
 It scrapes the page (JSON-LD, meta tags, dimension mentions, up to 3 product images inlined as data URLs), asks
@@ -123,7 +164,7 @@ Never call the API from unit tests. To regenerate an item, delete its `.cache/im
 
 The ⌕ button (top right) opens `#rightbar` (`src/catalog/shopBar.ts`, 340px, pushes the stage/bottom bar like the
 left drawer). The address bar takes a search or a pasted product link; results are cards with "Add to room"
-(runs the importer above). The ★ in the drawer head switches to the agent: a plain-language request plus optional
+(opens the image/size-review flow above). The ★ in the drawer head switches to the agent: a plain-language request plus optional
 "fits within" W/D/H in inches — typed, or filled by the "measure" links which run `MeasureTool.measureOnce`
 (two clicks in the room → inches). Endpoints in `server/shop.mjs` via the same `shopApi` plugin:
 - `GET /api/search-products?q=` — the same agent as ★ with no size limits (every search in the app goes through

@@ -89,3 +89,30 @@ fixture URLs remain placeholders until Dianne supplies the corresponding assets.
 - Reuses `p-mini-fridge` / `m-mini-fridge` so saved rooms load this asset instead
   of the old box. The five screenshot placeholders are hidden from browsing;
   their underlying fixtures remain available only for legacy saved placements.
+
+## DCI Campus four-drawer chest (September 19, 2026)
+
+- `campus-drawer-chest.glb`: Dianne's final supplied default model from
+  `outputs/drawer_chest/campus_4_drawer_chest.glb`. This is an offline Blender
+  visualization, not an official manufacturer mesh or a live pipeline result.
+  No third-party mesh license was supplied; the source `.blend` and preview
+  renders remain outside the repository.
+- [DCI Campus 4 Drawer Chest](https://dcifurn.com/campus-4-drawer-chest/): the
+  source notes select the published 30 W × 18 D × 38 H inch option. Catalog
+  dimensions use **width, height, depth**: `[0.762, 0.9652, 0.4572]` meters.
+  The GLB is already Y-up/+Z-front; only the viewer's normal bottom-centering is
+  needed. Do not apply the Blender source's Z-up/-Y-front convention again.
+- Oak texture: **Oak Veneer 01**, Jenelle van Heerden / Poly Haven,
+  [CC0](https://polyhaven.com/a/oak_veneer_01), as credited in the supplied notes.
+  Both color and normal maps remain embedded; there are no external asset requests.
+- Optimized with glTF Transform 4.5.0: `optimize --compress meshopt
+  --texture-compress auto --texture-size 1024 --simplify false --palette false
+  --flatten false --join false --instance false`. Transfer size: **294,820 bytes**
+  (from 5.81 MB). Geometry is not simplified; duplicate meshes share geometry,
+  and the four named drawer parent groups are preserved. The texture reduction
+  is for browser delivery; the supplied originals are unchanged.
+- Appears under the existing Misc category with the manufacturer shopping link.
+  Price was not supplied: `price-not-provided` makes the UI show that explicitly,
+  rather than presenting the numeric placeholder as a free item.
+- Shown closed; this addition does not implement drawer controls. Drawer boxes
+  and slide hardware are approximate visual details, not construction drawings.

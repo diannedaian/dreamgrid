@@ -260,7 +260,16 @@
       .add-furniture { margin-left: 12px; font: inherit; font-size: 12px; font-weight: 600; border: 0; background: none; color: var(--honey-deep); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; vertical-align: middle; }
       #import-popup { position: fixed; inset: 0; z-index: 31; background: rgba(40,46,36,0.35); display: grid; place-items: center; padding: 20px; box-sizing: border-box; }
       #import-popup[hidden] { display: none; }
-      #import-popup .sheet { position: relative; width: min(100%, 520px); background: var(--cream); border-radius: 22px; padding: 26px; box-sizing: border-box; box-shadow: 0 24px 70px rgba(30,40,20,0.35); }
+      #import-popup .sheet { position: relative; width: min(100%, 560px); max-height: 92vh; overflow: auto; background: var(--cream); border-radius: 22px; padding: 26px; box-sizing: border-box; box-shadow: 0 24px 70px rgba(30,40,20,0.35); }
+      #import-popup fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+      #import-popup label { display: block; font-size: 13px; margin: 12px 0 6px; }
+      #import-popup input:not([type=checkbox]), #import-popup textarea { display: block; width: 100%; box-sizing: border-box; padding: 9px; margin-top: 5px; border: 1px solid #d9cdb8; border-radius: 8px; background: white; font: inherit; }
+      #import-popup .check { display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; }
+      #import-popup .check input { flex: 0 0 auto; }
+      #import-popup .dimension { padding: 5px 0 10px; border-bottom: 1px solid #e4dbc9; }
+      #import-popup small, #import-popup .warnings { font-size: 12px; line-height: 1.5; color: var(--ink-soft); }
+      #import-popup .footer { margin: 14px 0 0; font-size: 11px; }
+      #import-popup .status { overflow-wrap: anywhere; }
       #import-popup .close { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: #fff; cursor: pointer; font-size: 14px; }
       #import-popup h2 { font-family: var(--serif); font-weight: 500; font-size: 24px; margin: 0 0 6px; }
       #import-popup .sub { font-size: 13px; color: var(--ink-soft); margin: 0 0 12px; line-height: 1.4; }

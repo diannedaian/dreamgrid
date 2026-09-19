@@ -1,7 +1,22 @@
 # DreamGrid Backbone Architecture
 
-Status: Shared implementation map
-Scope: Infrastructure only; product behavior belongs to feature branches
+Status: Backbone history plus current generation integration
+Scope: See `apps/web/HANDOFF.md` for the current vanilla TypeScript/Three.js UI.
+
+## Current integration (September 19)
+
+The React backbone described below was replaced by Cindy's vanilla Three.js room.
+The current live path is image upload → same-origin `/api/v1/models/prepare` →
+Sol custom geometry → user size confirmation → `/generate` → poll `/jobs/{id}` →
+Blender-exported GLB → `PlacementController.add`. Vite's `/api/v1` proxy reaches
+FastAPI on port 8000; shop and phone endpoints still run in Vite. No generated
+Python is executed. Product/SceneItem fields remain compatible; shared types are
+re-exported from `packages/contracts/src` through its root compatibility entry.
+The API and browser have separate caches; local generated entries are not yet
+portable across browsers. See `docs/MODEL_PIPELINE_HANDOFF.md` for backend limits.
+
+The remaining sections record the original infrastructure design, not a claim
+that the app still uses React or that generation is unimplemented.
 
 ## System Shape
 

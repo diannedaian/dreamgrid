@@ -1,6 +1,13 @@
 # Tested dependency versions for the backbone. Install with pyproject.toml:
 # python -m pip install -c services/api/constraints-dev.txt -e 'services/api[dev]'
 # Refresh deliberately when adding dependencies; these constrain development/CI.
+attrs==26.1.0
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+Pillow==12.3.0
+referencing==0.37.0
+rpds-py==2026.6.3
+types-jsonschema==4.26.0.20260518
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.15.1

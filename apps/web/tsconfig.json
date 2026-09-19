@@ -8,6 +8,7 @@
     "noEmit": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    "resolveJsonModule": true,
     "paths": { "@contracts": ["../../packages/contracts/index.ts"] }
   },
   "include": ["src", "../../packages/contracts/index.ts"]
