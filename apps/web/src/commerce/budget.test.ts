@@ -1,31 +1,10 @@
 // @vitest-environment node
 
-import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
-
-import type { Product, RoomState, SceneItem } from "@dreamgrid/contracts";
+import type { Product, RoomState } from "@dreamgrid/contracts";
 import { describe, expect, it } from "vitest";
 
 import { budgetStatus, roundUsd, summarizeBudget } from "./budget";
-
-const fixtureUrl = new URL("../../../../fixtures/", import.meta.url);
-
-async function fixture<T>(name: string): Promise<T> {
-  const contents = await readFile(fileURLToPath(new URL(name, fixtureUrl)), "utf8");
-  return JSON.parse(contents) as T;
-}
-
-const loadProducts = () => fixture<Product[]>("products.json");
-const loadRoomState = () => fixture<RoomState>("room-state.json");
-
-function sceneItem(overrides: Partial<SceneItem> & Pick<SceneItem, "id" | "productId">): SceneItem {
-  return {
-    modelAssetId: "",
-    positionM: [0, 0, 0],
-    rotationYDeg: 0,
-    ...overrides,
-  };
-}
+import { fixture, loadProducts, loadRoomState, sceneItem, testProduct } from "./testFixtures";
 
 describe("summarizeBudget", () => {
   it("totals the fixture room (bed 199 + desk 129 + shelf 79) against a 450 budget", async () => {
@@ -119,8 +98,8 @@ describe("summarizeBudget", () => {
 
   it("rounds fractional prices to cents", () => {
     const products: Product[] = [
-      { ...baseProduct("a"), priceUsd: 0.1 },
-      { ...baseProduct("b"), priceUsd: 0.2 },
+      testProduct("a", { priceUsd: 0.1 }),
+      testProduct("b", { priceUsd: 0.2 }),
     ];
     const state: RoomState = {
       room: { widthM: 3, depthM: 3, heightM: 2.5, gridSizeM: 0.25, lightingMode: "day" },
@@ -148,17 +127,3 @@ describe("roundUsd and budgetStatus", () => {
   });
 });
 
-function baseProduct(id: string): Product {
-  return {
-    id,
-    title: `Product ${id}`,
-    category: "decor",
-    priceUsd: 0,
-    merchant: "Test",
-    sourceUrl: "https://example.com",
-    imageUrl: "/demo-assets/previews/none.webp",
-    dimensionsM: [0.5, 0.5, 0.5],
-    styleTags: [],
-    colorTags: [],
-  };
-}
