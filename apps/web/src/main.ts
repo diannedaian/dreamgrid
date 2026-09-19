@@ -181,6 +181,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       sun,
       view: shell.view,
       openItems: placement?.openItemIds ?? plan?.openItems,
+      ignored: placement?.ignoredIds ?? plan?.ign,
     });
   const designs = createDesignStore();
   let designId: string | null = new URLSearchParams(location.search).get("design");
@@ -213,7 +214,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     onResize();
     if (plan?.items.length) {
       const viewer = new PlacementController(scene, camera, canvas, room, controls, catalog, lamps, () => {});
-      await viewer.loadItems(plan.items, plan.openItems);
+      await viewer.loadItems(plan.items, plan.openItems, plan.ign);
     }
   } else {
     sidebar.hidden = false;
@@ -223,6 +224,8 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     const tools = document.getElementById("item-tools")!;
     const stateBtn = document.getElementById("tool-state") as HTMLButtonElement;
     const upBtn = document.getElementById("tool-up") as HTMLButtonElement, downBtn = document.getElementById("tool-down") as HTMLButtonElement;
+    const ignoreBtn = document.getElementById("tool-ignore") as HTMLButtonElement;
+    ignoreBtn.addEventListener("click", () => placement!.toggleIgnoreSelected());
     placement = new PlacementController(scene, camera, canvas, room, controls, catalog, lamps, () => syncUrl(), (on) => shell.setGridVisible(on), (item) => {
       tools.hidden = !item;
       const state = item ? placement!.stateFor(item.id) : undefined;
@@ -230,7 +233,11 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       stateBtn.textContent = state?.isOpen ? "Close fridge" : "Open fridge";
       stateBtn.setAttribute("aria-pressed", String(state?.isOpen ?? false));
       stateBtn.title = "Preview the door and interior; placement clearance uses the closed cabinet";
-      if (!item) return;
+      if (!item) { ignoreBtn.hidden = true; return; }
+      const flagged = placement!.isFlagged(item.id), ignoring = placement!.isIgnored(item.id);
+      ignoreBtn.hidden = !(flagged || ignoring);
+      ignoreBtn.textContent = ignoring ? "Show overlap" : "Ignore overlap";
+      ignoreBtn.title = ignoring ? "Turn the red overlap warning back on for this item" : "Keep this item here without the red overlap warning";
       const wall = placement!.isAgainstWall(item.id);
       upBtn.disabled = downBtn.disabled = !wall;
       upBtn.title = downBtn.title = wall ? "Move up or down the wall (↑ / ↓, shift for a foot)" : "Push the item against a wall to move it up or down";
@@ -346,7 +353,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       share.textContent = ok ? "Link copied" : "Copy failed";
       setTimeout(() => (share.textContent = "Share"), 1800);
     });
-    if (plan?.items.length) await placement.loadItems(plan.items, plan.openItems);
+    if (plan?.items.length) await placement.loadItems(plan.items, plan.openItems, plan.ign);
   }
 
   applySun(sun);

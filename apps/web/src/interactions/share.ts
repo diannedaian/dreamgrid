@@ -17,6 +17,8 @@ export type Plan = {
   items: SceneItem[];
   /** IDs of models displaying their open pose; absent means all closed (legacy plans). */
   openItems?: string[];
+  /** IDs of items whose overlap / door-swing warnings the user chose to ignore. */
+  ign?: string[];
   /** Sun: time of day as 0..300 (sunrise 0, noon 100, sunset 200, midnight 300), heading the far wall faces, southern hemisphere. Omitted when default. */
   t?: number;
   hd?: number;
@@ -28,7 +30,7 @@ export type Plan = {
   vw?: "autumn" | "snowy" | "rainy";
 };
 
-export type Look = { paint?: string; floor?: string; sun?: SunSettings; view?: string; openItems?: string[] };
+export type Look = { paint?: string; floor?: string; sun?: SunSettings; view?: string; openItems?: string[]; ignored?: string[] };
 
 const inches = (m: number) => Math.round(m / INCH_M);
 
@@ -46,6 +48,7 @@ export function planFromState(room: RoomSpec, windows: WindowSpec[], items: Scen
     })),
     items: items.map((i) => ({ ...i, positionM: i.positionM.map((v) => Math.round(v * 10000) / 10000) as SceneItem["positionM"] })),
     ...(look.openItems?.length ? { openItems: [...new Set(look.openItems)].filter((id) => items.some((i) => i.id === id)) } : {}),
+    ...(look.ignored?.length ? { ign: [...new Set(look.ignored)].filter((id) => items.some((i) => i.id === id)) } : {}),
     ...(look.sun && Math.round(look.sun.t * 300) !== 100 ? { t: Math.round(look.sun.t * 300) } : {}),
     ...(look.sun && look.sun.headingDeg ? { hd: look.sun.headingDeg } : {}),
     ...(look.sun?.southern ? { sh: 1 as const } : {}),
@@ -96,6 +99,7 @@ export function decodePlan(s: string): Plan | null {
     return {
       v: 1, w: p.w, d: p.d, h: p.h, win: p.win, items: Array.isArray(p.items) ? p.items : [],
       ...(Array.isArray(p.openItems) ? { openItems: [...new Set(p.openItems.filter((id: unknown) => typeof id === "string" && p.items?.some((item: SceneItem) => item?.id === id)))] as string[] } : {}),
+      ...(Array.isArray(p.ign) ? { ign: [...new Set(p.ign.filter((id: unknown) => typeof id === "string" && p.items?.some((item: SceneItem) => item?.id === id)))] as string[] } : {}),
       ...(Number.isFinite(p.t) ? { t: Math.min(300, Math.max(0, Math.round(p.t))) }
         : typeof p.t === "string" && p.t in TIME_T ? { t: Math.round(TIME_T[p.t as TimeOfDay] * 300) }
         : p.n === 1 ? { t: 300 } : {}),

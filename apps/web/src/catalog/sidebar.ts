@@ -135,7 +135,7 @@ export function mountSidebar(root: HTMLElement, o: SidebarOptions): void {
 
   const compassRow = document.createElement("div");
   compassRow.className = "row";
-  compassRow.innerHTML = `<span class="lbl">Which way does the <b>far wall</b> face?</span><span class="lbl sub">The far wall is the one straight ahead when the room loads. Hover here to see it highlighted.</span>`;
+  compassRow.innerHTML = `<span class="lbl">Which way does the <b>far wall</b> face?</span>`;
   const compass = document.createElement("div");
   compass.className = "compass";
   const headingButtons = HEADINGS.map((h, i) => {

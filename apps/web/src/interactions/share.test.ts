@@ -50,6 +50,9 @@ describe("share plan", () => {
     expect(decodePlan(encodePlan(plan))?.items[0]).toEqual(item);
     expect(decodePlan(encodePlan(planFromState(room, [], [item])))?.openItems).toBeUndefined();
     expect(decodePlan(encodePlan({ ...plan, openItems: ["missing", "fridge1", "fridge1"] }))?.openItems).toEqual(["fridge1"]);
+    const ign = planFromState(room, [], [item], { ignored: ["fridge1", "missing", "fridge1"] });
+    expect(decodePlan(encodePlan(ign))?.ign).toEqual(["fridge1"]);
+    expect(decodePlan(encodePlan(planFromState(room, [], [item])))?.ign).toBeUndefined();
   });
 
   it("uses only URL-safe characters", () => {

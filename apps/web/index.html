@@ -251,6 +251,8 @@
       #item-tools button:hover { text-decoration: underline; }
       #item-tools button:disabled { opacity: 0.35; cursor: not-allowed; text-decoration: none; }
       #item-tools #tool-delete { color: #c8412c; }
+      #item-tools button.text { font-size: 12px; text-decoration: underline; text-underline-offset: 3px; color: var(--ink); white-space: nowrap; }
+      #item-tools button.text[hidden] { display: none; }
       #item-tools #tool-state { font-size: 13px; white-space: nowrap; border-radius: 8px; padding: 5px 8px; background: var(--paper, #fbf5ea); }
       #item-tools #tool-state[hidden] { display: none; }
 
@@ -338,6 +340,7 @@
         <button type="button" id="tool-up" title="Move up the wall">▲</button>
         <button type="button" id="tool-down" title="Move down the wall">▼</button>
         <button type="button" id="tool-delete" title="Remove (Delete)">✕</button>
+        <button type="button" id="tool-ignore" class="text" hidden>Ignore overlap</button>
       </div>
     </div>
 

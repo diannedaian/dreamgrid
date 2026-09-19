@@ -28,6 +28,8 @@ export class PlacementController {
   private overlapping = new Set<string>();
   private blockingDoor = new Set<string>();
   private tinted = new Set<string>();
+  /** Items the user chose to keep even though they overlap / block a door (no red, no warning). */
+  private ignored = new Set<string>();
   private warn: HTMLElement | null = document.getElementById("warn");
 
   constructor(
@@ -73,6 +75,7 @@ export class PlacementController {
     this.group.remove(p.object);
     this.placed.delete(id);
     this.tinted.delete(id);
+    this.ignored.delete(id);
     if (this.hovered === p) this.refreshHover(null);
     this.items.splice(this.items.findIndex((i) => i.id === id), 1);
     if (this.selected === id) this.select(null);
@@ -127,6 +130,24 @@ export class PlacementController {
     return this.selected ? this.placed.get(this.selected)?.item ?? null : null;
   }
 
+  get ignoredIds(): string[] { return [...this.ignored].filter((id) => this.placed.has(id)); }
+
+  /** True when the item is red: overlapping or in a door swing, and not ignored. */
+  isFlagged(id: string): boolean { return !this.ignored.has(id) && (this.overlapping.has(id) || this.blockingDoor.has(id)); }
+  isIgnored(id: string): boolean { return this.ignored.has(id); }
+
+  /** Toggle "ignore overlap" on the selected item. */
+  toggleIgnoreSelected(): void {
+    if (!this.selected) return;
+    const id = this.selected;
+    this.ignored.has(id) ? this.ignored.delete(id) : this.ignored.add(id);
+    this.applyTints();
+    this.refreshHover(this.hovered);
+    const p = this.placed.get(id);
+    if (p) this.onSelect(p.item);
+    this.onChange(this.items);
+  }
+
   get openItemIds(): string[] {
     return [...this.placed.values()].filter((p) => p.state?.isOpen).map((p) => p.item.id);
   }
@@ -152,7 +173,8 @@ export class PlacementController {
   removeSelected() { if (this.selected) this.remove(this.selected); }
   raiseSelected(inches: number) { if (this.selected) this.raise(this.selected, inches); }
 
-  async loadItems(items: SceneItem[], openItemIds: string[] = []) {
+  async loadItems(items: SceneItem[], openItemIds: string[] = [], ignoredIds: string[] = []) {
+    for (const id of ignoredIds) this.ignored.add(id);
     for (const it of items) {
       const entry = this.catalog.get(it.productId);
       if (!entry) continue;
@@ -176,8 +198,8 @@ export class PlacementController {
 
   private refreshHover(p: Placed | null) {
     this.hovered = p;
-    const blocked = !!p && this.blocksDoor(p);
-    const overlap = !!p && this.overlapping.has(p.item.id);
+    const blocked = !!p && !this.ignored.has(p.item.id) && this.blocksDoor(p);
+    const overlap = !!p && !this.ignored.has(p.item.id) && this.overlapping.has(p.item.id);
     this.applyTints();
     if (this.warn) {
       this.warn.hidden = !(blocked || overlap);
@@ -261,7 +283,7 @@ export class PlacementController {
 
   /** Red = overlapping another item or sitting in a door's swing. Stays on until fixed. */
   private applyTints() {
-    const want = new Set([...this.overlapping, ...this.blockingDoor]);
+    const want = new Set([...this.overlapping, ...this.blockingDoor].filter((id) => !this.ignored.has(id)));
     for (const id of this.tinted) if (!want.has(id)) { const p = this.placed.get(id); if (p) tint(p.object, null); }
     for (const id of want) { const p = this.placed.get(id); if (p) tint(p.object, "#e0523c"); }
     this.tinted = want;
