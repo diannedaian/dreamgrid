@@ -1,6 +1,12 @@
 {
   "keepFixtures": true,
-  "hiddenProductIds": ["p-bed-twin", "p-desk", "p-chair", "p-shelf", "p-rug"],
+  "hiddenProductIds": [
+    "p-bed-twin",
+    "p-desk",
+    "p-chair",
+    "p-shelf",
+    "p-rug"
+  ],
   "products": [
     {
       "id": "campus-drawer-chest",
@@ -10,9 +16,20 @@
       "merchant": "DCI Furniture",
       "sourceUrl": "https://dcifurn.com/campus-4-drawer-chest/",
       "imageUrl": "",
-      "dimensionsM": [0.762, 0.9652, 0.4572],
-      "styleTags": ["dorm", "storage", "four drawers", "price-not-provided"],
-      "colorTags": ["oak"],
+      "dimensionsM": [
+        0.762,
+        0.9652,
+        0.4572
+      ],
+      "styleTags": [
+        "dorm",
+        "storage",
+        "four drawers",
+        "price-not-provided"
+      ],
+      "colorTags": [
+        "oak"
+      ],
       "modelAssetId": "asset-campus-drawer-chest"
     },
     {
@@ -20,12 +37,22 @@
       "title": "Whirlpool mini fridge",
       "category": "misc",
       "priceUsd": 128.99,
-      "merchant": "Lowe's · Whirlpool",
+      "merchant": "Lowe's \u00b7 Whirlpool",
       "sourceUrl": "https://www.lowes.com/pd/Whirlpool-4-3-cu-ft-Counter-Depth-Freestanding-Compact-Refrigerator-black-stainless-steel-ENERGY-STAR/1000319705",
       "imageUrl": "",
-      "dimensionsM": [0.504952, 0.835914, 0.559054],
-      "styleTags": ["mini fridge", "openable door", "dorm"],
-      "colorTags": ["black"],
+      "dimensionsM": [
+        0.504952,
+        0.835914,
+        0.559054
+      ],
+      "styleTags": [
+        "mini fridge",
+        "openable door",
+        "dorm"
+      ],
+      "colorTags": [
+        "black"
+      ],
       "modelAssetId": "m-mini-fridge"
     },
     {
@@ -33,12 +60,23 @@
       "title": "Torchiere + task lamp",
       "category": "lamp",
       "priceUsd": 20,
-      "merchant": "Target · Room Essentials",
-      "sourceUrl": "https://www.target.com/p/torchiere-with-task-light-floor-lamp-room-essentials/-/A-87922469?preselect=87291863",
+      "merchant": "Target",
+      "sourceUrl": "https://www.target.com/p/torchiere-with-task-light-floor-lamp-black-room-essentials-8482/-/A-87291863",
       "imageUrl": "",
-      "dimensionsM": [0.52, 1.8161, 0.2413],
-      "styleTags": ["floor lamp", "reading light", "two bulbs"],
-      "colorTags": ["black", "white"],
+      "dimensionsM": [
+        0.52,
+        1.8161,
+        0.2413
+      ],
+      "styleTags": [
+        "floor lamp",
+        "reading light",
+        "two bulbs"
+      ],
+      "colorTags": [
+        "black",
+        "white"
+      ],
       "modelAssetId": "asset-torchiere-task-lamp"
     },
     {
@@ -136,12 +174,24 @@
       "title": "Cloud Checker rug",
       "category": "decor",
       "priceUsd": 58.99,
-      "merchant": "Wayfair · Orren Ellis",
+      "merchant": "Wayfair \u00b7 Orren Ellis",
       "sourceUrl": "https://www.wayfair.com/Orren-Ellis--Machine-Washable-IndoorOutdoor-Micelotta-ACN2345-Geometric-Rug-X226555181-L167-K~W115444070.html?PiID%5B%5D=1498454332",
       "imageUrl": "",
-      "dimensionsM": [0.762, 0.05, 1.1684],
-      "styleTags": ["rug", "checkerboard", "fluffy", "pastel"],
-      "colorTags": ["aqua", "vanilla"],
+      "dimensionsM": [
+        0.762,
+        0.05,
+        1.1684
+      ],
+      "styleTags": [
+        "rug",
+        "checkerboard",
+        "fluffy",
+        "pastel"
+      ],
+      "colorTags": [
+        "aqua",
+        "vanilla"
+      ],
       "modelAssetId": "asset-cloud-checker-rug"
     },
     {
@@ -149,12 +199,25 @@
       "title": "Aqua Halo rug",
       "category": "decor",
       "priceUsd": 46.99,
-      "merchant": "Wayfair · Highland Dunes",
+      "merchant": "Wayfair \u00b7 Highland Dunes",
       "sourceUrl": "https://www.wayfair.com/Highland-Dunes--Wallin-Hand-Woven-Performance-Rug-X113618190-L167-K~W002507089.html?PiID%5B%5D=817641371",
       "imageUrl": "",
-      "dimensionsM": [0.9144, 0.05, 0.9144],
-      "styleTags": ["rug", "round", "fluffy", "pastel"],
-      "colorTags": ["aqua", "seafoam", "vanilla"],
+      "dimensionsM": [
+        0.9144,
+        0.05,
+        0.9144
+      ],
+      "styleTags": [
+        "rug",
+        "round",
+        "fluffy",
+        "pastel"
+      ],
+      "colorTags": [
+        "aqua",
+        "seafoam",
+        "vanilla"
+      ],
       "modelAssetId": "asset-aqua-halo-rug"
     },
     {
@@ -185,7 +248,11 @@
       "id": "asset-campus-drawer-chest",
       "productId": "campus-drawer-chest",
       "glbUrl": "/demo-assets/campus-drawer-chest.glb",
-      "dimensionsM": [0.762, 0.9652, 0.4572],
+      "dimensionsM": [
+        0.762,
+        0.9652,
+        0.4572
+      ],
       "pivot": "bottom-center",
       "forwardAxis": "+Z",
       "generationMethod": "gpt-blender",
@@ -196,7 +263,11 @@
       "id": "m-mini-fridge",
       "productId": "p-mini-fridge",
       "glbUrl": "/demo-assets/mini-fridge.glb",
-      "dimensionsM": [0.504952, 0.835914, 0.559054],
+      "dimensionsM": [
+        0.504952,
+        0.835914,
+        0.559054
+      ],
       "pivot": "bottom-center",
       "forwardAxis": "+Z",
       "generationMethod": "gpt-blender",
@@ -207,7 +278,11 @@
       "id": "asset-torchiere-task-lamp",
       "productId": "torchiere-task-lamp",
       "glbUrl": "/demo-assets/torchiere-task-lamp.glb",
-      "dimensionsM": [0.52, 1.8161, 0.2413],
+      "dimensionsM": [
+        0.52,
+        1.8161,
+        0.2413
+      ],
       "pivot": "bottom-center",
       "forwardAxis": "+Z",
       "generationMethod": "gpt-blender",
@@ -278,7 +353,11 @@
       "id": "asset-cloud-checker-rug",
       "productId": "cloud-checker-rug",
       "glbUrl": "/demo-assets/cloud-checker-rug.glb",
-      "dimensionsM": [0.762, 0.05, 1.1684],
+      "dimensionsM": [
+        0.762,
+        0.05,
+        1.1684
+      ],
       "pivot": "bottom-center",
       "forwardAxis": "+Z",
       "generationMethod": "gpt-blender",
@@ -289,7 +368,11 @@
       "id": "asset-aqua-halo-rug",
       "productId": "aqua-halo-rug",
       "glbUrl": "/demo-assets/aqua-halo-rug.glb",
-      "dimensionsM": [0.9144, 0.05, 0.9144],
+      "dimensionsM": [
+        0.9144,
+        0.05,
+        0.9144
+      ],
       "pivot": "bottom-center",
       "forwardAxis": "+Z",
       "generationMethod": "gpt-blender",
@@ -300,7 +383,11 @@
       "id": "asset-imp-6f6f5196e5911cb8",
       "productId": "imp-6f6f5196e5911cb8",
       "glbUrl": "spec:/demo-assets/generated/imp-6f6f5196e5911cb8.spec.json",
-      "dimensionsM": [0.55, 0.45, 0.55],
+      "dimensionsM": [
+        0.55,
+        0.45,
+        0.55
+      ],
       "pivot": "bottom-center",
       "forwardAxis": "+Z",
       "generationMethod": "gpt-blender",
