@@ -344,7 +344,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     let armed = 0;
     reset.addEventListener("click", () => {
       if (!armed) {
-        reset.textContent = "Really reset? Click again";
+        reset.textContent = "Reset? Click again";
         reset.classList.add("armed");
         armed = window.setTimeout(() => { armed = 0; reset.textContent = "Reset"; reset.classList.remove("armed"); }, 3500);
         return;

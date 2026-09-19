@@ -33,9 +33,9 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): void {
       <textarea class="ask" rows="3" placeholder="e.g. a narrow bookshelf in light wood under $120"></textarea>
       <div class="fits">
         <div class="lbl">Fits within <span class="sub">(optional, inches)</span></div>
-        <label><span>Width</span><input type="number" min="1" step="1" data-dim="w" /><button type="button" class="measure" data-dim="w">measure</button></label>
-        <label><span>Depth</span><input type="number" min="1" step="1" data-dim="d" /><button type="button" class="measure" data-dim="d">measure</button></label>
-        <label><span>Height</span><input type="number" min="1" step="1" data-dim="h" /><button type="button" class="measure" data-dim="h">measure</button></label>
+        <label><span>Width</span><input type="text" inputmode="numeric" pattern="[0-9]*" data-dim="w" /><button type="button" class="measure" data-dim="w">measure</button></label>
+        <label><span>Depth</span><input type="text" inputmode="numeric" pattern="[0-9]*" data-dim="d" /><button type="button" class="measure" data-dim="d">measure</button></label>
+        <label><span>Height</span><input type="text" inputmode="numeric" pattern="[0-9]*" data-dim="h" /><button type="button" class="measure" data-dim="h">measure</button></label>
       </div>
       <div class="agent-actions"><button type="button" class="find">Find furniture</button><span class="status" hidden></span></div>
       <div class="picks"></div>
