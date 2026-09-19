@@ -1,7 +1,7 @@
 # DreamGrid Backbone Architecture
 
 Status: Shared implementation map
-Scope: Infrastructure only; product behavior belongs to feature branches
+Scope: Shared backbone plus the generation branch's image-first model boundary
 
 ## System Shape
 
@@ -41,7 +41,17 @@ React Three Fiber is the React renderer for Three.js. A model enters the scene a
 - Route handlers validate and translate requests.
 - Provider-specific code belongs behind boundary protocols or adapters.
 - Model generation and commerce remain separate modules even though they deploy together.
-- A health route is the only implemented backbone endpoint.
+- Health routes and the image-first model endpoints are implemented on this branch.
+
+Generation-branch update: `/api/v1/models/prepare`, `/generate`, `/jobs/{id}`, and
+`/assets/{hash}.glb` now implement the agreed image-first laptop pipeline. See
+[MODEL_PIPELINE_HANDOFF.md](MODEL_PIPELINE_HANDOFF.md). It uses a bounded in-process
+worker and local artifact cache, not a broker, database, or separately deployed service.
+Sol (`gpt-5.6-sol`, high reasoning) authors image-specific declarative geometry,
+including plant/decor; a trusted Blender interpreter exports the confirmed envelope.
+`ModelAsset` gains optional model-local `lighting` metadata for room night mode.
+Product/SceneItem/room shapes are unchanged. Import/job envelopes and estimate-axis
+provenance are defined in `model-pipeline.schema.json`. See the handoff for limits.
 
 Do not split this into independently deployed microservices during the hackathon.
 
@@ -77,7 +87,7 @@ Contract changes require agreement from the consumers. Additive optional fields 
 - Marketplace scraping
 - Background job infrastructure
 - Cloud deployment configuration
-- Real model-generation implementation
+- Automatic URL-to-image import (the current pipeline requires an uploaded image)
 - Drag-and-drop behavior
 - Room construction behavior
 

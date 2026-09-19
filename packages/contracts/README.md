@@ -14,8 +14,18 @@ the shopping and interaction UI, and the budget/commerce pipeline. Read
 - User-facing units are converted before data enters these contracts.
 - Undeclared JSON fields are rejected to catch integration typos early.
 
-The core TypeScript types intentionally match the manifesto field-for-field:
-`RoomSpec`, `Product`, `ModelAsset`, `SceneItem`, and `RoomState`.
+Core types are `RoomSpec`, `Product`, `ModelAsset`, `SceneItem`, and `RoomState`.
+The generation branch adds optional `ModelAsset.lighting`: model-local bulb
+positions/directions, emissive material names, and night-mode activation. Existing
+non-light assets remain valid. See `docs/MODEL_PIPELINE_HANDOFF.md` before integrating.
+
+Live image generation accepts the same categories as `Product`, including `decor`
+for plants, planters, and decorative objects. Send `categoryHint: "decor"` optionally;
+the resulting `PreparedImport` uses `category: "decor"` and `template: "custom"`.
+There is no decor preset: preset-mode decor requests return a clear input error.
+See `fixtures/plant-prepared-import.json` for a synthetic size-review fixture.
+Keep whole-plant estimates separate from known pot dimensions; do not describe a
+leafy composition as measured solely because its planter has published dimensions.
 
 ## Model generation safety boundary
 

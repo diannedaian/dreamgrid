@@ -188,6 +188,16 @@ type RoomState = {
 
 ## 6. Model-Generation Contract
 
+Approved pipeline refinement (September 19, 2026): image-first import may use an
+optional product URL or pasted specifications as dimension evidence. Missing sizes
+use explicitly confirmed, visibly labeled estimates. GPT-5.6 Sol (high reasoning)
+authors image-specific bounded geometry; trusted code compiles the canonical
+FurnitureSpec. Live generation does not select furniture templates. Presets remain
+an explicit offline alternative only. Plant/decor is supported; lamp assets include
+optional model-local light metadata for Cindy's night mode. This remains a stylized
+approximation, not exact product reconstruction. See
+[MODEL_PIPELINE_HANDOFF.md](MODEL_PIPELINE_HANDOFF.md) for the implemented interface.
+
 The default generation path is constrained and testable:
 
 1. The user supplies a clean product image.

@@ -17,29 +17,199 @@
     "disclosure"
   ],
   "properties": {
-    "id": { "type": "string", "minLength": 1 },
-    "productId": { "type": "string", "minLength": 1 },
-    "glbUrl": { "type": "string", "minLength": 1 },
-    "previewUrl": { "type": "string", "minLength": 1 },
-    "dimensionsM": { "$ref": "#/$defs/dimensionsM" },
-    "pivot": { "const": "bottom-center" },
-    "forwardAxis": { "const": "+Z" },
-    "generationMethod": {
-      "enum": ["gpt-blender", "meshy", "tripo", "public-preset"]
+    "id": {
+      "type": "string",
+      "minLength": 1
     },
-    "status": { "enum": ["queued", "generating", "ready", "failed"] },
-    "disclosure": { "type": "string", "minLength": 1 }
+    "productId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "glbUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "previewUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dimensionsM": {
+      "$ref": "#/$defs/dimensionsM"
+    },
+    "pivot": {
+      "const": "bottom-center"
+    },
+    "forwardAxis": {
+      "const": "+Z"
+    },
+    "generationMethod": {
+      "enum": [
+        "gpt-blender",
+        "meshy",
+        "tripo",
+        "public-preset"
+      ]
+    },
+    "status": {
+      "enum": [
+        "queued",
+        "generating",
+        "ready",
+        "failed"
+      ]
+    },
+    "disclosure": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lighting": {
+      "$ref": "#/$defs/Lighting"
+    }
   },
   "$defs": {
     "dimensionsM": {
       "type": "array",
       "prefixItems": [
-        { "type": "number", "exclusiveMinimum": 0 },
-        { "type": "number", "exclusiveMinimum": 0 },
-        { "type": "number", "exclusiveMinimum": 0 }
+        {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
       ],
       "minItems": 3,
       "maxItems": 3
+    },
+    "ModelLight": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "point",
+            "spot"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "positionM": {
+          "items": {
+            "maximum": 20,
+            "minimum": -20,
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Positionm",
+          "type": "array"
+        },
+        "direction": {
+          "items": {
+            "maximum": 20,
+            "minimum": -20,
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Direction",
+          "type": "array"
+        },
+        "colorHex": {
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "title": "Colorhex",
+          "type": "string"
+        },
+        "intensityCd": {
+          "maximum": 500,
+          "minimum": 0,
+          "title": "Intensitycd",
+          "type": "number"
+        },
+        "rangeM": {
+          "exclusiveMinimum": 0,
+          "maximum": 20,
+          "title": "Rangem",
+          "type": "number"
+        },
+        "coneAngleRad": {
+          "exclusiveMinimum": 0,
+          "maximum": 1.5708,
+          "title": "Coneanglerad",
+          "type": "number"
+        },
+        "penumbra": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Penumbra",
+          "type": "number"
+        },
+        "emissiveMaterialNames": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Emissivematerialnames",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "positionM",
+        "direction",
+        "colorHex",
+        "intensityCd",
+        "rangeM",
+        "coneAngleRad",
+        "penumbra",
+        "emissiveMaterialNames"
+      ],
+      "title": "ModelLight",
+      "type": "object"
+    },
+    "Lighting": {
+      "additionalProperties": false,
+      "properties": {
+        "coordinateSpace": {
+          "const": "model-local",
+          "title": "Coordinatespace",
+          "type": "string"
+        },
+        "activation": {
+          "const": "night",
+          "title": "Activation",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ModelLight"
+          },
+          "maxItems": 4,
+          "title": "Sources",
+          "type": "array"
+        },
+        "disclosure": {
+          "title": "Disclosure",
+          "type": "string"
+        }
+      },
+      "required": [
+        "coordinateSpace",
+        "activation",
+        "sources",
+        "disclosure"
+      ],
+      "title": "Lighting",
+      "type": "object"
     }
   }
 }

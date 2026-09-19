@@ -25,6 +25,9 @@ def args():
     parser.add_argument("--glb", required=True, type=Path)
     parser.add_argument("--no-render", action="store_true")
     parser.add_argument("--fuse-material", help="Optional offline union of one material's parts")
+    parser.add_argument("--fit-envelope", action="store_true",
+                        help="Fit a stylized template to confirmed outer dimensions")
+    parser.add_argument("--asset-only", action="store_true", help="Skip studio and editable-scene save")
     return parser.parse_args(sys.argv[sys.argv.index("--") + 1 :])
 
 
@@ -52,8 +55,8 @@ def validate_input(spec):
         if part["id"] in ids:
             raise ValueError("Duplicate part ID")
         ids.add(part["id"])
-        if part["primitive"] not in {"box", "rounded-box", "cylinder"}:
-            raise ValueError("This interpreter slice only supports boxes and cylinders")
+        if part["primitive"] not in {"box", "rounded-box", "cylinder", "shade", "sphere", "lathe", "tube"}:
+            raise ValueError("Unsupported primitive")
         if part["materialId"] not in materials:
             raise ValueError("Unknown material")
         if not finite_vector(part["dimensionsM"]) or not all(
@@ -72,6 +75,28 @@ def validate_input(spec):
                 raise ValueError("Invalid repeat count")
             if not finite_vector(repeat["offsetM"]):
                 raise ValueError("Invalid repeat offset")
+        if part["primitive"] == "lathe":
+            profile = part.get("profile", [])
+            if not 3 <= len(profile) <= 24 or any(
+                len(p) != 2 or not all(math.isfinite(v) and abs(v) <= 10 for v in p)
+                or p[0] < 0 for p in profile
+            ):
+                raise ValueError("Invalid lathe profile")
+        if part["primitive"] == "tube":
+            path = part.get("pathM", [])
+            if not 2 <= len(path) <= 16 or not all(finite_vector(p) for p in path):
+                raise ValueError("Invalid tube path")
+            if not .00001 <= part.get("tubeRadiusM", 0) <= .2:
+                raise ValueError("Invalid tube radius")
+    if len(spec.get("lights", [])) > 4:
+        raise ValueError("Light budget exceeded")
+    for light in spec.get("lights", []):
+        if not finite_vector(light["position"]) or not finite_vector(light["direction"]):
+            raise ValueError("Invalid emitter transform")
+        if Vector(light["direction"]).length < .1:
+            raise ValueError("Zero emitter direction")
+        if not set(light["glowMaterials"]) <= materials:
+            raise ValueError("Unknown emitter material")
 
 
 def linear_color(hex_color):
@@ -92,17 +117,73 @@ def make_material(item):
 
 
 def make_part(part, index, material, root, collection):
+    bpy.ops.object.select_all(action="DESELECT")
     width, height, depth = part["dimensionsM"]
     if part["primitive"] == "cylinder":
         bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=1, depth=2)
+    elif part["primitive"] == "shade":
+        bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=1, radius2=.65, depth=2)
+    elif part["primitive"] == "sphere":
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=12, radius=1)
+    elif part["primitive"] == "lathe":
+        profile = part["profile"]
+        segments = 40
+        vertices = [
+            (radius * math.cos(i * math.tau / segments),
+             radius * math.sin(i * math.tau / segments), height)
+            for radius, height in profile for i in range(segments)
+        ]
+        faces = [
+            (row * segments + i, row * segments + (i + 1) % segments,
+             ((row + 1) % len(profile)) * segments + (i + 1) % segments,
+             ((row + 1) % len(profile)) * segments + i)
+            for row in range(len(profile)) for i in range(segments)
+        ]
+        mesh = bpy.data.meshes.new(part["id"])
+        mesh.from_pydata(vertices, [], faces)
+        mesh.update()
+        obj = bpy.data.objects.new(part["id"], mesh)
+        bpy.context.collection.objects.link(obj)
+        bpy.context.view_layer.objects.active = obj
+        obj.select_set(True)
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.normals_make_consistent(inside=False)
+        bpy.ops.object.mode_set(mode="OBJECT")
+    elif part["primitive"] == "tube":
+        curve = bpy.data.curves.new(part["id"], "CURVE")
+        curve.dimensions = "3D"
+        curve.resolution_u = 6
+        curve.bevel_depth = part["tubeRadiusM"]
+        curve.bevel_resolution = 3
+        curve.use_fill_caps = True
+        spline = curve.splines.new("BEZIER")
+        spline.bezier_points.add(len(part["pathM"]) - 1)
+        for point, position in zip(spline.bezier_points, part["pathM"]):
+            point.co = AXES @ Vector(position)
+            point.handle_left_type = point.handle_right_type = "AUTO"
+        obj = bpy.data.objects.new(part["id"], curve)
+        bpy.context.collection.objects.link(obj)
+        bpy.ops.object.select_all(action="DESELECT")
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.convert(target="MESH")
     else:
         bpy.ops.mesh.primitive_cube_add(size=2)
     obj = bpy.context.object
     obj.name = part["id"] + (f"-{index:02d}" if "repeat" in part else "")
+    if part["primitive"] in {"lathe", "tube"}:
+        # Local geometric center, not center of mass, defines the part transform.
+        low = Vector([min(v.co[i] for v in obj.data.vertices) for i in range(3)])
+        high = Vector([max(v.co[i] for v in obj.data.vertices) for i in range(3)])
+        for v in obj.data.vertices:
+            v.co -= (low + high) / 2
+        obj.data.update()
+        bpy.context.view_layer.update()
     obj.dimensions = (width, depth, height)
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     radius = part.get("cornerRadiusM", 0)
-    if radius > 0:
+    if radius > 0 and part["primitive"] not in {"tube", "sphere"}:
         bevel = obj.modifiers.new("Soft physical edges", "BEVEL")
         bevel.width = radius
         bevel.segments = 6 if part["role"] == "body" else 4
@@ -127,6 +208,25 @@ def make_part(part, index, material, root, collection):
         old_collection.objects.unlink(obj)
     collection.objects.link(obj)
     return obj
+
+
+def normalized_lighting(spec, initial, ratio):
+    """Same affine normalization as the mesh; metadata is in final model-local meters."""
+    shift = [-(initial["maxM"][0] + initial["minM"][0]) * ratio[0] / 2,
+             -initial["minM"][1] * ratio[1],
+             -(initial["maxM"][2] + initial["minM"][2]) * ratio[2] / 2]
+    sources = []
+    for light in spec.get("lights", []):
+        direction = Vector([light["direction"][i] * ratio[i] for i in range(3)]).normalized()
+        sources.append({
+            "id": light["id"], "type": light["kind"],
+            "positionM": [light["position"][i] * ratio[i] + shift[i] for i in range(3)],
+            "direction": list(direction), "colorHex": "#FFF1D6",
+            "intensityCd": 40.0, "rangeM": 5.0, "coneAngleRad": .9, "penumbra": .5,
+            "emissiveMaterialNames": ["DG_" + name for name in light["glowMaterials"]],
+        })
+    return {"coordinateSpace": "model-local", "activation": "night", "sources": sources,
+            "disclosure": "Image-inferred bulb placement. Warm-white color, brightness and beam are visual defaults, not measured photometry."}
 
 
 def measure(objects):
@@ -282,7 +382,7 @@ def main():
     root["dimensionsM"] = spec["dimensionsM"]
     root["pivot"] = "bottom-center"
     root["forwardAxis"] = "+Z (glTF); -Y (Blender)"
-    root["disclosure"] = "Codex-authored declarative model interpreted in Blender; not a live API result."
+    root["disclosure"] = "Declarative model interpreted in Blender. See ModelAsset for generation provenance."
     materials = {item["id"]: make_material(item) for item in spec["materials"]}
     objects = [
         make_part(part, index, materials[part["materialId"]], root, collection)
@@ -293,6 +393,18 @@ def main():
         if options.fuse_material not in materials:
             raise ValueError("Unknown material requested for fusion")
         objects = fuse_material(objects, materials[options.fuse_material])
+    initial = measure(objects)
+    ratio = [1, 1, 1]
+    if options.fit_envelope:
+        ratio = [spec["dimensionsM"][i] / initial["dimensionsM"][i] for i in range(3)]
+        root.scale = (ratio[0], ratio[2], ratio[1])
+        root.location = (
+            -(initial["maxM"][0] + initial["minM"][0]) * ratio[0] / 2,
+            (initial["maxM"][2] + initial["minM"][2]) * ratio[2] / 2,
+            -initial["minM"][1] * ratio[1],
+        )
+    if spec.get("lights"):
+        root["dreamgridLighting"] = normalized_lighting(spec, initial, ratio)
     report = measure(objects)
     assert_normalized(report, spec["dimensionsM"])
     bpy.ops.object.select_all(action="DESELECT")
@@ -311,6 +423,9 @@ def main():
     report["blenderVersion"] = bpy.app.version_string
     report["dimensionToleranceM"] = .00001
     (output / "validation.json").write_text(json.dumps(report, indent=2) + "\n")
+    if options.asset_only:
+        print("DREAMGRID_VALIDATION " + json.dumps(report))
+        return
     camera = studio(scene, spec["dimensionsM"])
     bpy.ops.object.select_all(action="DESELECT")
     root.select_set(True)
