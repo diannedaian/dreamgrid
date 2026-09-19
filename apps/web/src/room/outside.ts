@@ -3,7 +3,7 @@
 import {
   BackSide, CanvasTexture, Color, CylinderGeometry, DirectionalLight, DoubleSide, Euler, Group, HemisphereLight,
   InstancedMesh, LinearSRGBColorSpace, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PlaneGeometry,
-  Quaternion, Scene, SphereGeometry, SRGBColorSpace, Vector3, WebGLRenderTarget, WebGLRenderer,
+  Quaternion, Scene, ShaderMaterial, SphereGeometry, SRGBColorSpace, Texture, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer,
 } from "three";
 import type { Look } from "./sun";
 
@@ -119,7 +119,7 @@ export function buildOutside(w: number, h: number, wallT: number, look: Look, vi
   const rt = new WebGLRenderTarget(px, Math.max(256, Math.round((px * h) / w)));
   rt.texture.colorSpace = LinearSRGBColorSpace;
   const group = new Group();
-  const pane = new Mesh(new PlaneGeometry(w, h), new MeshBasicMaterial({ map: rt.texture }));
+  const pane = new Mesh(new PlaneGeometry(w, h), glassMaterial(rt.texture, rt.width, rt.height));
   pane.position.set(w / 2, h / 2, -wallT + 0.005);
   group.add(pane);
   // Invisible copy of the canopy so the sun still throws dappled leaf shadows into the room.
@@ -301,4 +301,42 @@ function cloudTexture(): CanvasTexture {
   cloudTex = new CanvasTexture(c);
   cloudTex.colorSpace = SRGBColorSpace;
   return cloudTex;
+}
+
+/**
+ * The pane: shows the rendered view through a subtle sheet of glass. Toward the left and right edges
+ * the image softens and frosts a little, and a faint diagonal sheen sits over everything.
+ */
+function glassMaterial(map: Texture, width: number, height: number): ShaderMaterial {
+  return new ShaderMaterial({
+    uniforms: { map: { value: map }, texel: { value: new Vector2(1 / width, 1 / height) } },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `
+      uniform sampler2D map;
+      uniform vec2 texel;
+      varying vec2 vUv;
+      void main() {
+        // 0 at the side edges → 1 in the middle 50%
+        float side = smoothstep(0.0, 0.28, min(vUv.x, 1.0 - vUv.x));
+        float blur = (1.0 - side) * 6.0; // blur radius in texels
+        vec3 c = vec3(0.0);
+        float wsum = 0.0;
+        for (int i = -3; i <= 3; i++) for (int j = -3; j <= 3; j++) {
+          vec2 o = vec2(float(i), float(j)) * texel * blur;
+          float wgt = 1.0 / (1.0 + float(i * i + j * j) * 0.35);
+          c += texture2D(map, vUv + o).rgb * wgt;
+          wsum += wgt;
+        }
+        c /= wsum;
+        // frost toward the edges and a faint diagonal sheen
+        float frost = (1.0 - side) * 0.14;
+        float sheen = smoothstep(0.35, 0.65, vUv.x * 0.6 + vUv.y * 0.4) * 0.05;
+        c = mix(c, vec3(1.0), frost + sheen);
+        gl_FragColor = vec4(c, 1.0);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+  });
 }
