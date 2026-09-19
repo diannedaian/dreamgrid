@@ -267,6 +267,20 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       onNewRoom: ({ w, d, h }) => { location.href = `${location.pathname}?w=${w}&d=${d}&h=${h}`; },
     });
     void bar;
+    // Reset: back to an empty room with the same measurements (two clicks, no dialog).
+    const reset = document.getElementById("reset-design")!;
+    reset.hidden = false;
+    let armed = 0;
+    reset.addEventListener("click", () => {
+      if (!armed) {
+        reset.textContent = "Really reset? Click again";
+        reset.classList.add("armed");
+        armed = window.setTimeout(() => { armed = 0; reset.textContent = "Reset"; reset.classList.remove("armed"); }, 3500);
+        return;
+      }
+      const inches = (m: number) => Math.round(m / INCH_M);
+      location.href = `${location.pathname}?w=${inches(room.widthM)}&d=${inches(room.depthM)}&h=${inches(room.heightM)}`;
+    });
     share.addEventListener("click", async () => {
       const ok = await copyText(planUrl(currentPlan(), true));
       share.textContent = ok ? "Link copied" : "Copy failed";

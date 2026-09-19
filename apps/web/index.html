@@ -58,6 +58,8 @@
       .chip.dims { right: 20px; font-variant-numeric: tabular-nums; }
       .chip.action { right: 20px; top: 46px; pointer-events: auto; font-weight: 600; font-family: var(--sans); }
       .chip.action.save-design { top: 72px; }
+      .chip.action.reset-design { top: 98px; color: var(--ink-soft); font-weight: 500; }
+      .chip.action.reset-design.armed { color: #c8412c; font-weight: 700; }
       .chip.action[hidden] { display: none; }
       .chip.mode { left: 20px; top: 62px; pointer-events: auto; cursor: pointer; border: 0; font-family: var(--sans); }
       .chip.mode { display: none; }
@@ -216,6 +218,7 @@
       <div class="chip dims" id="dims-chip"></div>
       <button class="chip action" id="share" type="button">Share</button>
       <button class="chip action save-design" id="save-design" type="button" hidden>Save design</button>
+      <button class="chip action reset-design" id="reset-design" type="button" hidden>Reset</button>
       <button class="chip action" id="shared" type="button" hidden>Shared plan · Edit a copy</button>
       <div id="hint">Drag furniture in from the right, or click a wall to add a window or door</div>
       <div id="warn" hidden></div>
