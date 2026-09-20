@@ -6,9 +6,9 @@ const BODY_OFFSET_IN = 10; // the phone sits roughly this far in front of the wa
 
 type Step = 0 | 1 | 2; // 0 length, 1 width, 2 height
 const STEPS = [
-  { title: "Length", hint: "Stand with your back against a short wall. Aim the crosshair where the far wall meets the floor, then tap Mark." },
-  { title: "Width", hint: "Now stand with your back against a long wall. Aim where the wall across from you meets the floor, then tap Mark." },
-  { title: "Height", hint: "Stay where you are. Aim where that same wall meets the ceiling, then tap Mark." },
+  { title: "Length", hint: ["Stand with your back against a shorter wall.", "Aim the crosshair where the wall across from you meets the floor, and tap Mark."] },
+  { title: "Width", hint: ["Stand with your back against a longer wall.", "Aim the crosshair where the wall across from you meets the floor, and tap Mark."] },
+  { title: "Height", hint: ["Stay where you are.", "Aim where that same wall meets the ceiling, then tap Mark."] },
 ];
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -32,8 +32,9 @@ const result: { l?: number; w?: number; h?: number; widthDistM?: number } = {};
 
 function render() {
   const done = step > 2;
-  if (!done) { $("step-title").textContent = STEPS[step].title; $("step-hint").textContent = STEPS[step].hint; }
-  else { $("step-title").textContent = "Room measured"; $("step-hint").textContent = "Send it to the desktop, or undo to re-measure."; }
+  const hint = $("step-hint");
+  if (!done) { $("step-title").textContent = STEPS[step].title; hint.replaceChildren(...STEPS[step].hint.map((t) => Object.assign(document.createElement("li"), { textContent: t }))); }
+  else { $("step-title").textContent = "Room measured"; hint.replaceChildren(Object.assign(document.createElement("li"), { textContent: "Send it to the desktop, or undo to re-measure." })); }
   $("d-l").textContent = result.l ? ftIn(result.l) : "—";
   $("d-w").textContent = result.w ? ftIn(result.w) : "—";
   $("d-h").textContent = result.h ? ftIn(result.h) : "—";

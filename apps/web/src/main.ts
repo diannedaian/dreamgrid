@@ -84,8 +84,8 @@ document.getElementById("phone-link")!.addEventListener("click", async () => {
     out.innerHTML = `<div class="phone-card">
       <div class="qr"><canvas id="qr"></canvas></div>
       <div class="phone-body">
-        <h3>Scan with your phone</h3>
-        <ol><li>Same Wi-Fi as this Mac</li><li>Open the link, allow the camera${https ? ", accept the certificate" : ""}</li><li>Measure — the room appears here</li></ol>
+        <div class="phone-icon" aria-label="Scan with your phone" title="Scan with your phone"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="12" y="4" width="24" height="40" rx="5" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M20 9h8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M21 38h6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M4 18v12M44 18v12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity=".45"/></svg></div>
+        <ol><li>Ensure your laptop and iPhone are on the same Wi-Fi</li><li>Allow Permissions to Access Camera</li>${https ? "<li>Accept Certificate Permissions</li>" : ""}</ol>
       </div>
       <div class="phone-url"><code>${esc(url)}</code><button type="button" class="copy">Copy</button></div>
       ${https ? "" : `<p class="phone-warn">Safari needs https for the camera. Restart with <b>npm run dev</b> (https is the default).</p>`}
