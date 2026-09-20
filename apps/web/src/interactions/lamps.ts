@@ -1,6 +1,6 @@
 // Lamp registry: objects registered here glow and cast warm light at night.
 // Generated GLBs can supply multiple bulb positions; fixtures keep their default light.
-import { Box3, Color, Mesh, MeshStandardMaterial, Object3D, PointLight, SpotLight, Vector3 } from "three";
+import { Box3, Color, HemisphereLight, Light, Mesh, MeshStandardMaterial, Object3D, PointLight, SpotLight, Vector3 } from "three";
 
 export type LightingMode = "day" | "night";
 
@@ -18,8 +18,8 @@ export type LampOptions = {
   distanceM?: number;
 };
 
-type Emitter = { light: PointLight | SpotLight; intensity: number; target?: Object3D };
-type Entry = { object: Object3D; emitters: Emitter[]; glow: Set<MeshStandardMaterial> };
+type Emitter = { light: Light; intensity: number; target?: Object3D };
+type Entry = { object: Object3D; emitters: Emitter[]; glow: Set<MeshStandardMaterial>; glowStrength?: Map<MeshStandardMaterial, number> };
 
 // Narrow adapter for the existing GLB extras; no catalog/API contract changes.
 type Source = {
@@ -43,9 +43,28 @@ export class LampRegistry {
     });
     if (rig) {
       const { space, sources } = rig;
-      const entry: Entry = { object, emitters: [], glow: new Set() };
+      const entry: Entry = { object, emitters: [], glow: new Set(), glowStrength: new Map() };
       for (const source of sources) {
         const color = new Color(source.colorHex);
+        // An uplight (torchiere bowl aimed at the ceiling) should wash the whole room, not paint a spot on the
+        // ceiling: a wide, gently-decaying point light at the bowl plus a warm hemisphere fill, and a strong glow.
+        if (isUplight(source)) {
+          const wash = new PointLight(color, 0, source.rangeM * 1.8, 1);
+          wash.name = `dreamgrid:${source.id}`;
+          wash.position.set(...source.positionM);
+          space.add(wash);
+          const fill = new HemisphereLight(color, new Color(color).multiplyScalar(0.35), 0);
+          fill.name = `dreamgrid:${source.id}:fill`;
+          space.add(fill);
+          entry.emitters.push({ light: wash, intensity: (opts.intensity ?? source.intensityCd * GENERATED_LIGHT_PREVIEW_SCALE) * 0.9 });
+          entry.emitters.push({ light: fill, intensity: 0.35 });
+          object.traverse((node) => {
+            if (!(node instanceof Mesh)) return;
+            const mats = Array.isArray(node.material) ? node.material : [node.material];
+            for (const mat of mats) if (mat instanceof MeshStandardMaterial && source.emissiveMaterialNames.includes(mat.name)) { mat.emissive.copy(color); entry.glow.add(mat); entry.glowStrength!.set(mat, 2.2); }
+          });
+          continue;
+        }
         const light = source.type === "spot"
           ? new SpotLight(color, 0, source.rangeM, source.coneAngleRad ?? Math.PI / 4, source.penumbra ?? 0.5, 2)
           : new PointLight(color, 0, source.rangeM, 2);
@@ -118,8 +137,15 @@ export class LampRegistry {
   private apply(e: Entry) {
     const on = this.mode === "night";
     for (const { light, intensity } of e.emitters) light.intensity = on ? intensity : 0;
-    for (const mat of e.glow) mat.emissiveIntensity = on ? 0.8 : 0;
+    for (const mat of e.glow) mat.emissiveIntensity = on ? (e.glowStrength?.get(mat) ?? 0.8) : 0;
   }
+}
+
+/** A spot pointed (nearly) straight up: a torchiere / uplight bowl. */
+function isUplight(s: Source): boolean {
+  if (s.type !== "spot" || !s.direction) return false;
+  const [x, y, z] = s.direction;
+  return y > 0 && y / Math.hypot(x, y, z) > 0.9;
 }
 
 function record(value: unknown): value is Record<string, unknown> {
