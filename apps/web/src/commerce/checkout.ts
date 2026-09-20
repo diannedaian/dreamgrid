@@ -16,8 +16,8 @@ export type Checkout = {
   /** Reopen the sheet on the receipt of an existing intent. */
   showReceipt: (plan: ShoppingPlan, intent: PaymentIntent) => void;
   close: () => void;
-  /** Subscribe to intent changes (authorized, captured, refunded, declined, cleared). */
-  onIntent: (listener: (intent: PaymentIntent | undefined) => void) => void;
+  /** Subscribe to intent changes (authorized, captured, refunded, declined, cleared) with the plan they belong to. */
+  onIntent: (listener: (intent: PaymentIntent | undefined, plan: ShoppingPlan | undefined) => void) => void;
 };
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
@@ -37,8 +37,8 @@ export function mountCheckout(root: HTMLElement, o: CheckoutOptions): Checkout {
   let error = "";
   let busy = false;
   let steps: Step[] = [];
-  const listeners = new Set<(intent: PaymentIntent | undefined) => void>();
-  const emit = (next: PaymentIntent | undefined) => { intent = next; for (const l of listeners) l(next); };
+  const listeners = new Set<(intent: PaymentIntent | undefined, plan: ShoppingPlan | undefined) => void>();
+  const emit = (next: PaymentIntent | undefined) => { intent = next; for (const l of listeners) l(next, plan); };
   void o.payments.wallet().then((cards) => { if (cards.length) { wallet = cards; if (!wallet.some((c) => c.id === cardId)) cardId = wallet[0].id; render(); } }).catch(() => {});
 
   const q = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
@@ -164,7 +164,7 @@ export function mountCheckout(root: HTMLElement, o: CheckoutOptions): Checkout {
         <div class="amt">${formatUsd(Number(i.amountUsd))}</div>
         <div class="via">${declined ? esc(i.declineReason || i.declineCode || "") : `${esc(card.brand)} •••• ${esc(card.last4)} · ${esc(providerLabel(i))}${i.approvalCode ? ` · approval ${esc(i.approvalCode)}` : ""}`}</div>
       </div>
-      ${declined ? "" : `<ul class="mini">${p.groups.flatMap((g) => g.lines.map((l) => `<li><span>${esc(l.product.title)}${l.quantity > 1 ? ` ×${l.quantity}` : ""}</span><em>${esc(g.merchant)}</em><b>${formatUsd(l.lineTotalUsd)}</b></li>`)).join("")}</ul>`}
+      ${declined ? "" : `<ul class="mini">${receiptLines(p, i).map((l) => `<li><span>${esc(l.title)}${l.quantity > 1 ? ` ×${l.quantity}` : ""}</span><em>${esc(l.merchant)}</em><b>${formatUsd(l.totalUsd)}</b></li>`).join("")}</ul>`}
       <details class="more"><summary>Receipt details</summary>
         <dl>
           <dt>Intent</dt><dd><code>${esc(i.intentId)}</code></dd>
@@ -209,3 +209,9 @@ export function mountCheckout(root: HTMLElement, o: CheckoutOptions): Checkout {
 }
 
 const pause = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/** A receipt lists what was actually paid for (the intent's lines), never the room as it is now. */
+function receiptLines(plan: ShoppingPlan, intent: PaymentIntent): Array<{ title: string; merchant: string; quantity: number; totalUsd: number }> {
+  if (intent.lines?.length) return intent.lines.map((l) => ({ title: l.title, merchant: l.merchant, quantity: l.quantity, totalUsd: Number(l.totalUsd ?? Number(l.unitPriceUsd) * l.quantity) }));
+  return plan.groups.flatMap((g) => g.lines.map((l) => ({ title: l.product.title, merchant: g.merchant, quantity: l.quantity, totalUsd: l.lineTotalUsd })));
+}

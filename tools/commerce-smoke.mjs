@@ -146,7 +146,7 @@ try {
   await page.locator("#checkout-popup .result.declined").waitFor();
   assert.match(await page.locator("#checkout-popup .result").innerText(), /Declined.*exceeds the \$100\.00/s);
   await page.locator("#checkout-popup .done").click(); // "Fix the plan" clears the declined intent
-  assert.equal(await page.evaluate(() => localStorage.getItem("dreamgrid.paymentIntent")), null);
+  assert.equal(await page.evaluate(() => localStorage.getItem("dreamgrid.receipt")), null);
   await page.locator("#budgetbar .review").click();
   await page.locator("#checkout-popup .pay.confirm").click();
   await page.locator("#checkout-popup .result.captured").waitFor();
@@ -154,7 +154,7 @@ try {
   assert.equal(lastPlan.cardId, "visa-3705"); // the wallet pick travels with the plan (and its digest)
   await page.locator("#checkout-popup .done").click();
   assert.match(await page.locator("#budgetbar .paid").innerText(), /Paid \$999.*Visa •••• 3705/s);
-  assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem("dreamgrid.paymentIntent"))).status, "captured");
+  assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem("dreamgrid.receipt"))).intent.status, "captured");
   await page.locator("#budgetbar .receipt-link").click();
   await page.locator("#checkout-popup .refund").click();
   await page.locator("#checkout-popup .result.reversed").waitFor();

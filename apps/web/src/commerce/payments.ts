@@ -37,6 +37,14 @@ export type PaymentIntent = {
   cardLast4?: string;
 };
 
+/** What was paid for, order-independent: the same items at the same prices give the same key. */
+export function linesFingerprint(lines: ReadonlyArray<Pick<PaymentLine, "productId" | "quantity" | "unitPriceUsd">>): string {
+  return lines.map((l) => `${l.productId}x${l.quantity}@${l.unitPriceUsd}`).sort().join("|");
+}
+
+/** A receipt as remembered for one room: the intent plus what it paid for and where. */
+export type SavedReceipt = { intent: PaymentIntent; fingerprint: string; roomKey: string };
+
 /** Human label for the network that answered. */
 export function providerLabel(intent: Pick<PaymentIntent, "provider">): string {
   return intent.provider === "visa-acceptance-sandbox" ? "Visa Acceptance" : "DreamGrid sandbox";

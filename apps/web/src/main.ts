@@ -31,13 +31,19 @@ import { mountSharePopup } from "./catalog/sharePopup";
 import { saveGeneratedEntry } from "./catalog/generatedCatalog";
 import { mountBudgetBar } from "./commerce/budgetBar";
 import { saveProduct } from "./commerce/savedProducts";
-import { createPaymentsClient, type PaymentIntent } from "./commerce/payments";
+import { createPaymentsClient, type SavedReceipt } from "./commerce/payments";
 import { mountCheckout } from "./commerce/checkout";
 import "./commerce/commerce.css";
 
-const INTENT_KEY = "dreamgrid.paymentIntent";
-function readSavedIntent(): PaymentIntent | undefined {
-  try { const raw = localStorage.getItem(INTENT_KEY); return raw ? (JSON.parse(raw) as PaymentIntent) : undefined; } catch { return undefined; }
+// One remembered receipt, scoped to the room it paid for: a saved layout by id, otherwise the
+// unsaved working room. Opening a different layout or a fresh room starts with no receipt.
+const RECEIPT_KEY = "dreamgrid.receipt";
+function readSavedReceipt(roomKey: string): SavedReceipt | undefined {
+  try {
+    const raw = localStorage.getItem(RECEIPT_KEY);
+    const saved = raw ? (JSON.parse(raw) as SavedReceipt) : undefined;
+    return saved?.roomKey === roomKey && saved.intent ? saved : undefined;
+  } catch { return undefined; }
 }
 
 const overlay = document.getElementById("dims") as HTMLDivElement;
@@ -214,6 +220,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
   const designs = createDesignStore(undefined, await loadBuiltinDesigns());
   let designId: string | null = new URLSearchParams(location.search).get("design");
   let designName = designId ? designs.get(designId)?.name ?? "" : "";
+  const roomKey = () => designId ? `design:${designId}` : "working-room";
   let refreshShopList: () => void = () => {};
   const syncUrl = () => {
     const u = new URL(planUrl(currentPlan(), view));
@@ -290,14 +297,16 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     stateBtn.addEventListener("click", () => placement!.toggleSelectedState());
     upBtn.addEventListener("click", () => placement!.raiseSelected(1));
     downBtn.addEventListener("click", () => placement!.raiseSelected(-1));
-    // keep the toolbar pinned above the selected item
+    // keep the toolbar pinned above the selected item. Overlays live inside #chrome, which is itself
+    // offset by the open drawers, so project into #chrome's box rather than the viewport.
+    const chrome = document.getElementById("chrome")!;
     const anchorTools = () => {
       const a = placement?.selectedAnchor();
       if (!a || tools.hidden) return;
       const v = a.project(camera);
-      const r = canvas.getBoundingClientRect();
-      tools.style.left = `${r.left + ((v.x + 1) / 2) * r.width}px`;
-      tools.style.top = `${r.top + ((1 - v.y) / 2) * r.height}px`;
+      const r = canvas.getBoundingClientRect(), c = chrome.getBoundingClientRect();
+      tools.style.left = `${r.left - c.left + ((v.x + 1) / 2) * r.width}px`;
+      tools.style.top = `${r.top - c.top + ((1 - v.y) / 2) * r.height}px`;
     };
     frameHooks.push(anchorTools);
     const doorsOf = (ws: WindowSpec[]) => ws.filter((x) => x.kind === "door").map((x) => doorArc(x, room));
@@ -375,9 +384,9 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       const a = measure.labelAnchor();
       if (!a) return;
       const v = a.point.clone().project(camera);
-      const r = canvas.getBoundingClientRect();
-      measureLabel.style.left = `${r.left + ((v.x + 1) / 2) * r.width}px`;
-      measureLabel.style.top = `${r.top + ((1 - v.y) / 2) * r.height - 14}px`;
+      const r = canvas.getBoundingClientRect(), c = chrome.getBoundingClientRect();
+      measureLabel.style.left = `${r.left - c.left + ((v.x + 1) / 2) * r.width}px`;
+      measureLabel.style.top = `${r.top - c.top + ((1 - v.y) / 2) * r.height - 14}px`;
     });
 
     // Right drawer: furniture browser + shopping agent.
@@ -405,9 +414,9 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       copyText,
       checkout,
       onOpen: () => shopBar.setOpen(false),
-      // The sandbox receipt for this room survives a reload (the API keeps the ledger while it runs).
-      savedIntent: readSavedIntent(),
-      onIntentChange: (intent) => { try { intent ? localStorage.setItem(INTENT_KEY, JSON.stringify(intent)) : localStorage.removeItem(INTENT_KEY); } catch { /* storage full or blocked */ } },
+      // The receipt for this room survives a reload (the API keeps the ledger while it runs).
+      savedReceipt: readSavedReceipt(roomKey()),
+      onReceiptChange: (receipt) => { try { receipt ? localStorage.setItem(RECEIPT_KEY, JSON.stringify({ ...receipt, roomKey: roomKey() } satisfies SavedReceipt)) : localStorage.removeItem(RECEIPT_KEY); } catch { /* storage full or blocked */ } },
     });
     refreshBudget = () => budget.refresh();
     refreshShopList = () => shopBar.refresh();
@@ -437,7 +446,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
   }
 
   applySun(sun);
-  if (import.meta.env.DEV) (window as unknown as { __dg: unknown }).__dg = { scene, shell, placement, THREE, renderer, GLTFLoader };
+  if (import.meta.env.DEV) (window as unknown as { __dg: unknown }).__dg = { scene, shell, placement, camera, THREE, renderer, GLTFLoader };
 
   let last = performance.now();
   renderer.setAnimationLoop((now) => {

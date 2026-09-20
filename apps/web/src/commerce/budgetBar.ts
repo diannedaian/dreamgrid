@@ -10,7 +10,7 @@ import { activeSwaps, applySwap, fitToBudget, rankAlternatives, revertSwaps, typ
 import { roundUsd, summarizeBudget, type BudgetSummary } from "./budget";
 import { formatSignedUsd, formatUsd } from "./format";
 import { buildShoppingPlan, type ShoppingPlan } from "./shoppingPlan";
-import { providerLabel, type PaymentIntent } from "./payments";
+import { linesFingerprint, paymentPlanFrom, providerLabel, type PaymentIntent, type SavedReceipt } from "./payments";
 import type { Checkout } from "./checkout";
 
 export type BudgetBarOptions = {
@@ -27,9 +27,10 @@ export type BudgetBarOptions = {
   onOpen?: () => void;
   /** The checkout sheet (card pick → passkey → network → receipt). */
   checkout: Checkout;
-  /** Restore a receipt for the current room from an earlier session, if any. */
-  savedIntent?: PaymentIntent;
-  onIntentChange?: (intent: PaymentIntent | undefined) => void;
+  /** Receipt remembered for this room from an earlier session, if any. */
+  savedReceipt?: SavedReceipt;
+  /** Fired whenever the room's receipt changes (paid, refunded, cleared) so the caller can persist it. */
+  onReceiptChange?: (receipt: Omit<SavedReceipt, "roomKey"> | undefined) => void;
 };
 
 export type BudgetBar = {
@@ -51,9 +52,14 @@ export function mountBudgetBar(bar: HTMLElement, chip: HTMLButtonElement, o: Bud
   let swapsApplied: Alternative[] = [];
   let fitMessage = "";
   let busy = false;
-  let intent: PaymentIntent | undefined = o.savedIntent;
+  let receipt: Omit<SavedReceipt, "roomKey"> | undefined = o.savedReceipt;
+  const intent = () => receipt?.intent;
   /** The checkout sheet reports every change so the drawer summary and saved receipt stay in sync. */
-  o.checkout.onIntent((next) => { intent = next; o.onIntentChange?.(next); render(); });
+  o.checkout.onIntent((next, paidPlan) => {
+    receipt = next && paidPlan ? { intent: next, fingerprint: planFingerprint(paidPlan) } : next && receipt ? { ...receipt, intent: next } : undefined;
+    o.onReceiptChange?.(receipt);
+    render();
+  });
 
   bar.hidden = false;
   chip.hidden = false;
@@ -168,6 +174,7 @@ export function mountBudgetBar(bar: HTMLElement, chip: HTMLButtonElement, o: Bud
   };
 
   // ── checkout ────────────────────────────────────────────────────────────────
+  const planFingerprint = (p: ShoppingPlan) => linesFingerprint(paymentPlanFrom(p, p.totalUsd).lines);
   const stores = (p: ShoppingPlan) => [...new Set(p.groups.map((g) => g.merchant || "Unknown store"))];
   const paidCard = (i: PaymentIntent) => {
     const label = { authorized: "Authorized", captured: "Paid", reversed: "Refunded", declined: "Declined" }[i.status];
@@ -183,15 +190,22 @@ export function mountBudgetBar(bar: HTMLElement, chip: HTMLButtonElement, o: Bud
   };
   const planSection = (s: BudgetSummary) => {
     const p = buildShoppingPlan(state(), products(), swapsApplied);
-    if (intent && intent.status !== "declined") return `<h3>Purchase</h3>${paidCard(intent)}`;
-    return `
+    const paid = intent();
+    // A receipt belongs to the exact set of priced items it paid for. Same items → "Paid".
+    // Different items → keep the receipt visible but let the shopper check out the new room.
+    // An emptied room (Reset / New room) shows no old purchase at all.
+    const changed = !!receipt && planFingerprint(p) !== receipt.fingerprint;
+    const show = !!paid && paid.status !== "declined" && !(changed && s.lines.length === 0);
+    const purchase = show ? `<h3>Purchase</h3>${paidCard(paid)}${changed ? `<p class="sub changed">The room has changed since this purchase.</p>` : ""}` : "";
+    if (purchase && !changed) return purchase;
+    return `${purchase}
       <h3>Checkout</h3>
       ${s.lines.length ? `<p class="sub">${formatUsd(p.totalUsd)} · ${stores(p).length === 1 ? esc(stores(p)[0]) : `${stores(p).length} stores`}${p.unpricedItemCount ? ` · ${p.unpricedItemCount} unpriced not included` : ""}</p>` : `<p class="sub">Place priced furniture to check out.</p>`}
       <div class="agent-actions"><button type="button" class="find review" ${s.lines.length === 0 || busy ? "disabled" : ""}>Check out</button></div>`;
   };
   const wireCheckout = () => {
     pane.querySelector(".review")?.addEventListener("click", () => o.checkout.open(buildShoppingPlan(state(), products(), swapsApplied)));
-    pane.querySelector(".receipt-link")?.addEventListener("click", () => { if (intent) o.checkout.showReceipt(buildShoppingPlan(state(), products(), swapsApplied), intent); });
+    pane.querySelector(".receipt-link")?.addEventListener("click", () => { const i = intent(); if (i) o.checkout.showReceipt(buildShoppingPlan(state(), products(), swapsApplied), i); });
   };
 
   const render = () => {
@@ -202,7 +216,7 @@ export function mountBudgetBar(bar: HTMLElement, chip: HTMLButtonElement, o: Bud
 
   return {
     refresh: render,
-    showReceipt: () => { if (intent) { o.checkout.showReceipt(buildShoppingPlan(state(), products(), swapsApplied), intent); } },
+    showReceipt: () => { const i = intent(); if (i) o.checkout.showReceipt(buildShoppingPlan(state(), products(), swapsApplied), i); },
     setOpen,
     get budgetUsd() { return budgetUsd; },
     get summary() { return summarize(); },
