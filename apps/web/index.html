@@ -26,7 +26,7 @@
       .card { background: var(--cream); border-radius: 22px; padding: 30px 34px 28px; box-shadow: 0 18px 50px rgba(50,60,40,0.22), inset 0 1px 0 #fff; min-width: 300px; max-width: 440px; box-sizing: border-box; }
       .card h1 { font-family: var(--serif); font-weight: 500; font-size: 34px; letter-spacing: 0.01em; margin: 0 0 2px; }
       #dims .card { background: none; box-shadow: none; padding: 0 20px; } /* front page sits straight on the sage */
-      .card h1.glass-cloud { display: inline-block; position: relative; --k: 1.5; padding: 10px 18px; margin: -2px 0 40px -18px; } /* bottom margin clears the cloud so it never sits under the form */
+      .card h1.glass-cloud { display: inline-block; position: relative; --k: 1.5; padding: 10px 2.4em 10px 18px; margin: -2px 0 48px -18px; } /* bottom margin clears the cloud so it never sits under the form */
       .card h1 span { color: #8f7fc9; }
       .card .sub { margin: 0 0 22px; color: var(--ink-soft); font-size: 14px; }
       #dims form { display: grid; gap: 12px; }
@@ -93,11 +93,11 @@
           radial-gradient(ellipse 30% 18% at 74% 42%, rgba(255,255,255,0.6), rgba(255,255,255,0) 70%),
           radial-gradient(ellipse 60% 22% at 50% 96%, rgba(255,255,255,0.55), rgba(255,255,255,0) 70%);
         mix-blend-mode: screen; }
-      .chip.brand { left: 52px; top: 16px; font-family: var(--serif); font-size: 17px; padding: 8px 16px; background: none; }
+      .chip.brand { left: 52px; top: 16px; font-family: var(--serif); font-size: 17px; padding: 8px 2.4em 8px 16px; background: none; }
       .chip.brand::before, .chip.brand::after { inset: -16px -40px -8px; } /* small logo: keep the cloud inside the top bar */
       .chip.brand span { color: #8f7fc9; } /* lavender "Grid" */
       /* paint roller "painting" the Grid: mirrored, light grey, tilted 45° */
-      .roller { display: inline-block; width: 1.25em; height: 1.25em; margin-left: 0.12em; vertical-align: -0.28em; color: #c8c4bc; transform: rotate(45deg); transform-origin: 40% 60%; }
+      .roller { position: absolute; right: -0.25em; top: -0.55em; width: 2.9em; height: 2.9em; color: #c8c4bc; transform: rotate(45deg); transform-origin: 45% 45%; pointer-events: none; }
 
       .chip.dims { right: 62px; font-variant-numeric: tabular-nums; }
       /* top-right actions: small lavender glyph, soft cream pill on hover; text stays underlined */
