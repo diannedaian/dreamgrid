@@ -1,1 +1,135 @@
-[]
+[
+  {
+    "id": "starter-room",
+    "name": "Starter Room",
+    "plan": {
+      "v": 1,
+      "w": 144,
+      "d": 120,
+      "h": 96,
+      "win": [
+        {
+          "s": "l",
+          "u": 6,
+          "v": 37,
+          "w": 61,
+          "h": 44,
+          "f": "a"
+        },
+        {
+          "s": "b",
+          "u": 79,
+          "v": 38,
+          "w": 60,
+          "h": 37
+        }
+      ],
+      "items": [
+        {
+          "id": "imu9fz8rx0",
+          "productId": "green-velvet-mirror",
+          "modelAssetId": "asset-green-velvet-mirror",
+          "positionM": [
+            -0.7874,
+            1.143,
+            -1.5062
+          ],
+          "rotationYDeg": 0
+        },
+        {
+          "id": "imu9fzdd21",
+          "productId": "monstera-plant",
+          "modelAssetId": "asset-monstera-plant",
+          "positionM": [
+            -1.2446,
+            0,
+            1.0414
+          ],
+          "rotationYDeg": 0
+        },
+        {
+          "id": "imu9fzg0c2",
+          "productId": "prisco-olive-rug",
+          "modelAssetId": "asset-prisco-olive-rug",
+          "positionM": [
+            -0.2032,
+            0,
+            0.7112
+          ],
+          "rotationYDeg": 90
+        },
+        {
+          "id": "imu9fzmx23",
+          "productId": "torchiere-task-lamp",
+          "modelAssetId": "asset-torchiere-task-lamp",
+          "positionM": [
+            1.7018,
+            0,
+            -1.2446
+          ],
+          "rotationYDeg": 270
+        },
+        {
+          "id": "imu9fzpyp4",
+          "productId": "green-boucle-lounge-chair",
+          "modelAssetId": "asset-green-boucle-lounge-chair",
+          "positionM": [
+            1.0414,
+            0,
+            -0.889
+          ],
+          "rotationYDeg": 0
+        },
+        {
+          "id": "imu9g01h25",
+          "productId": "chenille-queen-bed",
+          "modelAssetId": "asset-chenille-queen-bed",
+          "positionM": [
+            -0.7112,
+            0,
+            -0.635
+          ],
+          "rotationYDeg": 90
+        },
+        {
+          "id": "imu9g3pw97",
+          "productId": "imp-6f6f5196e5911cb8",
+          "modelAssetId": "asset-imp-6f6f5196e5911cb8",
+          "positionM": [
+            -1.4478,
+            0,
+            0.5334
+          ],
+          "rotationYDeg": 0
+        },
+        {
+          "id": "imu9g4ke48",
+          "productId": "college-desk",
+          "modelAssetId": "asset-college-desk",
+          "positionM": [
+            1.2954,
+            0,
+            1.2192
+          ],
+          "rotationYDeg": 180
+        },
+        {
+          "id": "imu9g5o4ia",
+          "productId": "p-table-lamp",
+          "modelAssetId": "m-table-lamp",
+          "positionM": [
+            1.6764,
+            0.762,
+            1.397
+          ],
+          "rotationYDeg": 0
+        }
+      ],
+      "ign": [
+        "imu9fzpyp4",
+        "imu9fzdd21"
+      ]
+    },
+    "thumb": "/demo-assets/starter-room.jpg"
+  }
+]
