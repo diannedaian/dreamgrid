@@ -63,7 +63,7 @@ export class PlacementController {
     const object = await loadModel(product, asset);
     const item: SceneItem = { id: id ?? `i${Date.now().toString(36)}${(this.seq++).toString(36)}`, productId: product.id, modelAssetId: asset?.id ?? "", positionM, rotationYDeg };
     this.attach({ item, product, object });
-    this.moveTo(item.id, positionM[0], positionM[2], positionM[1]);
+    this.moveTo(item.id, positionM[0], positionM[2], positionM[1], !id); // fresh drops snap onto a desk / shelf top
     this.emit();
     return item;
   }
@@ -96,12 +96,14 @@ export class PlacementController {
    * Move an item to (x, z), clamped inside the room and snapped to the inch grid. Height is
    * kept only while the item is against a wall; away from a wall it sits on the floor.
    */
-  moveTo(id: string, x: number, z: number, y = this.placed.get(id)?.item.positionM[1] ?? 0) {
+  moveTo(id: string, x: number, z: number, y = this.placed.get(id)?.item.positionM[1] ?? 0, snapSurface = false) {
     const p = this.placed.get(id);
     if (!p) return;
     const [fw, fd] = this.footprint(p);
     const { widthM: W, depthM: D, heightM: H } = this.room;
     const sx = this.snapClamp(x, W, fw), sz = this.snapClamp(z, D, fd);
+    // Blender-style surface snap: a small item dragged over a desk / shelf lands on its top; off it, back to the floor.
+    if (snapSurface && this.canRaise(id)) y = this.surfaceTop(id, sx, sz) ?? 0;
     const against = sx - fw / 2 <= -W / 2 + 1e-6 || sz - fd / 2 <= -D / 2 + 1e-6;
     const ih = p.product.dimensionsM[1];
     // Wall-hugging items keep their height; decor and table lamps can sit at any height (e.g. on a desk).
@@ -109,6 +111,18 @@ export class PlacementController {
     p.item.positionM = [sx, sy, sz];
     p.object.position.set(sx, sy, sz);
     if (this.selected === id) this.placeRing(p);
+  }
+
+  /** Top of the highest desk / shelf / table whose footprint contains (x, z), or null on bare floor. */
+  surfaceTop(id: string, x: number, z: number): number | null {
+    let top: number | null = null;
+    for (const q of this.placed.values()) {
+      if (q.item.id === id || !isSurface(q)) continue;
+      const [fw, fd] = this.footprint(q);
+      const [qx, qy, qz] = q.item.positionM;
+      if (Math.abs(x - qx) <= fw / 2 && Math.abs(z - qz) <= fd / 2) top = Math.max(top ?? 0, qy + q.product.dimensionsM[1]);
+    }
+    return top;
   }
 
   /** Is the item touching the back or left wall (so it may be raised)? */
@@ -389,7 +403,7 @@ export class PlacementController {
     const hit = this.floorHit(e);
     if (!hit) return;
     this.drag.moved = true;
-    this.moveTo(this.drag.id, hit.x - this.drag.offset.x, hit.z - this.drag.offset.z);
+    this.moveTo(this.drag.id, hit.x - this.drag.offset.x, hit.z - this.drag.offset.z, undefined, true);
     this.updateOverlaps();
     this.refreshHover(this.placed.get(this.drag.id) ?? null);
   }
@@ -417,6 +431,12 @@ export class PlacementController {
     else if (e.key === "ArrowDown") { e.preventDefault(); this.raise(this.selected, e.shiftKey ? -12 : -1); }
     else if (e.key === "Escape") this.select(null);
   }
+}
+
+/** Things with a usable top: desks, side tables, chests, shelves. Small items can be set on them. */
+function isSurface(p: Placed): boolean {
+  const c = p.product.category as string;
+  return c === "desk" || c === "shelf";
 }
 
 /** Rugs, mats and anything a couple of inches thick: furniture sits on top, never "overlaps". */

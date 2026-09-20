@@ -7,7 +7,7 @@ export type CatalogEntry = { product: Product; asset?: ModelAsset };
 
 export const CATEGORY_ORDER = ["bed", "desk", "chair", "shelf", "lamp", "decor", "misc"] as const;
 export type CategoryKey = (typeof CATEGORY_ORDER)[number];
-export const CATEGORY_LABELS: Record<CategoryKey, string> = { bed: "Beds", desk: "Desks", chair: "Chairs", shelf: "Shelves", lamp: "Lamps", decor: "Decor", misc: "Misc" };
+export const CATEGORY_LABELS: Record<CategoryKey, string> = { bed: "Beds", desk: "Desks / Shelves", chair: "Chairs", shelf: "Shelves", lamp: "Lamps", decor: "Decor", misc: "Misc" };
 
 export class Catalog {
   private products = new Map<string, Product>();
@@ -36,7 +36,8 @@ export class Catalog {
   grouped(): Array<{ key: CategoryKey; label: string; entries: CatalogEntry[] }> {
     const buckets = new Map<CategoryKey, CatalogEntry[]>();
     for (const e of this.entries()) {
-      const k = Catalog.categoryOf(e.product);
+      const k0 = Catalog.categoryOf(e.product);
+      const k: CategoryKey = k0 === "shelf" ? "desk" : k0; // shelves share the "Desks / Shelves" column
       (buckets.get(k) ?? buckets.set(k, []).get(k)!).push(e);
     }
     return CATEGORY_ORDER.filter((k) => buckets.has(k)).map((key) => ({ key, label: CATEGORY_LABELS[key], entries: buckets.get(key)! }));
