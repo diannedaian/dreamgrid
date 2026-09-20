@@ -433,7 +433,10 @@
       #import-dock .builder .seat { left: 6px; bottom: 15px; width: 24px; height: 4px; border-radius: 2px; background: var(--honey); animation-name: seat-in-mini; }
       #import-dock .builder .back { left: 6px; bottom: 18px; width: 4px; height: 14px; border-radius: 2px 2px 1px 1px; animation-name: back-in; }
       #import-dock .builder .cushion { left: 12px; bottom: 19px; width: 16px; height: 4px; border-radius: 3px; background: var(--sage-deep); animation-name: cushion-in-mini; }
-      #import-dock.ok .builder i, #import-dock.err .builder i { animation: none; opacity: 1; transform: none; }
+      #import-dock.ok .builder i, #import-dock.err .builder i, #import-dock.ready .builder i { animation: none; opacity: 1; transform: none; }
+      #import-dock.ready { box-shadow: 0 10px 30px rgba(20,25,15,0.28), inset 0 0 0 2px var(--honey); animation: sheet-in .3s cubic-bezier(.2,.8,.2,1), dock-nudge 2.4s ease-in-out 1s infinite; }
+      #import-dock.ready small { color: var(--honey-deep); font-weight: 600; }
+      @keyframes dock-nudge { 0%, 88%, 100% { transform: none; } 92% { transform: translateY(-3px); } 96% { transform: translateY(1px); } }
       #import-dock.ok { box-shadow: 0 10px 30px rgba(20,25,15,0.28), inset 0 0 0 2px #3f7d4e; } #import-dock.err { box-shadow: 0 10px 30px rgba(20,25,15,0.28), inset 0 0 0 2px #c8412c; } #import-dock.err small { color: #c8412c; }
       @keyframes leg-in-mini { 0%, 8% { transform: translateY(18px); opacity: 0; } 22%, 78% { transform: none; opacity: 1; } 92%, 100% { transform: translateY(18px); opacity: 0; } }
       @keyframes seat-in-mini { 0%, 22% { transform: translateY(-22px); opacity: 0; } 38%, 78% { transform: none; opacity: 1; } 92%, 100% { transform: translateY(-22px); opacity: 0; } }

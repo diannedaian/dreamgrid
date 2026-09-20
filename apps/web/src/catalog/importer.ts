@@ -84,7 +84,7 @@ export function mountImporter(root: HTMLElement, onImported: (r: GeneratedEntry)
   dock.innerHTML = `<span class="builder mini" aria-hidden="true"><i class="leg a"></i><i class="leg b"></i><i class="seat"></i><i class="back"></i><i class="cushion"></i></span><span class="dock-text"><b></b><small></small></span>`;
   (document.getElementById("chrome") ?? root.parentElement ?? document.body).appendChild(dock);
   let dockTimer: number | undefined;
-  const showDock = (title: string, sub: string, kind: "working" | "ok" | "err" = "working") => {
+  const showDock = (title: string, sub: string, kind: "working" | "ready" | "ok" | "err" = "working") => {
     clearTimeout(dockTimer);
     dock.hidden = false; dock.className = kind;
     dock.querySelector("b")!.textContent = title;
@@ -94,7 +94,8 @@ export function mountImporter(root: HTMLElement, onImported: (r: GeneratedEntry)
   const dockTitle = () => prepared?.title || sourceProduct?.title || "your furniture";
   const close = () => { // Hide, don't abort paid work or discard progress.
     root.hidden = true;
-    if (busy && !completed) showDock(`Building ${dockTitle()}`, q(".progress .clock").textContent || "");
+    if (busy && !completed) showDock(`${prepared ? "Building" : "Studying"} ${dockTitle()}`, q(".progress .clock").textContent || "");
+    else if (prepared && !activeJob && !completed) showDock(`${dockTitle()} is ready to build`, "Check the sizes, then build it", "ready");
   };
   dock.addEventListener("click", () => { dock.hidden = true; clearTimeout(dockTimer); root.hidden = false; });
   root.addEventListener("click", e => { if (e.target === root) close(); });
@@ -196,6 +197,8 @@ export function mountImporter(root: HTMLElement, onImported: (r: GeneratedEntry)
         progress(null);
         productId = sourceProduct?.id || (sourceUrl ? await stableProductId(sourceUrl) : `generated-${prepared.importId}`);
         showReview();
+        // Analysis finished while tucked away: the shopper has to come back and confirm sizes.
+        if (root.hidden) showDock(`${prepared.title} is ready to build`, "Check the sizes, then build it", "ready");
         return;
       }
       if (!activeJob || activeJob.status === "failed") {
