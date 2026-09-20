@@ -79,7 +79,7 @@
           radial-gradient(ellipse 8% 7% at 91% 71%, #000 0 50%, transparent 100%),
           radial-gradient(ellipse 22% 13% at 70% 25%, #000 0 55%, transparent 100%),
           radial-gradient(ellipse 12% 11% at 85% 26%, #000 0 52%, transparent 100%); }
-      .glass-cloud::before, .glass-cloud::after { content: ""; position: absolute; inset: calc(-28px * var(--k)) calc(-56px * var(--k)) calc(-14px * var(--k)); z-index: -1; -webkit-mask: var(--puffs); mask: var(--puffs); }
+      .glass-cloud::before, .glass-cloud::after { content: ""; position: absolute; inset: calc(-28px * var(--k)) calc(-4px * var(--k)) calc(-14px * var(--k)) calc(-56px * var(--k)); z-index: -1; -webkit-mask: var(--puffs); mask: var(--puffs); }
       .glass-cloud::before {
         background:
           radial-gradient(ellipse 55% 70% at 22% 45%, rgba(255,190,225,0.38), transparent 72%),
@@ -94,10 +94,10 @@
           radial-gradient(ellipse 60% 22% at 50% 96%, rgba(255,255,255,0.55), rgba(255,255,255,0) 70%);
         mix-blend-mode: screen; }
       .chip.brand { left: 52px; top: 16px; font-family: var(--serif); font-size: 17px; padding: 8px 2.4em 8px 16px; background: none; }
-      .chip.brand::before, .chip.brand::after { inset: -16px -40px -8px; } /* small logo: keep the cloud inside the top bar */
+      .chip.brand::before, .chip.brand::after { inset: -16px -2px -8px -40px; } /* small logo: keep the cloud inside the top bar */
       .chip.brand span { color: #8f7fc9; } /* lavender "Grid" */
       /* paint roller "painting" the Grid: mirrored, light grey, tilted 45° */
-      .roller { position: absolute; right: 0.05em; top: -0.25em; width: 3.3em; height: 3.3em; color: #8e8a82; transform: rotate(45deg); transform-origin: 45% 45%; pointer-events: none; }
+      .roller { position: absolute; right: 0.05em; top: -0.25em; width: 3.3em; height: 3.3em; color: #a3a099; transform: rotate(45deg); transform-origin: 45% 45%; pointer-events: none; }
 
       .chip.dims { right: 62px; font-variant-numeric: tabular-nums; }
       /* top-right actions: small lavender glyph, soft cream pill on hover; text stays underlined */
