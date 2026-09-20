@@ -5,7 +5,7 @@ import {
   InstancedMesh, LinearSRGBColorSpace, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PlaneGeometry,
   Quaternion, Scene, ShaderMaterial, ShapeGeometry, SphereGeometry, SRGBColorSpace, Texture, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer,
 } from "three";
-import type { Look } from "./sun";
+import { nightness, type Look } from "./sun";
 import { openingShape, type WindowShape } from "../interactions/wallGrid";
 
 export type OutsideView = "leafy" | "autumn" | "snowy" | "rainy";
@@ -67,7 +67,7 @@ export function buildOutside(w: number, h: number, wallT: number, look: Look, vi
   const cx = (w + right - left) / 2, cy = (top - drop) / 2, cz = -wallT - bd / 2;
 
   // Seamless sky dome (no box edges): gradient from zenith to a bright horizon, all the way down.
-  const sky = skyTexture(look.pane, p.skyTint);
+  const sky = skyTexture(look.pane, p.skyTint, nightness(look));
   const dome = new Mesh(new SphereGeometry(9, 48, 24), new MeshBasicMaterial({ map: sky, side: BackSide }));
   dome.position.set(cx, h / 2, cz);
   sim.add(dome);
@@ -216,15 +216,16 @@ function leafTexture(): CanvasTexture {
   return leafTex;
 }
 
-function skyTexture([top, horizon, ground]: [string, string, string], tint: [string, number]): CanvasTexture {
+function skyTexture([top, horizon, ground]: [string, string, string], tint: [string, number], night = 0): CanvasTexture {
   const c = document.createElement("canvas");
   c.width = 16; c.height = 256;
   const ctx = c.getContext("2d")!;
-  const mix = (hex: string) => `#${new Color(hex).lerp(new Color(tint[0]), tint[1]).getHexString()}`;
+  // Weather tints (snow, rain) lighten the sky; at night they fade out so the sky stays dark.
+  const mix = (hex: string) => `#${new Color(hex).lerp(new Color(tint[0]), tint[1] * (1 - night)).getHexString()}`;
   void ground;
   const gr = ctx.createLinearGradient(0, 0, 0, 256);
-  // Horizon band: the horizon color lifted a little (bright by day, still dark at night).
-  const glow = `#${new Color(mix(horizon)).lerp(new Color("#ffffff"), 0.3).getHexString()}`;
+  // Horizon band: the horizon color lifted a little by day; at night the glow all but disappears.
+  const glow = `#${new Color(mix(horizon)).lerp(new Color("#ffffff"), 0.3 * (1 - night)).getHexString()}`;
   gr.addColorStop(0, mix(top)); gr.addColorStop(0.42, mix(horizon)); gr.addColorStop(0.6, glow); gr.addColorStop(1, mix(horizon));
   ctx.fillStyle = gr; ctx.fillRect(0, 0, 16, 256);
   const t = new CanvasTexture(c);
@@ -238,12 +239,14 @@ function cloudField(view: OutsideView, bw: number, bd: number, cx: number, cz: n
   const n = view === "rainy" ? 7 : 4;
   const tex = cloudTexture();
   const base = view === "rainy" ? "#9aa6b6" : view === "snowy" ? "#f1f5fb" : "#ffffff";
-  // Clouds take on the sky's light: bright by day, dim and blue at night.
-  const tint = look ? `#${new Color(base).lerp(new Color(look.pane[1]), 0.45).getHexString()}` : base;
+  // Clouds take on the sky's light: bright by day; at night they sink into the sky color and nearly vanish.
+  const night = look ? nightness(look) : 0;
+  const tint = look ? `#${new Color(base).lerp(new Color(look.pane[1]), 0.45 + 0.5 * night).getHexString()}` : base;
+  const opacity = (view === "rainy" ? 0.85 : 0.75) * (1 - 0.8 * night);
   const items: Array<{ m: Mesh; speed: number }> = [];
   for (let i = 0; i < n; i++) {
     const s = 0.6 + rnd() * 0.9;
-    const m = new Mesh(new PlaneGeometry(s * 1.8, s), new MeshBasicMaterial({ map: tex, color: new Color(tint), transparent: true, opacity: view === "rainy" ? 0.85 : 0.75, depthWrite: false, side: DoubleSide }));
+    const m = new Mesh(new PlaneGeometry(s * 1.8, s), new MeshBasicMaterial({ map: tex, color: new Color(tint), transparent: true, opacity, depthWrite: false, side: DoubleSide }));
     m.position.set(cx + (rnd() - 0.5) * bw, h * (0.35 + rnd() * 0.6), cz - bd * 0.3 + rnd() * 0.6);
     group.add(m);
     items.push({ m, speed: 0.02 + rnd() * 0.03 });
@@ -301,7 +304,9 @@ function glassMaterial(map: Texture, width: number, height: number): ShaderMater
         c /= wsum;
         float frost = 0.05;
         float sheen = smoothstep(0.35, 0.65, vUv.x * 0.6 + vUv.y * 0.4) * 0.04;
-        c = mix(c, vec3(1.0), frost + sheen);
+        // Frost is a fraction of the light coming through: a night sky stays dark instead of turning grey.
+        float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
+        c = mix(c, vec3(1.0), (frost + sheen) * clamp(lum * 4.0, 0.08, 1.0));
         gl_FragColor = vec4(c, 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>

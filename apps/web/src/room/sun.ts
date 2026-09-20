@@ -80,15 +80,17 @@ export type Look = {
   bodyClass: string;
   /** Pane gradient stops, top → horizon → ground. */
   pane: [string, string, string];
+  /** Page background behind the room: the sage shifts warm at the edges of the day and deep green-blue at night. */
+  page: string;
 };
 
 export const LOOKS: Record<TimeOfDay, Look> = {
   // Ambient light stays near-neutral so paint and floor colors read true at any hour; the
   // time of day lives in the sun and the window spill, which are strongly colored.
-  sunrise: { sun: "#ff8f6a", sunIntensity: 3.4, sky: "#fff3ec", ground: "#d9c6b8", hemiIntensity: 1.1, fill: "#fff1e8", fillIntensity: 0.8, spill: "#ff9878", spillIntensity: 2.8, bloom: 0.36, bloomThreshold: 0.78, bloomRadius: 0.9, exposure: 1.0, lampsOn: false, bodyClass: "t-sunrise", pane: ["#ffd6c2", "#ffe9d8", "#a9c56a"] },
-  noon: { sun: "#fff2cc", sunIntensity: 2.3, sky: "#fffbf5", ground: "#dad0bc", hemiIntensity: 1.25, fill: "#fff9f0", fillIntensity: 1.0, spill: "#fff0c6", spillIntensity: 1.9, bloom: 0.32, bloomThreshold: 0.8, bloomRadius: 0.9, exposure: 1.0, lampsOn: false, bodyClass: "t-noon", pane: ["#fff8e6", "#fdf3c8", "#aacb5e"] },
-  sunset: { sun: "#ff7a1e", sunIntensity: 3.6, sky: "#fff1e6", ground: "#d6c0aa", hemiIntensity: 1.0, fill: "#fff0e3", fillIntensity: 0.7, spill: "#ff8a2e", spillIntensity: 3.0, bloom: 0.36, bloomThreshold: 0.78, bloomRadius: 0.9, exposure: 0.98, lampsOn: true, bodyClass: "t-sunset", pane: ["#ff9e4a", "#ffcd8a", "#7a8a45"] },
-  midnight: { sun: "#9fb0e8", sunIntensity: 0.25, sky: "#e3e7f5", ground: "#b8bccb", hemiIntensity: 0.35, fill: "#e8ecff", fillIntensity: 0.12, spill: "#8fa0f0", spillIntensity: 0, bloom: 0.25, bloomThreshold: 0.9, bloomRadius: 0.8, exposure: 0.85, lampsOn: true, bodyClass: "t-midnight", pane: ["#141b3d", "#25305e", "#161e2c"] },
+  sunrise: { sun: "#ff8f6a", sunIntensity: 3.4, sky: "#fff3ec", ground: "#d9c6b8", hemiIntensity: 1.1, fill: "#fff1e8", fillIntensity: 0.8, spill: "#ff9878", spillIntensity: 2.8, bloom: 0.36, bloomThreshold: 0.78, bloomRadius: 0.9, exposure: 1.0, lampsOn: false, bodyClass: "t-sunrise", pane: ["#ffd6c2", "#ffe9d8", "#a9c56a"], page: "#b9bd98" },
+  noon: { sun: "#fff2cc", sunIntensity: 2.3, sky: "#fffbf5", ground: "#dad0bc", hemiIntensity: 1.25, fill: "#fff9f0", fillIntensity: 1.0, spill: "#fff0c6", spillIntensity: 1.9, bloom: 0.32, bloomThreshold: 0.8, bloomRadius: 0.9, exposure: 1.0, lampsOn: false, bodyClass: "t-noon", pane: ["#fff8e6", "#fdf3c8", "#aacb5e"], page: "#adbc9c" },
+  sunset: { sun: "#ff7a1e", sunIntensity: 3.6, sky: "#fff1e6", ground: "#d6c0aa", hemiIntensity: 1.0, fill: "#fff0e3", fillIntensity: 0.7, spill: "#ff8a2e", spillIntensity: 3.0, bloom: 0.36, bloomThreshold: 0.78, bloomRadius: 0.9, exposure: 0.98, lampsOn: true, bodyClass: "t-sunset", pane: ["#ff9e4a", "#ffcd8a", "#7a8a45"], page: "#b5aa88" },
+  midnight: { sun: "#9fb0e8", sunIntensity: 0.25, sky: "#e3e7f5", ground: "#b8bccb", hemiIntensity: 0.35, fill: "#e8ecff", fillIntensity: 0.12, spill: "#8fa0f0", spillIntensity: 0, bloom: 0.25, bloomThreshold: 0.9, bloomRadius: 0.8, exposure: 0.85, lampsOn: true, bodyClass: "t-midnight", pane: ["#0b1026", "#182342", "#0f1520"], page: "#2a423f" },
 };
 
 /** The look for any time of day, blended between the two nearest checkpoints. */
@@ -104,7 +106,15 @@ export function lookAt(t: number): Look {
     lampsOn: t >= 0.55, // lamps come on in the late afternoon
     bodyClass: LOOKS[nearestTime(t)].bodyClass,
     pane: [lerpColor(A.pane[0], B.pane[0], f), lerpColor(A.pane[1], B.pane[1], f), lerpColor(A.pane[2], B.pane[2], f)],
+    page: lerpColor(A.page, B.page, f),
   };
+}
+
+/** 0 by day → 1 at night, from how dark the sky horizon is. Drives how much the outside dims. */
+export function nightness(look: Pick<Look, "pane">): number {
+  const c = new Color(look.pane[1]);
+  const lum = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+  return Math.min(1, Math.max(0, 1 - lum * 2.2));
 }
 
 export function headingLabel(deg: number): string {

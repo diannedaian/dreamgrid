@@ -15,7 +15,9 @@
         --display: "Instrument Serif", var(--serif);
         --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
       }
-      html, body { margin: 0; height: 100%; background: var(--sage); font-family: var(--sans); color: var(--ink); transition: background 0.8s ease; overflow: hidden; }
+      /* --page follows the time of day (set from main.ts); the front page keeps the plain sage. */
+      html, body { margin: 0; height: 100%; background: var(--page, var(--sage)); font-family: var(--sans); color: var(--ink); transition: background 1.2s ease; overflow: hidden; }
+      body.night #menu-toggle { color: #fbf5ea; } body.night #menu-toggle:hover { background: rgba(255,255,255,0.14); }
       #stage { position: fixed; inset: 0; bottom: var(--panel-h, 0px); left: var(--left-w, 0px); right: var(--right-w, 0px); z-index: 0; transition: left 0.25s ease, right 0.25s ease; }
       body.has-leftbar { --left-w: 0px; }
       body.has-leftbar.leftbar-open { --left-w: 250px; }

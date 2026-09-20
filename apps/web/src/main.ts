@@ -231,6 +231,9 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     bloom.threshold = look.bloomThreshold;
     bloom.radius = look.bloomRadius;
     renderer.toneMappingExposure = look.exposure;
+    // The page behind the room follows the hour: warm at sunrise/sunset, deep green-blue at midnight.
+    document.documentElement.style.setProperty("--page", look.page);
+    document.body.classList.toggle("night", look.lampsOn && s.t > 0.8);
     syncUrl();
   };
 
