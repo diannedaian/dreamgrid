@@ -78,7 +78,25 @@ export function mountImporter(root: HTMLElement, onImported: (r: GeneratedEntry)
   let started = 0, ticker: number | undefined, photoLoad = 0;
   let sourceProduct: ImportSeed | undefined;
   const q = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
-  const close = () => { root.hidden = true; }; // Hide, don't abort paid work or discard progress.
+  // While a build runs the sheet can be tucked away into this pill; the work itself never stops.
+  const dock = document.createElement("button");
+  dock.type = "button"; dock.id = "import-dock"; dock.hidden = true;
+  dock.innerHTML = `<span class="builder mini" aria-hidden="true"><i class="leg a"></i><i class="leg b"></i><i class="seat"></i><i class="back"></i><i class="cushion"></i></span><span class="dock-text"><b></b><small></small></span>`;
+  (document.getElementById("chrome") ?? root.parentElement ?? document.body).appendChild(dock);
+  let dockTimer: number | undefined;
+  const showDock = (title: string, sub: string, kind: "working" | "ok" | "err" = "working") => {
+    clearTimeout(dockTimer);
+    dock.hidden = false; dock.className = kind;
+    dock.querySelector("b")!.textContent = title;
+    dock.querySelector("small")!.textContent = sub;
+    if (kind === "ok") dockTimer = window.setTimeout(() => { dock.hidden = true; }, 5000);
+  };
+  const dockTitle = () => prepared?.title || sourceProduct?.title || "your furniture";
+  const close = () => { // Hide, don't abort paid work or discard progress.
+    root.hidden = true;
+    if (busy && !completed) showDock(`Building ${dockTitle()}`, q(".progress .clock").textContent || "");
+  };
+  dock.addEventListener("click", () => { dock.hidden = true; clearTimeout(dockTimer); root.hidden = false; });
   root.addEventListener("click", e => { if (e.target === root) close(); });
   window.addEventListener("keydown", e => { if (e.key === "Escape" && !root.hidden) close(); });
 
@@ -135,6 +153,7 @@ export function mountImporter(root: HTMLElement, onImported: (r: GeneratedEntry)
       const s = Math.round((performance.now() - started) / 1000);
       q(".progress .note").textContent = note || notes[i % notes.length];
       q(".progress .clock").textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+      if (!dock.hidden && dock.className === "working") dock.querySelector("small")!.textContent = `${q(".progress .clock").textContent} · ${q(".progress .note").textContent}`;
       if (s % 3 === 0) i++;
     };
     q(".progress .headline").textContent = phase === "analyze" ? "Studying your photo" : "Building your model";
@@ -203,9 +222,11 @@ export function mountImporter(root: HTMLElement, onImported: (r: GeneratedEntry)
       goBusy(false);
       const go = q<HTMLButtonElement>(".go");
       go.textContent = "Done"; go.onclick = close;
+      if (root.hidden) showDock(`${prepared.title} is in your room`, "Drag it wherever you like", "ok"); else dock.hidden = true;
     } catch (e) {
       progress(null);
       status((e as Error).message, "err");
+      if (root.hidden) showDock(`${dockTitle()} needs a look`, (e as Error).message, "err");
       q<HTMLButtonElement>(".go").textContent = activeJob ? activeJob.status === "failed" ? "Try the build again" : "Check on the build" : prepared ? "Looks right — build it" : "Generate";
     } finally {
       if (!completed) goBusy(false);
@@ -241,6 +262,7 @@ export function mountImporter(root: HTMLElement, onImported: (r: GeneratedEntry)
       <div class="progress" hidden>
         <div class="builder" aria-hidden="true"><i class="leg a"></i><i class="leg b"></i><i class="seat"></i><i class="back"></i><i class="cushion"></i><i class="shadow"></i></div>
         <div class="headline"></div><div class="note"></div><div class="clock"></div>
+        <button type="button" class="minimize">Keep building in the background →</button>
       </div>
       <div class="done" hidden><div class="check">✓</div><p><b></b> is in your room. Drag it wherever you like.</p></div>
       <div class="status" role="status" aria-live="polite" hidden></div>
@@ -261,6 +283,7 @@ export function mountImporter(root: HTMLElement, onImported: (r: GeneratedEntry)
     });
     if (input) prefill(input);
     q(".close").addEventListener("click", close);
+    q(".minimize").addEventListener("click", close);
     q(".restart").addEventListener("click", () => { if (!busy) { completed = true; open(); } });
     q(".go").addEventListener("click", run);
   };

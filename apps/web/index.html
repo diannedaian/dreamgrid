@@ -420,6 +420,24 @@
       #import-popup .builder .back { left: 22px; bottom: 60px; width: 12px; height: 44px; border-radius: 6px 6px 3px 3px; animation-name: back-in; transform-origin: bottom; }
       #import-popup .builder .cushion { left: 40px; bottom: 62px; width: 50px; height: 12px; border-radius: 8px; background: var(--sage-deep); animation-name: cushion-in; }
       #import-popup .builder .shadow { left: 18px; bottom: 4px; width: 84px; height: 6px; border-radius: 50%; background: rgba(0,0,0,0.12); animation-name: shadow-in; }
+      #import-popup .progress .minimize { margin-top: 14px; font: inherit; font-size: 12.5px; font-weight: 500; border: 0; background: none; color: var(--ink-soft); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+      #import-popup .progress .minimize:hover { color: var(--ink); }
+      /* Background-build pill: the sheet is hidden but the build (and its clock) keeps going. */
+      #import-dock { position: absolute; left: 16px; bottom: 14px; pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 8px 16px 8px 10px; border: 0; border-radius: 999px; background: rgba(255,255,255,0.92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(20,25,15,0.28), inset 0 0 0 1px rgba(255,255,255,0.7); font-family: var(--sans); color: var(--ink); cursor: pointer; text-align: left; animation: sheet-in .3s cubic-bezier(.2,.8,.2,1); transition: transform .15s ease; }
+      #import-dock:hover { transform: translateY(-2px); }
+      #import-dock[hidden] { display: none; }
+      #import-dock .dock-text { display: grid; gap: 1px; } #import-dock b { font-size: 13px; font-weight: 600; } #import-dock small { font-size: 11px; color: var(--ink-soft); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      #import-dock .builder { position: relative; width: 36px; height: 34px; flex: 0 0 auto; }
+      #import-dock .builder i { position: absolute; display: block; border-radius: 2px; background: var(--ink); animation-duration: 3.2s; animation-iteration-count: infinite; animation-timing-function: cubic-bezier(.2,.8,.2,1); transform-origin: bottom; }
+      #import-dock .builder .leg { width: 3px; height: 12px; bottom: 3px; animation-name: leg-in-mini; } #import-dock .builder .leg.a { left: 9px; } #import-dock .builder .leg.b { left: 25px; animation-delay: .15s; }
+      #import-dock .builder .seat { left: 6px; bottom: 15px; width: 24px; height: 4px; border-radius: 2px; background: var(--honey); animation-name: seat-in-mini; }
+      #import-dock .builder .back { left: 6px; bottom: 18px; width: 4px; height: 14px; border-radius: 2px 2px 1px 1px; animation-name: back-in; }
+      #import-dock .builder .cushion { left: 12px; bottom: 19px; width: 16px; height: 4px; border-radius: 3px; background: var(--sage-deep); animation-name: cushion-in-mini; }
+      #import-dock.ok .builder i, #import-dock.err .builder i { animation: none; opacity: 1; transform: none; }
+      #import-dock.ok { box-shadow: 0 10px 30px rgba(20,25,15,0.28), inset 0 0 0 2px #3f7d4e; } #import-dock.err { box-shadow: 0 10px 30px rgba(20,25,15,0.28), inset 0 0 0 2px #c8412c; } #import-dock.err small { color: #c8412c; }
+      @keyframes leg-in-mini { 0%, 8% { transform: translateY(18px); opacity: 0; } 22%, 78% { transform: none; opacity: 1; } 92%, 100% { transform: translateY(18px); opacity: 0; } }
+      @keyframes seat-in-mini { 0%, 22% { transform: translateY(-22px); opacity: 0; } 38%, 78% { transform: none; opacity: 1; } 92%, 100% { transform: translateY(-22px); opacity: 0; } }
+      @keyframes cushion-in-mini { 0%, 52% { transform: translateY(-12px) scaleX(.6); opacity: 0; } 62% { transform: translateY(1px) scaleX(1.06); opacity: 1; } 68%, 78% { transform: none; opacity: 1; } 92%, 100% { transform: translateY(-12px); opacity: 0; } }
       @keyframes leg-in { 0%, 8% { transform: translateY(60px); opacity: 0; } 22%, 78% { transform: none; opacity: 1; } 92%, 100% { transform: translateY(60px); opacity: 0; } }
       @keyframes seat-in { 0%, 22% { transform: translateY(-70px); opacity: 0; } 38%, 78% { transform: none; opacity: 1; } 92%, 100% { transform: translateY(-70px); opacity: 0; } }
       @keyframes back-in { 0%, 38% { transform: rotate(-90deg); opacity: 0; } 52%, 78% { transform: none; opacity: 1; } 92%, 100% { transform: rotate(-90deg); opacity: 0; } }
