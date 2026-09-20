@@ -1,0 +1,143 @@
+{
+  "name": "Casacomoda L Shaped Desk",
+  "category": "desk",
+  "dimensionsM": [
+    1.29,
+    0.75,
+    1.29
+  ],
+  "materials": [
+    {
+      "id": "material1",
+      "name": "MDF",
+      "baseColorHex": "#000000",
+      "roughness": 0.6,
+      "metallic": 0
+    }
+  ],
+  "parts": [
+    {
+      "id": "part1",
+      "primitive": "box",
+      "role": "body",
+      "dimensionsM": [
+        1.29,
+        0.02,
+        1.29
+      ],
+      "positionM": [
+        0,
+        0.75,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "material1",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "part2",
+      "primitive": "cylinder",
+      "role": "leg",
+      "dimensionsM": [
+        0.05,
+        0.7,
+        0.05
+      ],
+      "positionM": [
+        -0.64,
+        0.35,
+        -0.64
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "material1",
+      "cornerRadiusM": null,
+      "repeat": {
+        "count": 2,
+        "offsetM": [
+          0,
+          0,
+          1.28
+        ]
+      }
+    },
+    {
+      "id": "part3",
+      "primitive": "cylinder",
+      "role": "leg",
+      "dimensionsM": [
+        0.05,
+        0.7,
+        0.05
+      ],
+      "positionM": [
+        0.64,
+        0.35,
+        -0.64
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "material1",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "part4",
+      "primitive": "cylinder",
+      "role": "leg",
+      "dimensionsM": [
+        0.05,
+        0.7,
+        0.05
+      ],
+      "positionM": [
+        -0.64,
+        0.35,
+        0.64
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "material1",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "part5",
+      "primitive": "cylinder",
+      "role": "leg",
+      "dimensionsM": [
+        0.05,
+        0.7,
+        0.05
+      ],
+      "positionM": [
+        0.64,
+        0.35,
+        0.64
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "material1",
+      "cornerRadiusM": null,
+      "repeat": null
+    }
+  ],
+  "schemaVersion": "1.0"
+}

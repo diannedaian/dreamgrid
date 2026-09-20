@@ -7,41 +7,25 @@ nothing in this directory keeps its own cart.
 Do not implement 3D manipulation or model generation here. The step-by-step
 plan is in `docs/LINDA_COMMERCE_PLAN.md`.
 
-## Try it without the rest of the app
+## Where it shows up in the app
 
-```powershell
-pnpm --filter @dreamgrid/web dev
-```
+The web app is vanilla TypeScript (no React), so the UI here is plain DOM:
 
-Open `http://localhost:5173/commerce-demo.html`. `CommerceDemo` holds one
-`RoomState` (the fixture room) with add/remove buttons standing in for the
-placement layer. It is a dev-only entry; `pnpm build` ignores it.
-
-## Inputs the app shell must supply
-
-| Input | Type | Source |
+| Module | Mounted from `main.ts` as | What it is |
 |---|---|---|
-| `roomState` | `RoomState` from `@dreamgrid/contracts` | The one shared state Cindy's placement layer edits |
-| `setRoomState` | `(next: RoomState) => void` | Same owner; swaps come back through it |
-| `products` | `Product[]` | Catalog (fixture `fixtures/products.json` until live) |
+| `budgetBar.ts` | the **Budget** chip under Measure → `#budgetbar` drawer | budget input, room total / remaining, cheaper swaps, "fit my budget", shopping plan + approval |
+| `productForm.ts` | "+ Add your own product" in the ⌕ Shop drawer | read a link / paste listing text / type a product |
+| `catalogAdd.ts` | `createCatalogAdder` | Product → catalog + `localStorage` (`savedProducts.ts`) → Cindy's importer for a 3D model |
+| `../catalog/shopBar.ts` | ⌕ (top right) | search / pasted link through `productSourcing.ts`, ranked by `productSearch.ts` |
 
-Wiring in the compositor (see `CommerceDemo.tsx` for the full example):
+`RoomState` is built on the fly: `{ room, budgetUsd, items: placement.items }`
+with `products = catalog.entries().map(e => e.product)`. The budget number lives
+in the plan URL (`b`), so shared links carry it. Swaps go back into the room via
+`placement.remove(id)` + `placement.add(product, asset, position, rotation, id)`.
 
-```tsx
-const summary = useMemo(() => summarizeBudget(roomState, products), [roomState, products]);
-const alternatives = useMemo(() => rankAlternatives(roomState, products), [roomState, products]);
-
-<BudgetPanel summary={summary} onBudgetChange={(budgetUsd) => setRoomState({ ...roomState, budgetUsd })} />
-<AlternativesList
-  alternatives={alternatives}
-  isOverBudget={summary.status === "over"}
-  onApplySwap={(alt) => setRoomState(applySwap(roomState, alt))}
-  onFitToBudget={() => setRoomState(fitToBudget(roomState, products).state)}
-/>
-```
-
-Because everything is derived from `roomState`, totals follow every add,
-move, rotate, swap, or delete with no events to subscribe to.
+Because everything is derived from the placed items, totals follow every add,
+move, rotate, swap, or delete; `main.ts` calls `budget.refresh()` from the
+placement `onChange` and on catalog changes.
 
 ## Pure modules (all tested against the shared fixtures)
 
@@ -78,18 +62,17 @@ move, rotate, swap, or delete with no events to subscribe to.
 `scoring.ts` — `jaccard`, `styleSimilarity`, `footprintFit`, `dimensionFit`
 (the last is for product search later).
 
-## Components (props only, no cart state, unstyled)
+## UI modules (plain DOM; styles live in `index.html` under `.drawer`)
 
-| Component | Props |
+| Module | Options |
 |---|---|
-| `BudgetPanel` | `summary`, `onBudgetChange?` |
-| `AlternativesList` | `alternatives`, `isOverBudget`, `onApplySwap`, `onFitToBudget`, `fitMessage?`, `appliedSwaps?`, `onUndoSwaps?` |
-| `PlanSummary` | `plan` |
-| `ApprovalScreen` | `plan`, `onApprove`, `onBack` |
+| `mountBudgetBar(bar, chip, o)` | `room`, `catalog`, `items()`, `budgetUsd`, `onBudgetChange`, `swap(itemId, product)`, `copyText`, `onOpen?` → `{ refresh, setOpen, budgetUsd, summary }` |
+| `mountProductForm(root, o)` | `onProductCreated`, `fetchDraft?`, `productId?` → `{ open(draft?), close, toggle, isOpen }` |
+| `createCatalogAdder(o)` | `catalog`, `importModel?`, `save?` → `{ add(product) → { product, model: Promise<ModelOutcome> } }` |
 
-Class names (`commerce-budget`, `commerce-alternatives`, `commerce-plan`,
-`commerce-approval`, and their `__element` / `--status` variants) are the
-styling hooks; no CSS ships from this directory.
+The former React components (`BudgetPanel`, `AlternativesList`,
+`ApprovalScreen`, `ImportProductForm`, `ProductSearchForm`, `CommerceDemo`)
+were ported into these; the pure modules and their tests are unchanged.
 
 ## Product sourcing (paste a link, or search by size and budget)
 
@@ -111,15 +94,14 @@ result, so the manual form always works.
   selling price (ignores list price / savings), `W x D x H` dimensions with
   their unit, a title, and a category guess. This is the path that always
   works, even for stores that block the API's reader.
-- `ImportProductForm` props: `onProductCreated`, `draft?` (prefill),
-  `fetchDraft?` (test injection). Three ways in: read a link, paste the
-  details, or type them. Shows how each field was obtained (structured data /
-  page text / AI / fixture / by hand).
-- `ProductSearchForm` props: `defaultMaxPriceUsd` (pass
-  `summary.remainingUsd`), `onProductCreated` (a result had everything and
-  became a `Product`), `onNeedsDetails` (a result still lacks dimensions;
-  open it in the import form), `search?` / `fetchDraft?` (test injection).
-  "Add to catalog" reads the link first when the listing lacks dimensions.
+- `productForm.ts` (the "Add your own product" form): three ways in — read a
+  link, paste the details, or type them. Shows how each field was obtained
+  (structured data / page text / AI / fixture / by hand).
+- `shopBar.ts` search: the price limit defaults to `summary.remainingUsd`;
+  "Add to catalog" reads the link first when the listing lacks dimensions and
+  opens the form prefilled when something (usually the price) is still missing.
+- `productSourcing.ts` turns the API's `null` fields into `undefined` so
+  `mergeDrafts` and the form see them as missing.
 
 API contract (see `services/api/.../routes/products.py`): `POST
 /api/v1/products/import { url }` and `POST /api/v1/products/search
@@ -131,10 +113,11 @@ enough), import falls back to an AI web-search lookup when a store blocks
 direct reading (Amazon, IKEA, Wayfair, Target), the AI fills dimensions the
 page did not state, and search returns live US listings.
 
-**Ownership note:** the manifesto gives the import-product UI to Cindy. These
-two forms live here so the sourcing pipeline could be built end to end; Cindy
-may move or restyle them. A new `Product` should be appended to the app's
-product list so the catalog, the budget, and the generator all see it.
+**Ownership note:** the manifesto gives the import-product UI to Cindy. The
+form lives here so the sourcing pipeline could be built end to end; Cindy may
+move or restyle it. A new `Product` goes through `catalogAdd.ts`, so the
+catalog, the budget, and Cindy's model generator all see it (its id matches
+the importer's `imp-<sha1(url)[:16]>` so the same page is never listed twice).
 
 ## Approval
 

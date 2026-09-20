@@ -8,7 +8,8 @@
     "noEmit": true,
     "skipLibCheck": true,
     "isolatedModules": true,
-    "paths": { "@contracts": ["../../packages/contracts/index.ts"] }
+    "resolveJsonModule": true,
+    "paths": { "@contracts": ["../../packages/contracts/index.ts"], "@dreamgrid/contracts": ["../../packages/contracts/src/index.ts"] }
   },
-  "include": ["src", "../../packages/contracts/index.ts"]
+  "include": ["src", "../../packages/contracts/index.ts", "../../packages/contracts/src"]
 }

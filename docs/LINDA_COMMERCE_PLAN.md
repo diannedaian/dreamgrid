@@ -5,6 +5,17 @@ Status: Working plan for Linda's lane (commerce). Supplements, does not replace,
 Owner: Linda
 Last updated: 2026-09-19
 
+## Integration status (2026-09-19)
+
+Merged into the vanilla-TS room planner from `main`. The React components named
+below were ported to plain-DOM modules (the app has no React): the **Budget**
+chip under Measure opens `apps/web/src/commerce/budgetBar.ts` (budget, cheaper
+swaps, shopping plan + approval); the ⌕ Shop drawer (`apps/web/src/catalog/shopBar.ts`)
+runs search and pasted links through `productSourcing.ts` → `services/api`, and
+"+ Add your own product" opens `productForm.ts`. Products join the catalog via
+`catalogAdd.ts` (localStorage + Cindy's importer for a 3D model). Pure modules
+and tests are unchanged. See `apps/web/HANDOFF.md` and `apps/web/src/commerce/README.md`.
+
 ## Decisions already made
 
 - **No Visa / no payment provider.** DreamGrid cannot consolidate purchases

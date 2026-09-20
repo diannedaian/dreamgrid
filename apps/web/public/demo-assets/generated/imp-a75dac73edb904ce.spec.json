@@ -1,0 +1,166 @@
+{
+  "name": "Modernluxe Executive Desk",
+  "category": "desk",
+  "dimensionsM": [
+    1.778,
+    0.762,
+    0.711
+  ],
+  "materials": [
+    {
+      "id": "wood",
+      "name": "Wood",
+      "baseColorHex": "#000000",
+      "roughness": 0.6,
+      "metallic": 0
+    },
+    {
+      "id": "metal",
+      "name": "Metal",
+      "baseColorHex": "#FFD700",
+      "roughness": 0.3,
+      "metallic": 0.8
+    }
+  ],
+  "parts": [
+    {
+      "id": "top",
+      "primitive": "box",
+      "role": "top",
+      "dimensionsM": [
+        1.778,
+        0.05,
+        0.711
+      ],
+      "positionM": [
+        0,
+        0.762,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "leftLeg",
+      "primitive": "box",
+      "role": "leg",
+      "dimensionsM": [
+        0.05,
+        0.711,
+        0.711
+      ],
+      "positionM": [
+        -0.889,
+        0.3555,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "rightLeg",
+      "primitive": "box",
+      "role": "leg",
+      "dimensionsM": [
+        0.05,
+        0.711,
+        0.711
+      ],
+      "positionM": [
+        0.889,
+        0.3555,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "frontLeftDrawer",
+      "primitive": "box",
+      "role": "shelf",
+      "dimensionsM": [
+        0.4,
+        0.1,
+        0.3
+      ],
+      "positionM": [
+        -0.889,
+        0.5,
+        0.355
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "frontRightDrawer",
+      "primitive": "box",
+      "role": "shelf",
+      "dimensionsM": [
+        0.4,
+        0.1,
+        0.3
+      ],
+      "positionM": [
+        0.889,
+        0.5,
+        0.355
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "middleDrawer",
+      "primitive": "box",
+      "role": "shelf",
+      "dimensionsM": [
+        0.6,
+        0.1,
+        0.3
+      ],
+      "positionM": [
+        0,
+        0.5,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood",
+      "cornerRadiusM": null,
+      "repeat": null
+    }
+  ],
+  "schemaVersion": "1.0"
+}

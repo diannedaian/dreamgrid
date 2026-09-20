@@ -1,4 +1,5 @@
-// Product detail panel: bigger preview, facts, disclosure, and a slot for Linda's shopping info.
+// Product detail panel: bigger preview, facts, disclosure, and Linda's shopping info (price, store, link).
+import type { Product } from "@contracts";
 import type { CatalogEntry } from "./catalog";
 
 export type DetailOptions = {
@@ -33,7 +34,7 @@ export function mountDetail(root: HTMLElement, o: DetailOptions): { open: (entry
             ${asset ? `<dt>Model</dt><dd>${esc(asset.generationMethod)} · ${esc(asset.status)}</dd>` : ""}
           </dl>
           ${asset?.disclosure ? `<p class="disclosure">${esc(asset.disclosure)}</p>` : ""}
-          <div class="shop"><span>Shopping info coming soon</span>${product.sourceUrl ? `<a href="${esc(product.sourceUrl)}" target="_blank" rel="noopener">View listing</a>` : ""}</div>
+          <div class="shop">${shopInfo(product)}</div>
           <button type="button" class="add">Add to room</button>
         </div>
       </div>`;
@@ -44,6 +45,13 @@ export function mountDetail(root: HTMLElement, o: DetailOptions): { open: (entry
   };
 
   return { open, close };
+}
+
+/** Price + store + listing link; what the budget drawer counts for this product. */
+function shopInfo(p: Product): string {
+  const link = /^https?:\/\//.test(p.sourceUrl) && !p.sourceUrl.startsWith("https://example.com/") ? `<a href="${esc(p.sourceUrl)}" target="_blank" rel="noopener">View listing</a>` : "";
+  const text = p.priceUsd > 0 ? `Counts $${p.priceUsd} toward your budget${p.merchant ? ` · ${esc(p.merchant)}` : ""}` : "No price yet · not counted in the budget";
+  return `<span>${text}</span>${link}`;
 }
 
 function esc(s: string): string {

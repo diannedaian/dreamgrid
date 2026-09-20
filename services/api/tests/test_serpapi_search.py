@@ -74,16 +74,16 @@ def test_build_params_uses_region_and_price_filter() -> None:
 
     assert params["engine"] == "google_shopping"
     assert params["q"] == "small desk under $43"
+    assert "tbs" not in params  # the shopping engine ignores it
+    assert build_params(query, "k", limit=6, price_in_query=False)["q"] == "small desk"
     assert params["gl"] == "us"
-    assert params["tbs"] == "mr:1,price:1,ppr_max:43"
     assert params["api_key"] == "k"
 
     uk = build_params(
         ProductQuery(category="lamp", region="uk", max_price_usd=Decimal("9")), "k", 4
     )
     assert uk["gl"] == "uk"
-    assert uk["q"] == "lamp"
-    assert "tbs" not in uk  # price filter is USD-only
+    assert uk["q"] == "lamp"  # the "under $X" phrase is USD-only
 
 
 def test_within_budget_results_come_first_and_sellers_collapse() -> None:
@@ -177,6 +177,43 @@ async def test_provider_respects_limit_and_reports_empty() -> None:
     outcome = await empty.search(ProductQuery(category="desk"), limit=5)
     assert outcome.results == ()
     assert outcome.note is not None and "No Google Shopping" in outcome.note
+
+
+@pytest.mark.anyio
+async def test_provider_retries_without_the_price_phrase_when_google_returns_nothing() -> None:
+    queries: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        q = request.url.params["q"]
+        queries.append(q)
+        if "under $" in q:
+            return httpx.Response(200, json={"shopping_results": []})
+        return httpx.Response(200, json=LISTINGS)
+
+    provider = make_provider(httpx.MockTransport(handler))
+    outcome = await provider.search(
+        ProductQuery(category="lamp", keywords="panda", max_price_usd=Decimal("50")), limit=5
+    )
+    assert queries == ["panda lamp under $50", "panda lamp"]
+    assert outcome.results
+    # Budget ordering still applies: nothing over $50 sorts before something at or under it.
+    prices = [d.price_usd for d in outcome.results if d.price_usd is not None]
+    within = [p for p in prices if p <= 50]
+    assert prices[: len(within)] == within
+
+
+@pytest.mark.anyio
+async def test_provider_does_not_retry_without_a_price_limit() -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(200, json={"shopping_results": []})
+
+    provider = make_provider(httpx.MockTransport(handler))
+    await provider.search(ProductQuery(category="lamp", keywords="panda"), limit=5)
+    assert calls == 1
 
 
 @pytest.mark.anyio

@@ -28,6 +28,9 @@ import { createDesignStore } from "./interactions/designs";
 import { mountDesignsBar } from "./catalog/designsBar";
 import { mountShopBar } from "./catalog/shopBar";
 import { importProductUrl } from "./catalog/importer";
+import { mountBudgetBar } from "./commerce/budgetBar";
+import { addKeepingModels, createCatalogAdder } from "./commerce/catalogAdd";
+import { loadSavedProducts } from "./commerce/savedProducts";
 
 const overlay = document.getElementById("dims") as HTMLDivElement;
 const form = document.getElementById("dims-form") as HTMLFormElement;
@@ -164,8 +167,11 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
 
   const lamps = new LampRegistry();
   const catalog = await Catalog.load();
+  addKeepingModels(catalog, loadSavedProducts()); // products added through the shop drawer (search / link / by hand)
   let picker: WallPicker | null = null;
   let placement: PlacementController | null = null;
+  /** Budget (USD) travels in the plan URL like everything else; 0 = not set. */
+  let budgetUsd = plan?.b ?? 0;
 
   // Keep the address bar in sync so the current URL is always the current plan.
   let sun: SunSettings = plan ? sunFromPlan(plan) : { ...DEFAULT_SUN };
@@ -175,6 +181,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       floor: shell.floor !== DEFAULT_FLOOR ? shell.floor : undefined,
       sun,
       view: shell.view,
+      budgetUsd,
     });
   const designs = createDesignStore();
   let designId: string | null = new URLSearchParams(location.search).get("design");
@@ -216,7 +223,8 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     onResize();
     const tools = document.getElementById("item-tools")!;
     const upBtn = document.getElementById("tool-up") as HTMLButtonElement, downBtn = document.getElementById("tool-down") as HTMLButtonElement;
-    placement = new PlacementController(scene, camera, canvas, room, controls, catalog, lamps, () => syncUrl(), (on) => shell.setGridVisible(on), (item) => {
+    const roomChanged: Array<() => void> = [];
+    placement = new PlacementController(scene, camera, canvas, room, controls, catalog, lamps, () => { syncUrl(); roomChanged.forEach((f) => f()); }, (on) => shell.setGridVisible(on), (item) => {
       tools.hidden = !item;
       if (!item) return;
       const wall = placement!.isAgainstWall(item.id);
@@ -308,11 +316,34 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       measureLabel.style.top = `${r.top + ((1 - v.y) / 2) * r.height - 14}px`;
     });
 
-    // Right drawer: furniture browser + shopping agent.
-    mountShopBar(document.getElementById("rightbar")!, {
-      addFromUrl: async (url) => { const r = await importProductUrl(url); onImported(r); return { title: r.product.title }; },
+    // Right drawers: the shop (search / link / by hand → catalog) and the budget. They share the
+    // right edge, so opening one closes the other.
+    const adder = createCatalogAdder({ catalog, importModel: importProductUrl });
+    const shop = mountShopBar(document.getElementById("rightbar")!, {
+      addProduct: (product) => adder.add(product),
       measure: (cb) => measure.measureOnce(cb),
+      remainingBudgetUsd: () => (budget.budgetUsd > 0 ? budget.summary.remainingUsd : undefined),
+      onOpen: () => budget.setOpen(false),
     });
+    const budget = mountBudgetBar(document.getElementById("budgetbar")!, document.getElementById("budget") as HTMLButtonElement, {
+      room,
+      catalog,
+      items: () => placement!.items,
+      budgetUsd,
+      onBudgetChange: (usd) => { budgetUsd = usd; syncUrl(); },
+      // A swap keeps the item's id, spot and rotation; only the product (and its model) changes.
+      swap: async (id, product) => {
+        const item = placement!.items.find((i) => i.id === id);
+        if (!item) return;
+        const entry = catalog.get(product.id);
+        placement!.remove(id);
+        await placement!.add(entry?.product ?? product, entry?.asset, item.positionM, item.rotationYDeg, id);
+      },
+      copyText,
+      onOpen: () => shop.setOpen(false),
+    });
+    roomChanged.push(() => budget.refresh());
+    catalog.onChange(() => budget.refresh());
 
     // Reset: back to an empty room with the same measurements (two clicks, no dialog).
     const reset = document.getElementById("reset-design")!;

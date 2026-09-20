@@ -43,7 +43,12 @@ src/catalog/catalog.ts         catalog store (fixtures + public/demo-assets/cata
 src/catalog/sidebar.ts         bottom bar: catalog cards, paint, floor, sun, outside view
 src/catalog/detail.ts          product detail sheet (has the "shopping info" slot)
 src/catalog/thumbnails.ts      offscreen thumbnail renderer for cards
-src/catalog/shopBar.ts         right drawer: furniture "browser" (search / paste a link) + ★ shopping agent
+src/catalog/shopBar.ts         right drawer: furniture "browser" (search / paste a link / add your own) + ★ shopping agent
+src/commerce/budgetBar.ts      right drawer: budget vs. room total, cheaper swaps, shopping plan (Linda)
+src/commerce/productForm.ts    "Add your own product" form (read a link / paste listing text / type it)
+src/commerce/catalogAdd.ts     product → catalog (+ localStorage) → Cindy's importer for a 3D model
+src/commerce/*.ts              pure budget / alternatives / shopping-plan / sourcing logic (tested)
+src/lib/commerce/productSourcing.ts  client for services/api: POST /api/v1/products/{import,search}
 server/shop.mjs                shopping agent (OpenAI web_search, strict JSON) + page previews
 src/measure/*                  Safari phone rangefinder page (measure.html)
 public/demo-assets/            Dianne's GLBs (college-bed/desk/chair) + catalog.json
@@ -74,10 +79,12 @@ procedural stand-in. Lamps (category `lamp`) automatically glow at night. The ro
 a placeholder; if replacing it, keep the `RoomShell` surface: `group`, `walls`, `setWindows`, `setSun`,
 `setWallColor`, `setFloor`, `setView`, `setGridVisible`, `setWallHighlight`, `update(dt, time, renderer)`.
 
-**Linda (commerce).** Placed items are `placement.items: SceneItem[]`; every change calls the
-`onChange` callback given in `main.ts` (currently just re-syncs the URL). Hook budget/subtotal there.
-The product detail sheet (`src/catalog/detail.ts`) has a dashed "Shopping info coming soon" slot and a
-`sourceUrl` link; replace that block with the real shopping UI. Prices are `priceUsd` on `Product`.
+**Linda (commerce).** Wired. `placement.onChange` also calls `budget.refresh()`; the Budget chip (under
+Measure) opens `#budgetbar` (`src/commerce/budgetBar.ts`), which derives everything from `placement.items` +
+the catalog: room total vs. budget (kept in the plan URL as `b`), cheaper same-category swaps ("Swap in"
+replaces the placed item in place via `placement.remove` + `add` with the same id), "Make this room fit my
+budget", and a per-store shopping plan to approve / copy. The detail sheet's shop slot shows price · store ·
+listing link. Prices are `priceUsd` on `Product`; `0` means unpriced (listed, not counted).
 
 **Phone measuring.** `measure.html` (alias `/m`) uses the camera + tilt sensor over https and POSTs
 `{ w, d, h }` inches to `/api/measurement`; the open desktop form polls it. The native ARKit app in
@@ -95,21 +102,37 @@ Cost guard: each call's tokens are priced and tallied in `.cache/openai-usage.js
 `OPENAI_SESSION_BUDGET_USD` (default $5). One import is ~$0.001. Keys live in `apps/web/.env` (gitignored).
 Never call the API from unit tests. To regenerate an item, delete its `.cache/imports/<hash>.json`.
 
-## Shop drawer + ★ shopping agent (OpenAI web search)
+## Shop drawer (Linda's sourcing API) + ★ shopping agent (OpenAI web search)
 
 The ⌕ button (top right) opens `#rightbar` (`src/catalog/shopBar.ts`, 340px, pushes the stage/bottom bar like the
-left drawer). The address bar takes a search or a pasted product link; results are cards with "Add to room"
-(runs the importer above). The ★ in the drawer head switches to the agent: a plain-language request plus optional
-"fits within" W/D/H in inches — typed, or filled by the "measure" links which run `MeasureTool.measureOnce`
-(two clicks in the room → inches). Endpoints in `server/shop.mjs` via the same `shopApi` plugin:
-- `GET /api/search-products?q=` — the same agent as ★ with no size limits (every search in the app goes through
-  OpenAI web search; free engines — DuckDuckGo/Bing/Brave/Mojeek — were tried and dropped: rate-limited or degraded).
-- `GET /api/preview-product?url=` — scrape only (title/price/image/dims), in-memory cache, no API cost. Cards call
-  it lazily to fill images; big retailers (Amazon, Home Depot, Target) block it, so cards may stay imageless.
+left drawer; the Budget drawer shares the right edge, so opening one closes the other). The address bar takes:
+- **a search** ("small white desk") → `POST /api/v1/products/search` on the FastAPI service (`services/api`;
+  Google Shopping via SerpAPI, fixture results without a key). The category is guessed from the words
+  (`guessCategory`) and the price limit defaults to the remaining budget; "Refine ▾" overrides type / max $ /
+  region / target size. Hits are ranked by `productSearch.ts` (price, size, style) and shown as cards.
+- **a pasted link** → `POST /api/v1/products/import` reads the page (structured data → text → AI lookup when the
+  store blocks reading) for title, price, W×D×H, then adds it straight away.
+- **"+ Add your own product"** → `src/commerce/productForm.ts`: read a link, paste the listing text (parsed in the
+  browser), or type title / price / category / size; validated against the Product schema.
+
+"Add to catalog" (`src/commerce/catalogAdd.ts`): a hit missing dimensions has its link read first; if the merged
+draft is complete it becomes a `Product` (id `imp-<sha1(url)[:16]>`, the same id Cindy's importer uses, so the two
+never duplicate a page), joins the catalog at once (sized box), is remembered in `localStorage`
+(`dreamgrid.products`, restored on load), and then `POST /api/import-product` is asked for a FurnitureSpec model in
+the background (needs an OpenAI key; falls back to the box). A draft still missing something (typically the price
+— AI-reported prices are never trusted) opens the form prefilled. The Vite dev server proxies `/api/v1` to
+`DREAMGRID_API_URL` (default `http://127.0.0.1:8000`; `pnpm dev` at the repo root starts both servers).
+
+The ★ in the drawer head switches to Cindy's agent: a plain-language request plus optional "fits within" W/D/H in
+inches — typed, or filled by the "measure" links which run `MeasureTool.measureOnce` (two clicks in the room →
+inches). Its picks use the same "Add to catalog" path. Endpoints in `server/shop.mjs` via the `shopApi` plugin:
+- `GET /api/search-products?q=` — the agent with no size limits (no longer used by the drawer; kept for scripts).
+- `GET /api/preview-product?url=` — scrape only (title/price/image/dims), in-memory cache, no API cost.
 - `POST /api/shop-agent { prompt, fitsIn:{w,d,h} }` — ONE `OPENAI_SEARCH_MODEL` (default `gpt-4.1-mini`) call with
   web search + strict JSON: up to 5 real product pages with price, `[w,d,h]` inches, fit verdict and a reason;
   then a free scrape per pick. ~$0.015/run, cached by prompt+limits under `.cache/shop/`. Shares the session
   budget/tally with the importer (`createUsage` in `import-product.mjs`; search tool calls counted at $0.01 each).
+The OpenAI key comes from `apps/web/.env` `OPENAI_API_KEY`, or the repo-root `.env` `OPENAI_KEY` when that is empty.
 
 ## Known gaps / ideas
 

@@ -149,11 +149,11 @@ export function mergeDrafts(base: ProductDraft, extra: ProductDraft): ProductDra
  * A draft becomes a Product without user input only when everything the
  * contract needs is present. Returns null when the form is still required.
  */
-export function productFromCompleteDraft(draft: ProductDraft): Product | null {
+export function productFromCompleteDraft(draft: ProductDraft, id?: string): Product | null {
   const fields = fieldsFromDraft(draft, "cm");
   if (Object.keys(validateFields(fields)).length > 0) return null;
   try {
-    return buildProduct(fields);
+    return buildProduct(fields, id);
   } catch {
     return null;
   }

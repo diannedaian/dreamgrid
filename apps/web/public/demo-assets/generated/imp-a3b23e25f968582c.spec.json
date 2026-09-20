@@ -1,0 +1,97 @@
+{
+  "name": "47\" Computer Desk",
+  "category": "desk",
+  "dimensionsM": [
+    1.2,
+    0.75,
+    0.5
+  ],
+  "materials": [
+    {
+      "id": "wood_black",
+      "name": "Wood (Black)",
+      "baseColorHex": "#000000",
+      "roughness": 0.6,
+      "metallic": 0
+    },
+    {
+      "id": "metal_black",
+      "name": "Metal (Black)",
+      "baseColorHex": "#000000",
+      "roughness": 0.3,
+      "metallic": 0.8
+    }
+  ],
+  "parts": [
+    {
+      "id": "top",
+      "primitive": "box",
+      "role": "top",
+      "dimensionsM": [
+        1.2,
+        0.02,
+        0.5
+      ],
+      "positionM": [
+        0,
+        0.74,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood_black",
+      "cornerRadiusM": 0,
+      "repeat": null
+    },
+    {
+      "id": "frame",
+      "primitive": "rounded-box",
+      "role": "body",
+      "dimensionsM": [
+        1.2,
+        0.75,
+        0.02
+      ],
+      "positionM": [
+        0,
+        0.01,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "metal_black",
+      "cornerRadiusM": 0.02,
+      "repeat": null
+    },
+    {
+      "id": "storage_bag",
+      "primitive": "box",
+      "role": "support",
+      "dimensionsM": [
+        0.3,
+        0.1,
+        0.2
+      ],
+      "positionM": [
+        -0.5,
+        0.25,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "metal_black",
+      "cornerRadiusM": 0,
+      "repeat": null
+    }
+  ],
+  "schemaVersion": "1.0"
+}

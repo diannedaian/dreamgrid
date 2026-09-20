@@ -32,13 +32,20 @@ _REGION_GL: dict[Region, tuple[str, str]] = {
 }
 
 
-def build_params(query: ProductQuery, api_key: str, limit: int) -> dict[str, str]:
+def build_params(
+    query: ProductQuery, api_key: str, limit: int, *, price_in_query: bool = True
+) -> dict[str, str]:
+    """
+    The Google Shopping engine ignores the ``tbs`` price filter, so the only lever is the
+    query text. "under $X" narrows common queries well ("desk under $150") but makes Google
+    return nothing at all for niche ones ("panda lamp under $50"); ``search`` retries without
+    it when the first call comes back empty.
+    """
     gl, hl = _REGION_GL[query.region]
     terms = " ".join(part for part in (query.keywords.strip(), query.category) if part)
-    if query.max_price_usd is not None and query.region == "us":
-        # Google honors "under $X" in the query far more reliably than the tbs price filter.
+    if price_in_query and query.max_price_usd is not None and query.region == "us":
         terms = f"{terms} under ${int(query.max_price_usd)}"
-    params = {
+    return {
         "engine": "google_shopping",
         "q": terms,
         "gl": gl,
@@ -46,9 +53,6 @@ def build_params(query: ProductQuery, api_key: str, limit: int) -> dict[str, str
         "num": str(max(limit * 4, 20)),
         "api_key": api_key,
     }
-    if query.max_price_usd is not None and query.region == "us":
-        params["tbs"] = f"mr:1,price:1,ppr_max:{int(query.max_price_usd)}"
-    return params
 
 
 def listing_key(item: dict[str, Any], draft: ProductDraft) -> str:
@@ -139,9 +143,11 @@ class SerpApiShoppingProvider:
     async def search(self, query: ProductQuery, *, limit: int) -> SearchOutcome:
         client = self._client or httpx.AsyncClient(timeout=TIMEOUT_SECONDS)
         try:
-            response = await client.get(
-                SERPAPI_URL, params=build_params(query, self._api_key, limit)
-            )
+            listings = await self._listings(client, query, limit, price_in_query=True)
+            if not listings and query.max_price_usd is not None and query.region == "us":
+                # "panda lamp under $50" → nothing; "panda lamp" → 40 listings. Ask again and
+                # let the budget ordering below (and the UI's over-budget marking) do the rest.
+                listings = await self._listings(client, query, limit, price_in_query=False)
         except httpx.HTTPError as error:
             return SearchOutcome(
                 results=(),
@@ -149,19 +155,17 @@ class SerpApiShoppingProvider:
                 provider="serpapi",
                 note=f"Search unavailable ({error.__class__.__name__}).",
             )
-        finally:
-            if self._client is None:
-                await client.aclose()
-
-        if response.status_code >= 400:
+        except _HttpStatus as error:
             return SearchOutcome(
                 results=(),
                 source="live",
                 provider="serpapi",
-                note=f"Search unavailable (SerpAPI answered HTTP {response.status_code}).",
+                note=f"Search unavailable (SerpAPI answered HTTP {error.status}).",
             )
-        payload = response.json()
-        listings = payload.get("shopping_results", []) if isinstance(payload, dict) else []
+        finally:
+            if self._client is None:
+                await client.aclose()
+
         seen: set[str] = set()
         candidates: list[ProductDraft] = []
         for item in listings:
@@ -179,3 +183,22 @@ class SerpApiShoppingProvider:
         results = tuple(ordered[:limit])
         note = None if results else "No Google Shopping listings matched. Try fewer constraints."
         return SearchOutcome(results=results, source="live", provider="serpapi", note=note)
+
+    async def _listings(
+        self, client: httpx.AsyncClient, query: ProductQuery, limit: int, *, price_in_query: bool
+    ) -> list[dict[str, Any]]:
+        response = await client.get(
+            SERPAPI_URL,
+            params=build_params(query, self._api_key, limit, price_in_query=price_in_query),
+        )
+        if response.status_code >= 400:
+            raise _HttpStatus(response.status_code)
+        payload = response.json()
+        listings = payload.get("shopping_results", []) if isinstance(payload, dict) else []
+        return [item for item in listings if isinstance(item, dict)]
+
+
+class _HttpStatus(Exception):
+    def __init__(self, status: int) -> None:
+        super().__init__(f"HTTP {status}")
+        self.status = status

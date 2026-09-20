@@ -120,3 +120,16 @@ describe("helpers", () => {
     ]);
   });
 });
+
+describe("null fields from the API", () => {
+  it("become undefined so mergeDrafts and the form treat them as missing", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ sourceUrl: "https://shop.example/x", title: "X", priceUsd: null, dimensionsM: null, imageUrl: null, styleTags: [], colorTags: [], confidence: 0.5, extractionMethod: "llm", missing: ["priceUsd", "dimensionsM"] }),
+    } as Response));
+    const draft = await importProductFromUrl("https://shop.example/x", {}, config);
+    expect("priceUsd" in draft).toBe(false);
+    expect(draft.dimensionsM).toBeUndefined();
+    expect(draft.missing).toEqual(["priceUsd", "dimensionsM"]);
+  });
+});

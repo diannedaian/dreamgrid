@@ -24,9 +24,11 @@ export type Plan = {
   floor?: string;
   /** Outside view when not leafy. */
   vw?: "autumn" | "snowy" | "rainy";
+  /** Budget in whole USD (Linda's commerce lane); omitted when unset. */
+  b?: number;
 };
 
-export type Look = { paint?: string; floor?: string; sun?: SunSettings; view?: string };
+export type Look = { paint?: string; floor?: string; sun?: SunSettings; view?: string; budgetUsd?: number };
 
 const inches = (m: number) => Math.round(m / INCH_M);
 
@@ -49,6 +51,7 @@ export function planFromState(room: RoomSpec, windows: WindowSpec[], items: Scen
     ...(look.paint ? { paint: look.paint.replace("#", "") } : {}),
     ...(look.floor ? { floor: look.floor } : {}),
     ...(look.view && look.view !== "leafy" ? { vw: look.view as Plan["vw"] } : {}),
+    ...(look.budgetUsd && look.budgetUsd > 0 ? { b: Math.round(look.budgetUsd) } : {}),
   };
 }
 
@@ -100,6 +103,7 @@ export function decodePlan(s: string): Plan | null {
       ...(typeof p.paint === "string" && /^[0-9a-f]{6}$/i.test(p.paint) ? { paint: p.paint } : {}),
       ...(typeof p.floor === "string" ? { floor: p.floor } : {}),
       ...(["autumn", "snowy", "rainy"].includes(p.vw) ? { vw: p.vw } : {}),
+      ...(Number.isFinite(p.b) && p.b > 0 ? { b: Math.round(p.b) } : {}),
     };
   } catch {
     return null;

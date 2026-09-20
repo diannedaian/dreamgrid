@@ -1,0 +1,171 @@
+{
+  "name": "IKEA LAGKAPTEN / ADILS desk",
+  "category": "desk",
+  "dimensionsM": [
+    1.2,
+    0.73,
+    0.6
+  ],
+  "materials": [
+    {
+      "id": "material1",
+      "name": "Particleboard",
+      "baseColorHex": "#A9A9A9",
+      "roughness": 0.9,
+      "metallic": 0
+    },
+    {
+      "id": "material2",
+      "name": "Steel",
+      "baseColorHex": "#000000",
+      "roughness": 0.3,
+      "metallic": 0.8
+    },
+    {
+      "id": "material3",
+      "name": "Fiberboard",
+      "baseColorHex": "#A9A9A9",
+      "roughness": 0.9,
+      "metallic": 0
+    },
+    {
+      "id": "material4",
+      "name": "Wood",
+      "baseColorHex": "#8B4513",
+      "roughness": 0.6,
+      "metallic": 0
+    }
+  ],
+  "parts": [
+    {
+      "id": "top",
+      "primitive": "box",
+      "role": "top",
+      "dimensionsM": [
+        1.2,
+        0.034,
+        0.6
+      ],
+      "positionM": [
+        0,
+        0.713,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "material1",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "leg1",
+      "primitive": "cylinder",
+      "role": "leg",
+      "dimensionsM": [
+        0.05,
+        0.696,
+        0.05
+      ],
+      "positionM": [
+        0.575,
+        0.348,
+        0.275
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "material2",
+      "cornerRadiusM": null,
+      "repeat": {
+        "count": 2,
+        "offsetM": [
+          0.05,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "leg2",
+      "primitive": "cylinder",
+      "role": "leg",
+      "dimensionsM": [
+        0.05,
+        0.696,
+        0.05
+      ],
+      "positionM": [
+        -0.575,
+        0.348,
+        0.275
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "material2",
+      "cornerRadiusM": null,
+      "repeat": {
+        "count": 2,
+        "offsetM": [
+          0.05,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "leg3",
+      "primitive": "cylinder",
+      "role": "leg",
+      "dimensionsM": [
+        0.05,
+        0.696,
+        0.05
+      ],
+      "positionM": [
+        0.575,
+        0.348,
+        -0.275
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "material2",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "leg4",
+      "primitive": "cylinder",
+      "role": "leg",
+      "dimensionsM": [
+        0.05,
+        0.696,
+        0.05
+      ],
+      "positionM": [
+        -0.575,
+        0.348,
+        -0.275
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "material2",
+      "cornerRadiusM": null,
+      "repeat": null
+    }
+  ],
+  "schemaVersion": "1.0"
+}

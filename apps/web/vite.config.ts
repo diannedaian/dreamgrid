@@ -121,9 +121,12 @@ function shopApi(env: Record<string, string>): Plugin {
   return { name: "dreamgrid-shop-api", configureServer: (s) => void s.middlewares.use(handle), configurePreviewServer: (s) => void s.middlewares.use(handle) };
 }
 
-export default defineConfig(({ mode }) => ({
-  ...baseConfig(loadEnv(mode, process.cwd(), "")),
-}));
+export default defineConfig(({ mode }) => {
+  // apps/web/.env first; the repo-root .env (OPENAI_KEY, shared with services/api) fills any gap.
+  const root = loadEnv(mode, fileURLToPath(new URL("../..", import.meta.url)), "");
+  const env = loadEnv(mode, process.cwd(), "");
+  return baseConfig({ ...root, ...env, OPENAI_API_KEY: env.OPENAI_API_KEY || root.OPENAI_API_KEY || root.OPENAI_KEY });
+});
 
 function baseConfig(env: Record<string, string>) { return ({
   // https by default (self-signed): iOS Safari only allows the camera and motion sensors used by
@@ -132,8 +135,16 @@ function baseConfig(env: Record<string, string>) { return ({
   resolve: {
     alias: {
       "@contracts": fileURLToPath(new URL("../../packages/contracts/index.ts", import.meta.url)),
+      // Linda's commerce modules use the validated contracts package (same shapes + JSON-schema validators).
+      "@dreamgrid/contracts": fileURLToPath(new URL("../../packages/contracts/src/index.ts", import.meta.url)),
     },
   },
-  server: { host: true, fs: { allow: ["../.."] } },
+  server: {
+    host: true,
+    fs: { allow: ["../.."] },
+    // Product sourcing (search by size/budget, read a product link) lives in services/api (FastAPI, :8000;
+    // `pnpm dev` at the repo root starts both). Same-origin here so the browser needs no CORS or second URL.
+    proxy: { "/api/v1": { target: env.DREAMGRID_API_URL || "http://127.0.0.1:8000", changeOrigin: true, secure: false } },
+  },
   build: { rollupOptions: { input: { main: "index.html", measure: "measure.html" } } },
 }); }

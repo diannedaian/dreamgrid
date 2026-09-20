@@ -1,0 +1,196 @@
+{
+  "name": "New Mainstays 4-Cube Storage Desk",
+  "category": "desk",
+  "dimensionsM": [
+    1.2,
+    0.76,
+    1.2
+  ],
+  "materials": [
+    {
+      "id": "wood1",
+      "name": "Spring Pine",
+      "baseColorHex": "#D8CBAF",
+      "roughness": 0.6,
+      "metallic": 0
+    },
+    {
+      "id": "fabric1",
+      "name": "Fabric Drawer",
+      "baseColorHex": "#F4C2C2",
+      "roughness": 0.9,
+      "metallic": 0
+    },
+    {
+      "id": "fabric2",
+      "name": "Fabric Drawer",
+      "baseColorHex": "#A8D8E8",
+      "roughness": 0.9,
+      "metallic": 0
+    }
+  ],
+  "parts": [
+    {
+      "id": "top",
+      "primitive": "box",
+      "role": "top",
+      "dimensionsM": [
+        1.2,
+        0.02,
+        1.2
+      ],
+      "positionM": [
+        0,
+        0.75,
+        0
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood1",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "leftCube",
+      "primitive": "box",
+      "role": "body",
+      "dimensionsM": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "positionM": [
+        -0.4,
+        0.3,
+        0.4
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood1",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "rightCube",
+      "primitive": "box",
+      "role": "body",
+      "dimensionsM": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "positionM": [
+        0.4,
+        0.3,
+        0.4
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood1",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "leftDrawer",
+      "primitive": "box",
+      "role": "shelf",
+      "dimensionsM": [
+        0.6,
+        0.02,
+        0.6
+      ],
+      "positionM": [
+        -0.4,
+        0.1,
+        0.4
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "fabric1",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "rightDrawer",
+      "primitive": "box",
+      "role": "shelf",
+      "dimensionsM": [
+        0.6,
+        0.02,
+        0.6
+      ],
+      "positionM": [
+        0.4,
+        0.1,
+        0.4
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "fabric2",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "leg1",
+      "primitive": "cylinder",
+      "role": "leg",
+      "dimensionsM": [
+        0.05,
+        0.7,
+        0.05
+      ],
+      "positionM": [
+        -0.4,
+        0.35,
+        0.4
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood1",
+      "cornerRadiusM": null,
+      "repeat": null
+    },
+    {
+      "id": "leg2",
+      "primitive": "cylinder",
+      "role": "leg",
+      "dimensionsM": [
+        0.05,
+        0.7,
+        0.05
+      ],
+      "positionM": [
+        0.4,
+        0.35,
+        0.4
+      ],
+      "rotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "materialId": "wood1",
+      "cornerRadiusM": null,
+      "repeat": null
+    }
+  ],
+  "schemaVersion": "1.0"
+}

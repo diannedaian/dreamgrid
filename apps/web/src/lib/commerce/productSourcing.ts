@@ -92,6 +92,16 @@ function isDraft(value: unknown): value is ProductDraft {
   );
 }
 
+/** The API sends `null` for what it could not fill; the rest of the pipeline reads `undefined`. */
+function normalizeDraft(draft: ProductDraft): ProductDraft {
+  const out = { ...draft } as Record<string, unknown>;
+  for (const key of Object.keys(out)) if (out[key] === null) delete out[key];
+  out.styleTags ??= [];
+  out.colorTags ??= [];
+  out.missing ??= [];
+  return out as unknown as ProductDraft;
+}
+
 async function postJson(
   path: string,
   body: unknown,
@@ -130,7 +140,7 @@ export async function importProductFromUrl(
     if (!isDraft(payload)) {
       throw new Error("Import returned an invalid draft.");
     }
-    return payload;
+    return normalizeDraft(payload);
   } catch (error) {
     const reason = error instanceof Error ? error.message : "unknown error";
     return manualDraft(url, `Could not read the page (${reason}). Enter the details by hand.`);
@@ -156,7 +166,7 @@ export async function searchProducts(
     ) {
       throw new Error("Search returned an invalid response.");
     }
-    const results = payload.results.filter(isDraft);
+    const results = payload.results.filter(isDraft).map(normalizeDraft);
     const source =
       "source" in payload && (payload.source === "live" || payload.source === "fixture")
         ? payload.source
