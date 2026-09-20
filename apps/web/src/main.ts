@@ -24,7 +24,7 @@ import { mountSidebar } from "./catalog/sidebar";
 import { ThumbnailRenderer } from "./catalog/thumbnails";
 import { mountDetail } from "./catalog/detail";
 import { mountImporter } from "./catalog/importer";
-import { createDesignStore } from "./interactions/designs";
+import { createDesignStore, loadBuiltinDesigns } from "./interactions/designs";
 import { mountDesignsBar } from "./catalog/designsBar";
 import { mountShopBar } from "./catalog/shopBar";
 import { mountSharePopup } from "./catalog/sharePopup";
@@ -210,7 +210,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       openItems: placement?.openItemIds ?? plan?.openItems,
       ignored: placement?.ignoredIds ?? plan?.ign,
     });
-  const designs = createDesignStore();
+  const designs = createDesignStore(undefined, await loadBuiltinDesigns());
   let designId: string | null = new URLSearchParams(location.search).get("design");
   let designName = designId ? designs.get(designId)?.name ?? "" : "";
   let refreshShopList: () => void = () => {};

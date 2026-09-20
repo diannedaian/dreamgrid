@@ -44,8 +44,8 @@ export function mountDesignsBar(bar: HTMLElement, popup: HTMLElement, o: Designs
       el.innerHTML = `
         <div class="thumb">${d.thumb ? `<img src="${d.thumb}" alt="">` : ""}</div>
         <div class="meta"><div class="name">${esc(d.name)}</div><div class="sub">${ftIn(d.plan.w * IN)} × ${ftIn(d.plan.d * IN)} × ${ftIn(d.plan.h * IN)} · ${d.plan.items.length} item${d.plan.items.length === 1 ? "" : "s"}</div></div>
-        <button type="button" class="del" title="Delete">✕</button>`;
-      el.querySelector(".del")!.addEventListener("click", (e) => { e.stopPropagation(); o.store.remove(d.id); if (currentId === d.id) currentId = null; render(); });
+        ${d.builtIn ? `<span class="del" title="Built-in layout"></span>` : `<button type="button" class="del" title="Delete">✕</button>`}`;
+      el.querySelector("button.del")?.addEventListener("click", (e) => { e.stopPropagation(); o.store.remove(d.id); if (currentId === d.id) currentId = null; render(); });
       el.addEventListener("click", () => o.onOpen(d));
       list.appendChild(el);
     }

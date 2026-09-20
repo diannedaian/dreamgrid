@@ -8,6 +8,8 @@ export type SavedDesign = {
   /** Small JPEG data URL captured from the canvas, if available. */
   thumb?: string;
   savedAt: number;
+  /** Shipped with the app (public/demo-assets/starter-layouts.json): shown to everyone, can't be deleted. */
+  builtIn?: boolean;
 };
 
 const KEY = "dreamgrid.designs.v1";
@@ -19,8 +21,21 @@ export type DesignStore = {
   remove(id: string): void;
 };
 
-/** Store backed by any Storage-like object (localStorage in the app, a Map in tests). */
-export function createDesignStore(storage: Pick<Storage, "getItem" | "setItem"> = safeLocalStorage()): DesignStore {
+/** Built-in layouts shipped with the app. Missing file or bad JSON → none. */
+export async function loadBuiltinDesigns(url = "/demo-assets/starter-layouts.json"): Promise<SavedDesign[]> {
+  try {
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) return [];
+    const arr = (await r.json()) as SavedDesign[];
+    return Array.isArray(arr) ? arr.filter((d) => d && typeof d.id === "string" && d.plan).map((d) => ({ ...d, savedAt: 0, builtIn: true })) : [];
+  } catch { return []; }
+}
+
+/**
+ * Store backed by any Storage-like object (localStorage in the app, a Map in tests).
+ * Built-ins are listed after the user's own layouts; saving over a built-in id keeps a local copy instead.
+ */
+export function createDesignStore(storage: Pick<Storage, "getItem" | "setItem"> = safeLocalStorage(), builtins: SavedDesign[] = []): DesignStore {
   const read = (): SavedDesign[] => {
     try {
       const raw = storage.getItem(KEY);
@@ -29,9 +44,10 @@ export function createDesignStore(storage: Pick<Storage, "getItem" | "setItem"> 
     } catch { return []; }
   };
   const write = (arr: SavedDesign[]) => { try { storage.setItem(KEY, JSON.stringify(arr)); } catch { /* quota or private mode */ } };
+  const all = () => { const local = read(); const ids = new Set(local.map((d) => d.id)); return [...local, ...builtins.filter((b) => !ids.has(b.id))]; };
   return {
-    list: () => read().sort((a, b) => b.savedAt - a.savedAt),
-    get: (id) => read().find((d) => d.id === id),
+    list: () => all().sort((a, b) => b.savedAt - a.savedAt),
+    get: (id) => all().find((d) => d.id === id),
     save: (d) => {
       const arr = read();
       const id = d.id ?? `d${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
