@@ -158,7 +158,8 @@
       #leftbar { position: fixed; top: 0; bottom: 0; left: 0; width: 250px; z-index: 7; box-sizing: border-box; background: var(--cream); box-shadow: 8px 0 30px rgba(40,50,30,0.14); transform: translateX(-100%); transition: transform 0.25s ease; display: flex; flex-direction: column; }
       #leftbar[hidden] { display: none; }
       body.leftbar-open #leftbar { transform: none; }
-      #leftbar .head { padding: 16px 16px 10px 56px; display: flex; align-items: center; justify-content: space-between; }
+      /* Title centred on the same line as the ☰/← toggle (top 21px + 28px tall → centre 35px). */
+      #leftbar .head { box-sizing: border-box; height: 56px; padding: 14px 16px 0 56px; display: flex; align-items: center; justify-content: space-between; }
       #leftbar h2 { font-family: var(--serif); font-weight: 500; font-size: 18px; margin: 0; }
       #leftbar .designs { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
       #leftbar .design { display: grid; grid-template-columns: 64px 1fr 22px; gap: 8px; align-items: center; padding: 8px; border-radius: 3px; background: #fff; box-shadow: 0 1px 3px rgba(40,50,30,0.12); margin-bottom: 8px; cursor: pointer; }
