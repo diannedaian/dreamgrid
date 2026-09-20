@@ -21,6 +21,8 @@ from pydantic.alias_generators import to_camel
 
 from dreamgrid_api.adapters.commerce.passkeys import PasskeyError, PasskeyRegistry
 from dreamgrid_api.boundaries.payments import (
+    DEFAULT_CARD_ID,
+    WALLET_CARDS,
     ConsentEvidence,
     Mandate,
     PaymentIntent,
@@ -57,6 +59,8 @@ class MandateIn(CamelModel):
 class PlanIn(CamelModel):
     lines: list[LineIn] = Field(max_length=200)
     mandate: MandateIn
+    card_id: str = Field(default=DEFAULT_CARD_ID, max_length=40)
+    """Wallet card the shopper picked; part of the digest so it cannot change after approval."""
 
 
 def plan_digest(plan: PlanIn) -> str:
@@ -199,6 +203,9 @@ class IntentResponse(CamelModel):
     network_reference: str | None = None
     approval_code: str | None = None
     fallback_reason: str | None = None
+    card_id: str = DEFAULT_CARD_ID
+    card_brand: str = "Visa"
+    card_last4: str = "1111"
 
     @classmethod
     def from_intent(cls, intent: PaymentIntent) -> IntentResponse:
@@ -234,6 +241,9 @@ class IntentResponse(CamelModel):
             network_reference=intent.network_reference,
             approval_code=intent.approval_code,
             fallback_reason=intent.fallback_reason,
+            card_id=intent.card_id,
+            card_brand=intent.card_brand,
+            card_last4=intent.card_last4,
         )
 
 
@@ -286,8 +296,30 @@ def create_intent(
         expires_at=datetime.now(UTC) + timedelta(minutes=request.plan.mandate.valid_for_minutes),
         budget_usd=request.plan.mandate.budget_usd,
     )
-    intent = network.create_intent(lines, mandate, consent, idempotency_key=request.idempotency_key)
+    intent = network.create_intent(
+        lines,
+        mandate,
+        consent,
+        idempotency_key=request.idempotency_key,
+        card_id=request.plan.card_id,
+    )
     return IntentResponse.from_intent(intent)
+
+
+class WalletCardOut(CamelModel):
+    id: str
+    brand: str
+    label: str
+    last4: str
+    holder: str
+    expires: str
+
+
+@router.get("/wallet", response_model=list[WalletCardOut])
+def wallet() -> list[WalletCardOut]:
+    """The shopper's sandbox wallet: labels and last four only, never card numbers."""
+
+    return [WalletCardOut(**card.__dict__) for card in WALLET_CARDS]
 
 
 @router.get("/intents", response_model=list[IntentResponse])

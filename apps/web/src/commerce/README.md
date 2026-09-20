@@ -58,29 +58,34 @@ unreachable, the local network answers instead (`provider: "dreamgrid-sandbox"`,
 `isSandbox` is always `true`. A Visa decline surfaces as `NETWORK_DECLINED` with the token
 voided.
 
-1. **Spending mandate.** The review sheet shows the exact priced lines and a mandate: a cap
-   the shopper can raise (never below the total), the stores involved, 24-hour validity, and
-   the room budget if one is set.
+1. **Checkout sheet** (`checkout.ts`, same footprint as the Generate panel): compact order
+   line, a **wallet** of sandbox Visa cards fetched from `GET /payments/wallet` (labels and
+   last four only; the API maps the id to a Visa-published test PAN), an editable spending
+   cap (never below the total), and one **Pay with passkey** button. The chosen `cardId` is
+   part of the plan, so it is inside the challenge digest and cannot change after approval.
 2. **Consent.** The browser asks the API for a one-time challenge bound to a SHA-256 digest of
    the plan, then signs it with a **platform passkey** (WebAuthn `navigator.credentials`,
-   Touch ID / Face ID / Windows Hello; enrolled once per browser). The API verifies origin,
-   RP ID hash, user-present/verified flags, the challenge, and the **ES256 signature**
-   (`cryptography`). "Approve without passkey" still uses a single-use plan-bound challenge.
-   A challenge cannot authorize a different plan; nothing can swap items after approval.
-3. **Intent.** `POST /intents` checks the mandate (`MANDATE_EXCEEDED`, `BUDGET_EXCEEDED`,
-   `MANDATE_EXPIRED`, `MERCHANT_NOT_ALLOWED`, `CONSENT_INVALID`, `EMPTY_PLAN`, `UNPRICED_LINE`)
-   and returns `authorized` with an HMAC-signed sandbox token, or `declined` with a code and
-   reason (HTTP 201 either way; declines are ledger entries, not errors). Idempotent per key.
-4. **Receipt.** Intent id, network, how it was approved, mandate, token, and a status timeline.
-   **Complete purchase** captures; **Release hold** / **Refund** reverses. The receipt is kept
-   in `localStorage` (`dreamgrid.paymentIntent`) so it survives a reload; the API's ledger is
-   in-memory for the process.
+   Touch ID / Face ID / Windows Hello; enrolled once per browser, re-enrolled automatically if
+   the in-memory registry forgot it). The API verifies origin (RP-ID rule, passkeys are scoped
+   to the page host; IP hosts get a link to `localhost`), RP ID hash, user-present/verified
+   flags, the challenge, and the **ES256 signature** (`cryptography`). "Pay without passkey"
+   still uses a single-use plan-bound challenge.
+3. **Processing.** The card animates while a checklist ticks off the real calls: consent →
+   mandate → network authorization → capture. `POST /intents` enforces the mandate
+   (`MANDATE_EXCEEDED`, `BUDGET_EXCEEDED`, `MANDATE_EXPIRED`, `MERCHANT_NOT_ALLOWED`,
+   `CONSENT_INVALID`, `EMPTY_PLAN`, `UNPRICED_LINE`, `NETWORK_DECLINED`) and returns
+   `authorized` with an HMAC-signed token or `declined` with a code (HTTP 201 either way).
+   Checkout captures immediately after a successful authorization ("Pay").
+4. **Done.** Big check, amount, `Visa •••• 3705 · Visa Acceptance · approval 831000`, the
+   item list, and a collapsed "Receipt details" (intent id, Visa transaction, mandate, token,
+   timeline). **Refund** reverses. The Budget drawer keeps a two-line summary with a
+   **Receipt** link; the intent persists in `localStorage` (`dreamgrid.paymentIntent`).
 5. **Agents.** `tools/payments-mcp/server.mjs` is a dependency-free stdio MCP server exposing
    the same flow as tools (`request_payment_instruction`, `authorize_payment`,
    `capture_payment`, `reverse_payment`, `get_payment_intent`, `list_payment_ledger`,
    `verify_payment_token`). `node tools/payments-mcp/smoke.mjs` exercises it end to end.
 
-Frontend: `payments.ts` (client + WebAuthn ceremony), `budgetBar.ts` (mandate → receipt).
+Frontend: `payments.ts` (client + WebAuthn ceremony), `checkout.ts` (sheet), `budgetBar.ts` (entry + summary).
 Backend: `adapters/commerce/mock_payment_network.py`, `adapters/commerce/passkeys.py`,
 `api/v1/routes/payments.py`. Tests: `payments.test.ts`, `tests/test_payments.py` (includes a
 software ES256 authenticator so forged signatures are provably rejected).

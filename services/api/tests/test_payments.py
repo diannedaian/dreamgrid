@@ -462,6 +462,36 @@ def test_challenge_cannot_be_reused_and_unknown_passkey_is_rejected(client: Test
     assert rejected.status_code == 400 and "not enrolled" in rejected.json()["detail"]
 
 
+def test_wallet_lists_cards_without_numbers_and_the_pick_is_bound_to_the_challenge(
+    client: TestClient,
+) -> None:
+    cards = client.get("/api/v1/payments/wallet").json()
+    assert [c["id"] for c in cards] == ["visa-1111", "visa-3705"]
+    assert all("number" not in c and len(c["last4"]) == 4 for c in cards)
+    plan = {**PLAN, "cardId": "visa-3705"}
+    challenge = client.post("/api/v1/payments/passkeys/challenge", json={"plan": plan}).json()
+    # Swapping the card after approval changes the digest, so the challenge no longer matches.
+    swapped = client.post(
+        "/api/v1/payments/intents",
+        json={
+            "plan": {**plan, "cardId": "visa-1111"},
+            "consent": {"challenge": challenge["challenge"]},
+            "idempotencyKey": "swap-card",
+        },
+    )
+    assert swapped.status_code == 400
+    fresh = client.post("/api/v1/payments/passkeys/challenge", json={"plan": plan}).json()
+    paid = client.post(
+        "/api/v1/payments/intents",
+        json={
+            "plan": plan,
+            "consent": {"challenge": fresh["challenge"]},
+            "idempotencyKey": "pick-visa-3705",
+        },
+    ).json()
+    assert (paid["cardId"], paid["cardBrand"], paid["cardLast4"]) == ("visa-3705", "Visa", "3705")
+
+
 def test_browser_can_check_whether_its_passkey_is_still_enrolled(client: TestClient) -> None:
     assert client.get("/api/v1/payments/passkeys/unknown-cred").json() == {
         "credentialId": "unknown-cred",

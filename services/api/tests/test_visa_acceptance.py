@@ -167,6 +167,25 @@ def test_capture_then_refund_and_authorize_then_reverse_call_the_matching_visa_r
     )
 
 
+def test_the_picked_wallet_card_is_the_one_sent_to_visa() -> None:
+    fake = FakeVisa()
+    net = network(fake)
+    intent = net.create_intent(
+        (DESK,), MANDATE, CONSENT, idempotency_key="card", card_id="visa-3705"
+    )
+    assert (intent.card_id, intent.card_brand, intent.card_last4) == ("visa-3705", "Visa", "3705")
+    sent = json.loads(fake.requests[0].content)["paymentInformation"]["card"]
+    assert sent["number"].endswith("3705") and sent["securityCode"] == "838"
+    # Unknown ids fall back to the default card rather than failing the purchase.
+    other = net.create_intent(
+        (CHAIR,), MANDATE, CONSENT, idempotency_key="card2", card_id="amex-9999"
+    )
+    assert other.card_last4 == "1111"
+    assert json.loads(fake.requests[1].content)["paymentInformation"]["card"]["number"].endswith(
+        "1111"
+    )
+
+
 def test_local_mandate_decline_never_reaches_visa() -> None:
     fake = FakeVisa()
     intent = network(fake).create_intent(

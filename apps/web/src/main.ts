@@ -31,7 +31,8 @@ import { mountSharePopup } from "./catalog/sharePopup";
 import { saveGeneratedEntry } from "./catalog/generatedCatalog";
 import { mountBudgetBar } from "./commerce/budgetBar";
 import { saveProduct } from "./commerce/savedProducts";
-import type { PaymentIntent } from "./commerce/payments";
+import { createPaymentsClient, type PaymentIntent } from "./commerce/payments";
+import { mountCheckout } from "./commerce/checkout";
 import "./commerce/commerce.css";
 
 const INTENT_KEY = "dreamgrid.paymentIntent";
@@ -396,11 +397,13 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       remainingBudgetUsd: () => budgetUsd > 0 ? budget.summary.remainingUsd : undefined,
       onOpen: () => budget.setOpen(false),
     });
+    const checkout = mountCheckout(document.getElementById("checkout-popup")!, { payments: createPaymentsClient(), copyText });
     const budget = mountBudgetBar(document.getElementById("budgetbar")!, document.getElementById("budget") as HTMLButtonElement, {
       room, catalog, items: () => placement!.items, budgetUsd,
       onBudgetChange: (usd) => { budgetUsd = usd; syncUrl(); },
       swap: (id, product) => placement!.replace(id, product, catalog.get(product.id)?.asset),
       copyText,
+      checkout,
       onOpen: () => shopBar.setOpen(false),
       // The sandbox receipt for this room survives a reload (the API keeps the ledger while it runs).
       savedIntent: readSavedIntent(),

@@ -25,6 +25,7 @@ from dreamgrid_api.boundaries.payments import (
     Mandate,
     PaymentIntent,
     PaymentLine,
+    wallet_card,
 )
 
 PROVIDER = "dreamgrid-sandbox"
@@ -68,6 +69,7 @@ class MockPaymentNetwork:
         consent: ConsentEvidence,
         *,
         idempotency_key: str,
+        card_id: str | None = None,
     ) -> PaymentIntent:
         with self._lock:
             existing = self._by_idempotency.get(idempotency_key)
@@ -76,37 +78,36 @@ class MockPaymentNetwork:
             now = self._now()
             amount = sum((line.total_usd for line in lines), Decimal("0"))
             intent_id = f"pi_{secrets.token_hex(8)}"
+            card = wallet_card(card_id)
+            common = {
+                "intent_id": intent_id,
+                "amount_usd": amount,
+                "currency": "USD",
+                "lines": lines,
+                "mandate": mandate,
+                "consent": consent,
+                "provider": PROVIDER,
+                "is_sandbox": True,
+                "created_at": now,
+                "card_id": card.id,
+                "card_brand": card.brand,
+                "card_last4": card.last4,
+            }
             try:
                 self._check(lines, mandate, consent, amount, now)
             except PaymentDeclined as declined:
                 intent = PaymentIntent(
-                    intent_id=intent_id,
                     status="declined",
-                    amount_usd=amount,
-                    currency="USD",
-                    lines=lines,
-                    mandate=mandate,
-                    consent=consent,
-                    provider=PROVIDER,
-                    is_sandbox=True,
-                    created_at=now,
                     decline_code=declined.code,
                     decline_reason=declined.reason,
                     history=((now, "declined"),),
+                    **common,  # type: ignore[arg-type]
                 )
             else:
                 intent = PaymentIntent(
-                    intent_id=intent_id,
                     status="authorized",
-                    amount_usd=amount,
-                    currency="USD",
-                    lines=lines,
-                    mandate=mandate,
-                    consent=consent,
-                    provider=PROVIDER,
-                    is_sandbox=True,
-                    created_at=now,
                     history=((now, "authorized"),),
+                    **common,  # type: ignore[arg-type]
                 )
                 intent = PaymentIntent(**{**intent.__dict__, "token": self._sign(intent)})
             self._intents[intent_id] = intent
@@ -240,6 +241,7 @@ class MockPaymentNetwork:
                 "max": f"{intent.mandate.max_amount_usd:.2f}",
                 "exp": int(intent.mandate.expires_at.timestamp()),
             },
+            "card": {"brand": intent.card_brand, "last4": intent.card_last4},
             "consent": {
                 "method": intent.consent.method,
                 "cred": intent.consent.credential_id,

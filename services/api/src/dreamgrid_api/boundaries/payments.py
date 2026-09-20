@@ -32,6 +32,30 @@ DeclineCode = Literal[
 
 
 @dataclass(frozen=True)
+class WalletCard:
+    """A card the shopper can pick in checkout. Labels only; the network holds the test PAN."""
+
+    id: str
+    brand: str
+    label: str
+    last4: str
+    holder: str
+    expires: str
+
+
+# The shopper's sandbox wallet. Every id maps to a Visa-published test card inside the adapter.
+WALLET_CARDS: tuple[WalletCard, ...] = (
+    WalletCard("visa-1111", "Visa", "DreamGrid Visa", "1111", "DIANNE D", "12/31"),
+    WalletCard("visa-3705", "Visa", "Visa Signature", "3705", "DIANNE D", "12/31"),
+)
+DEFAULT_CARD_ID = WALLET_CARDS[0].id
+
+
+def wallet_card(card_id: str | None) -> WalletCard:
+    return next((c for c in WALLET_CARDS if c.id == card_id), WALLET_CARDS[0])
+
+
+@dataclass(frozen=True)
 class PaymentLine:
     product_id: str
     title: str
@@ -85,6 +109,10 @@ class PaymentIntent:
     approval_code: str | None = None
     # Set when the external network could not be reached and the local sandbox stood in.
     fallback_reason: str | None = None
+    # Which wallet card paid (labels only).
+    card_id: str = DEFAULT_CARD_ID
+    card_brand: str = "Visa"
+    card_last4: str = "1111"
 
 
 class PaymentNetwork(Protocol):
@@ -97,6 +125,7 @@ class PaymentNetwork(Protocol):
         consent: ConsentEvidence,
         *,
         idempotency_key: str,
+        card_id: str | None = None,
     ) -> PaymentIntent: ...
 
     def capture(self, intent_id: str) -> PaymentIntent: ...

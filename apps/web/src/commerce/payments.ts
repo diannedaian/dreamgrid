@@ -5,7 +5,8 @@ import type { ShoppingPlan } from "./shoppingPlan";
 
 export type PaymentLine = { productId: string; title: string; merchant: string; unitPriceUsd: string; quantity: number };
 export type PaymentMandate = { maxAmountUsd: string; merchants: string[]; validForMinutes: number; budgetUsd?: string };
-export type PaymentPlan = { lines: PaymentLine[]; mandate: PaymentMandate };
+export type PaymentPlan = { lines: PaymentLine[]; mandate: PaymentMandate; cardId?: string };
+export type WalletCard = { id: string; brand: string; label: string; last4: string; holder: string; expires: string };
 
 export type PaymentIntent = {
   intentId: string;
@@ -31,6 +32,9 @@ export type PaymentIntent = {
   approvalCode?: string | null;
   /** Present when the external network was unreachable and the local sandbox stood in. */
   fallbackReason?: string | null;
+  cardId?: string;
+  cardBrand?: string;
+  cardLast4?: string;
 };
 
 /** Human label for the network that answered. */
@@ -41,13 +45,13 @@ export function providerLabel(intent: Pick<PaymentIntent, "provider">): string {
 const usd = (n: number) => n.toFixed(2);
 
 /** The exact plan the shopper approves: priced lines only, merchants derived from them. */
-export function paymentPlanFrom(plan: ShoppingPlan, maxAmountUsd: number, validForMinutes = 24 * 60): PaymentPlan {
+export function paymentPlanFrom(plan: ShoppingPlan, maxAmountUsd: number, cardId?: string, validForMinutes = 24 * 60): PaymentPlan {
   const lines = plan.groups.flatMap((g) => g.lines.map((l) => ({
     productId: l.product.id, title: l.product.title, merchant: g.merchant || "Unknown store",
     unitPriceUsd: usd(l.product.priceUsd), quantity: l.quantity,
   })));
   const merchants = [...new Set(lines.map((l) => l.merchant))];
-  return { lines, mandate: { maxAmountUsd: usd(maxAmountUsd), merchants, validForMinutes, ...(plan.budgetUsd > 0 ? { budgetUsd: usd(plan.budgetUsd) } : {}) } };
+  return { lines, mandate: { maxAmountUsd: usd(maxAmountUsd), merchants, validForMinutes, ...(plan.budgetUsd > 0 ? { budgetUsd: usd(plan.budgetUsd) } : {}) }, ...(cardId ? { cardId } : {}) };
 }
 
 const b64 = (buf: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -153,6 +157,7 @@ export function createPaymentsClient(fetcher: typeof fetch = fetch, storage: Pic
     reverse: (intentId: string) => request<PaymentIntent>(`/intents/${encodeURIComponent(intentId)}/reverse`, {}),
     get: (intentId: string) => request<PaymentIntent>(`/intents/${encodeURIComponent(intentId)}`),
     ledger: () => request<PaymentIntent[]>("/intents"),
+    wallet: () => request<WalletCard[]>("/wallet"),
     verifyToken: (token: string) => request<{ valid: boolean; payload: Record<string, unknown> | null }>("/tokens/verify", { token }),
   };
 }

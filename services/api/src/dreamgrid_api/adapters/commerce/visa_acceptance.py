@@ -26,14 +26,38 @@ from decimal import Decimal
 import httpx
 
 from dreamgrid_api.adapters.commerce.mock_payment_network import MockPaymentNetwork
-from dreamgrid_api.boundaries.payments import ConsentEvidence, Mandate, PaymentIntent, PaymentLine
+from dreamgrid_api.boundaries.payments import (
+    DEFAULT_CARD_ID,
+    ConsentEvidence,
+    Mandate,
+    PaymentIntent,
+    PaymentLine,
+)
 
 log = logging.getLogger(__name__)
 
 TEST_HOST = "apitest.visaacceptance.com"
 PROVIDER = "visa-acceptance-sandbox"
-# Visa's documented sandbox test card, never a real PAN. Server-side only; never sent to a browser.
-TEST_CARD = {"number": "4111111111111111", "expirationMonth": "12", "expirationYear": "2031"}
+# Visa's documented sandbox test cards, never real PANs. Server-side only; the browser only ever
+# sees an id, a label and the last four digits. The shopper "picks a card" from these in checkout.
+TEST_CARDS: dict[str, dict[str, str]] = {
+    "visa-1111": {"number": "4111111111111111", "expirationMonth": "12", "expirationYear": "2031"},
+    "visa-3705": {
+        "number": "4622943127013705",
+        "expirationMonth": "12",
+        "expirationYear": "2031",
+        "securityCode": "838",
+    },
+}
+
+
+def card_for(card_id: str | None) -> tuple[str, dict[str, str]]:
+    """Resolve the shopper's pick to a sandbox card, defaulting to the first one."""
+
+    key = card_id if card_id in TEST_CARDS else DEFAULT_CARD_ID
+    return key, TEST_CARDS[key]
+
+
 DEMO_BILL_TO = {
     "firstName": "DreamGrid",
     "lastName": "Shopper",
@@ -133,12 +157,17 @@ class VisaAcceptanceClient:
     # ── payments resource ─────────────────────────────────────────────────────
 
     def authorize(
-        self, reference: str, amount_usd: Decimal, lines: tuple[PaymentLine, ...]
+        self,
+        reference: str,
+        amount_usd: Decimal,
+        lines: tuple[PaymentLine, ...],
+        card_id: str | None = None,
     ) -> dict[str, object]:
+        _, card = card_for(card_id)
         payload: dict[str, object] = {
             "clientReferenceInformation": {"code": reference[:50]},
             "processingInformation": {"capture": False},
-            "paymentInformation": {"card": TEST_CARD},
+            "paymentInformation": {"card": card},
             "orderInformation": {
                 "amountDetails": {"totalAmount": f"{amount_usd:.2f}", "currency": "USD"},
                 "billTo": DEMO_BILL_TO,
@@ -205,15 +234,20 @@ class VisaAcceptanceNetwork:
         consent: ConsentEvidence,
         *,
         idempotency_key: str,
+        card_id: str | None = None,
     ) -> PaymentIntent:
         existing = self._local.get_by_idempotency(idempotency_key)
         if existing:
             return existing
-        intent = self._local.create_intent(lines, mandate, consent, idempotency_key=idempotency_key)
+        intent = self._local.create_intent(
+            lines, mandate, consent, idempotency_key=idempotency_key, card_id=card_id
+        )
         if intent.status != "authorized":
             return intent  # mandate declined locally; Visa is never asked
         try:
-            result = self._client.authorize(intent.intent_id, intent.amount_usd, lines)
+            result = self._client.authorize(
+                intent.intent_id, intent.amount_usd, lines, card_id=intent.card_id
+            )
         except VisaAcceptanceError as error:
             log.warning(
                 "Visa Acceptance unavailable, keeping local sandbox authorization: %s", error
