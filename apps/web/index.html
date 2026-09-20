@@ -96,6 +96,9 @@
       .chip.brand { left: 52px; top: 16px; font-family: var(--serif); font-size: 17px; padding: 8px 16px; background: none; }
       .chip.brand::before, .chip.brand::after { inset: -16px -40px -8px; } /* small logo: keep the cloud inside the top bar */
       .chip.brand span { color: #8f7fc9; } /* lavender "Grid" */
+      /* paint roller "painting" the Grid: mirrored, light grey, tilted 45° */
+      .roller { display: inline-block; width: 1.25em; height: 1.25em; margin-left: 0.12em; vertical-align: -0.28em; color: #c8c4bc; transform: rotate(45deg); transform-origin: 40% 60%; }
+
       .chip.dims { right: 62px; font-variant-numeric: tabular-nums; }
       /* top-right actions: small lavender glyph, soft cream pill on hover; text stays underlined */
       .chip.action { right: 10px; top: 42px; padding: 4px 10px; border-radius: 999px; text-decoration: none; pointer-events: auto; font-weight: 600; font-family: var(--sans); transition: text-shadow 0.18s ease, color 0.18s ease; }
@@ -381,7 +384,7 @@
       <svg class="leaf tl" viewBox="0 0 100 60" fill="none" stroke="#fbf5ea" stroke-width="2" stroke-linecap="round"><path d="M5 55 C 30 10, 70 5, 95 8 C 80 40, 40 58, 5 55 Z"/><path d="M5 55 C 35 40, 60 25, 95 8"/></svg>
       <svg class="leaf br" viewBox="0 0 100 60" fill="none" stroke="#fbf5ea" stroke-width="2" stroke-linecap="round"><path d="M5 55 C 30 10, 70 5, 95 8 C 80 40, 40 58, 5 55 Z"/><path d="M5 55 C 35 40, 60 25, 95 8"/></svg>
       <div class="card">
-        <h1 class="glass-cloud">Dream<span>Grid</span></h1>
+        <h1 class="glass-cloud">Dream<span>Grid</span><svg class="roller" viewBox="0 0 512 512" aria-hidden="true"><g transform="scale(-1,1) translate(-512,0)" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"><rect x="120" y="70" width="290" height="100" rx="28"/><path d="M410 120h22"/><path d="M120 125h-15a25 25 0 0 0-25 25v40a25 25 0 0 0 18 24l150 42a25 25 0 0 1 18 24v38"/><rect x="235" y="295" width="60" height="140" rx="18"/></g></svg></h1>
         <form id="dims-form">
           <label><span>Width</span> <input name="w-ft" type="number" min="0" step="1" value="12" required /> <span class="unit">ft</span> <input name="w-in" type="number" min="0" max="11" step="1" value="0" /> <span class="unit">in</span></label>
           <label><span>Depth</span> <input name="d-ft" type="number" min="0" step="1" value="10" required /> <span class="unit">ft</span> <input name="d-in" type="number" min="0" max="11" step="1" value="0" /> <span class="unit">in</span></label>
@@ -405,7 +408,7 @@
     <aside id="sidebar" hidden></aside>
 
     <div id="chrome" hidden>
-      <div class="chip brand glass-cloud">Dream<span>Grid</span></div>
+      <div class="chip brand glass-cloud">Dream<span>Grid</span><svg class="roller" viewBox="0 0 512 512" aria-hidden="true"><g transform="scale(-1,1) translate(-512,0)" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"><rect x="120" y="70" width="290" height="100" rx="28"/><path d="M410 120h22"/><path d="M120 125h-15a25 25 0 0 0-25 25v40a25 25 0 0 0 18 24l150 42a25 25 0 0 1 18 24v38"/><rect x="235" y="295" width="60" height="140" rx="18"/></g></svg></div>
       <div class="chip dims" id="dims-chip"></div>
       <button class="chip action" id="share" type="button">Share</button>
       <button class="chip action save-design" id="save-design" type="button" hidden>Save layout</button>
