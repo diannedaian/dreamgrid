@@ -72,7 +72,7 @@
       .cross::after { top: 50%; left: 0; height: 2px; width: 100%; transform: translateY(-50%); }
       .hud { position: absolute; left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); padding: 16px; border-radius: 18px; background: rgba(251,245,234,0.92); backdrop-filter: blur(8px); box-sizing: border-box; }
       .hud h2 { font-family: var(--serif); font-weight: 500; font-size: 22px; margin: 0 0 4px; }
-      .hud .hint { font-size: 14px; color: var(--ink-soft); margin: 0 0 12px; line-height: 1.4; }
+      .hud .hint { font-size: 14px; color: var(--ink-soft); margin: 0 0 12px; line-height: 1.4; padding-left: 18px; } .hud .hint li { margin-bottom: 4px; }
       .hud .live { font-variant-numeric: tabular-nums; font-size: 15px; margin-bottom: 12px; }
       .hud .live b { font-size: 22px; }
       .hud .live.bad { color: #a8523a; }
@@ -109,7 +109,7 @@
       </div>
       <div class="hud">
         <h2 id="step-title">Length</h2>
-        <p class="hint" id="step-hint"></p>
+        <ul class="hint" id="step-hint"></ul>
         <div class="dims">
           <div><small>Length</small><span id="d-l">—</span></div>
           <div><small>Width</small><span id="d-w">—</span></div>
