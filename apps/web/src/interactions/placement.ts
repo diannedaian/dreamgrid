@@ -68,6 +68,24 @@ export class PlacementController {
     return item;
   }
 
+  async replace(id: string, product: Product, asset: ModelAsset | undefined): Promise<void> {
+    const previous = this.placed.get(id);
+    if (!previous) throw new Error("This item is no longer loaded in the room.");
+    if (!asset || asset.status !== "ready") throw new Error("Generate and load the replacement model first.");
+    const object = await loadModel(product, asset);
+    if (this.placed.get(id) !== previous) throw new Error("The item changed while its replacement loaded. Try again.");
+    const item: SceneItem = { ...previous.item, positionM: [...previous.item.positionM], productId: product.id, modelAssetId: asset.id };
+    this.lamps.unregister(previous.object);
+    this.group.remove(previous.object);
+    this.tinted.delete(id);
+    this.items.splice(this.items.indexOf(previous.item), 1);
+    this.attach({ item, product, object });
+    this.moveTo(id, item.positionM[0], item.positionM[2], item.positionM[1]);
+    if (this.hovered === previous) this.refreshHover(this.placed.get(id) ?? null);
+    if (this.selected === id) this.select(id);
+    this.emit();
+  }
+
   remove(id: string) {
     const p = this.placed.get(id);
     if (!p) return;
@@ -85,11 +103,22 @@ export class PlacementController {
   rotate(id: string) {
     const p = this.placed.get(id);
     if (!p) return;
-    p.item.rotationYDeg = (((p.item.rotationYDeg + 90) % 360) as SceneItem["rotationYDeg"]);
-    p.object.rotation.y = (p.item.rotationYDeg * Math.PI) / 180;
-    this.moveTo(id, p.item.positionM[0], p.item.positionM[2]); // re-clamp with the new footprint
+    if (isWallMount(p.product)) {
+      // A mirror or picture only faces into the room, so "rotate" hops it to the other wall.
+      const { widthM: W, depthM: D } = this.room;
+      const toLeft = p.item.rotationYDeg % 180 === 0;
+      this.moveTo(id, toLeft ? -W / 2 : p.item.positionM[0], toLeft ? p.item.positionM[2] : -D / 2);
+    } else {
+      this.setRotation(p, ((p.item.rotationYDeg + 90) % 360) as SceneItem["rotationYDeg"]);
+      this.moveTo(id, p.item.positionM[0], p.item.positionM[2]); // re-clamp with the new footprint
+    }
     this.emit();
     if (this.selected === id) this.onSelect(p.item);
+  }
+
+  private setRotation(p: Placed, deg: SceneItem["rotationYDeg"]) {
+    p.item.rotationYDeg = deg;
+    p.object.rotation.y = (deg * Math.PI) / 180;
   }
 
   /**
@@ -99,15 +128,29 @@ export class PlacementController {
   moveTo(id: string, x: number, z: number, y = this.placed.get(id)?.item.positionM[1] ?? 0, snapSurface = false) {
     const p = this.placed.get(id);
     if (!p) return;
-    const [fw, fd] = this.footprint(p);
     const { widthM: W, depthM: D, heightM: H } = this.room;
+    const ih = p.product.dimensionsM[1];
+    if (isWallMount(p.product)) {
+      // Mirrors and pictures hang flat on whichever wall is nearer, facing into the room, at eye level by default.
+      const wall = Math.abs(x + W / 2) < Math.abs(z + D / 2) ? "left" : "back";
+      this.setRotation(p, wall === "left" ? 90 : 0);
+      const [fw, fd] = this.footprint(p);
+      const sx = wall === "left" ? -W / 2 + fw / 2 : this.snapClamp(x, W, fw);
+      const sz = wall === "back" ? -D / 2 + fd / 2 : this.snapClamp(z, D, fd);
+      if (snapSurface && y <= 0) y = WALL_MOUNT_CENTER_M - ih / 2;
+      const sy = Math.min(Math.max(0, snapToInch(y)), Math.max(0, H - ih));
+      p.item.positionM = [sx, sy, sz];
+      p.object.position.set(sx, sy, sz);
+      if (this.selected === id) this.placeRing(p);
+      return;
+    }
+    const [fw, fd] = this.footprint(p);
     const sx = this.snapClamp(x, W, fw), sz = this.snapClamp(z, D, fd);
     // Blender-style surface snap: a small item dragged over a desk / shelf lands on its top; off it, back to the floor.
     if (snapSurface && this.canRaise(id)) y = this.surfaceTop(id, sx, sz) ?? 0;
     const against = sx - fw / 2 <= -W / 2 + 1e-6 || sz - fd / 2 <= -D / 2 + 1e-6;
-    const ih = p.product.dimensionsM[1];
     // Wall-hugging items keep their height; decor and table lamps can sit at any height (e.g. on a desk).
-    const sy = against || this.canRaise(id) ? Math.min(Math.max(0, snapToInch(y)), Math.max(0, H - ih)) : 0;
+    const sy = !isFloorOnly(p.product) && (against || this.canRaise(id)) ? Math.min(Math.max(0, snapToInch(y)), Math.max(0, H - ih)) : 0;
     p.item.positionM = [sx, sy, sz];
     p.object.position.set(sx, sy, sz);
     if (this.selected === id) this.placeRing(p);
@@ -133,12 +176,18 @@ export class PlacementController {
     return p.item.positionM[0] - fw / 2 <= -this.room.widthM / 2 + 1e-6 || p.item.positionM[2] - fd / 2 <= -this.room.depthM / 2 + 1e-6;
   }
 
-  /** Items that may move up and down: decor, and table / desk lamps. */
+  /** Items that may move up and down: wall-hung pieces, decor, and table / desk lamps. */
   canRaise(id: string): boolean {
     const p = this.placed.get(id);
-    if (!p) return false;
+    if (!p || isFloorOnly(p.product)) return false;
     const c = p.product.category as string;
-    return c === "decor" || (c === "lamp" && /\b(table|desk)\b/i.test(p.product.title));
+    return isWallMount(p.product) || c === "decor" || (c === "lamp" && /\b(table|desk)\b/i.test(p.product.title));
+  }
+
+  /** Wall-hung items (mirrors, art) sit flat on a wall and only move along it and up / down. */
+  isWallMounted(id: string): boolean {
+    const p = this.placed.get(id);
+    return !!p && isWallMount(p.product);
   }
 
   /** Raise or lower a raisable item by whole inches (clamped to floor and ceiling). */
@@ -436,12 +485,26 @@ export class PlacementController {
 /** Things with a usable top: desks, side tables, chests, shelves. Small items can be set on them. */
 function isSurface(p: Placed): boolean {
   const c = p.product.category as string;
-  return c === "desk" || c === "shelf";
+  return !isFloorOnly(p.product) && (c === "desk" || c === "shelf");
+}
+
+function isFloorOnly(product: Product): boolean {
+  return /\b(rugs?|carpets?|mats?)\b/i.test([product.title, product.category, ...product.styleTags].join(" "));
+}
+
+/** Default hanging height: the centre of a mirror or picture at roughly eye level. */
+const WALL_MOUNT_CENTER_M = 1.5;
+
+/** Mirrors, wall art, sconces and anything tagged wall-mounted hang on a wall instead of standing on the floor. */
+export function isWallMount(product: Product): boolean {
+  const text = [product.title, ...product.styleTags].join(" ");
+  return /\b(mirrors?|wall[- ]?(art|mounted|mount|hung|hanging|shelf|shelves|clock|decor)|artwork|paintings?|picture frames?|tapestr(y|ies)|sconces?|posters?)\b/i.test(text)
+    && !/\bfloor mirror|standing mirror|leaning\b/i.test(text);
 }
 
 /** Rugs, mats and anything a couple of inches thick: furniture sits on top, never "overlaps". */
 function isFloorCovering(p: Placed): boolean {
-  return /\b(rug|mat|carpet)\b/i.test(p.product.title) || p.product.dimensionsM[1] <= 0.06;
+  return isFloorOnly(p.product) || p.product.dimensionsM[1] <= 0.06;
 }
 
 /** Emissive tint on every mesh of an object (null clears). */

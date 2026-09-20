@@ -99,10 +99,13 @@ designs. Legacy plans stay closed. `SceneItem` and canonical contracts are uncha
 The catalog's `hiddenProductIds` hides the five retired placeholder cards while
 keeping their IDs available to old saved plans; it does not delete those plans.
 
-**Linda (commerce).** Placed items are `placement.items: SceneItem[]`; every change calls the
-`onChange` callback given in `main.ts` (currently just re-syncs the URL). Hook budget/subtotal there.
-The product detail sheet (`src/catalog/detail.ts`) has a dashed "Shopping info coming soon" slot and a
-`sourceUrl` link; replace that block with the real shopping UI. Prices are `priceUsd` on `Product`.
+**Linda (commerce).** Integrated via `src/commerce/README.md`. The Budget action shows
+known-price totals, unpriced warnings, ready-model alternatives, swaps/undo and session-only
+shopping-plan approval (no payment/Visa call). `main.ts` refreshes from `placement.items` and
+catalog changes; hidden catalog cards still count when placed. `Plan.b` carries the USD budget.
+The Source products tab adds region/budget/size search and URL/text/manual entry, then opens the
+same image-first generation panel. Source details persist locally and generated dimensions win.
+The existing Shopping agent and Shopping list tabs, photos, links and quantities are retained.
 
 **Phone measuring.** `measure.html` (alias `/m`) uses the camera + tilt sensor over https and POSTs
 `{ w, d, h }` inches to `/api/measurement`; the open desktop form polls it. The native ARKit app in
@@ -113,13 +116,16 @@ The product detail sheet (`src/catalog/detail.ts`) has a dashed "Shopping info c
 `+ Add furniture` opens `src/catalog/importer.ts`. Shop cards open that same panel
 with the URL prefilled; neither UI calls the legacy simplified importer anymore.
 
-1. Upload a PNG/JPEG/WebP image (<5 MB), optionally provide a link, specifications
-   and price. The current backend **requires the image**; URL-only image extraction
-   is not implemented. Blocked listings need pasted specifications.
-2. `/api/v1/models/prepare` runs one Sol analysis (may take minutes). Progress says
-   analyzing and shows elapsed time, not invented percentage/stages.
-3. Review width/height/depth in cm, provenance, warnings and estimates. Changes that
-   are guesses remain estimates; explicitly accept them before proceeding.
+1. Drop or pick a PNG/JPEG/WebP photo (<5 MB); link, price and notes are optional
+   (notes/sizes live under "Add sizes or notes"). The backend **requires the photo**;
+   URL-only image extraction is not implemented. Blocked listings need pasted specs.
+2. `/api/v1/models/prepare` runs one Sol analysis (may take minutes). The panel shows
+   the self-assembling chair loader, rotating notes and a real elapsed clock, not an
+   invented percentage.
+3. Quick size check in inches: `~` marks a backend estimate, `✓` a sourced size. There
+   is no acceptance checkbox. Building with untouched estimates sends
+   `acceptEstimated: true` with those axes in `estimatedAxes`; a size the user types
+   is sent as their measurement. Estimates stay labeled in the asset disclosure.
 4. `/generate` starts Blender; `/jobs/{id}` is polled every second. Actual job
    states drive queued/building/ready/error UI. Resume reuses the same job and
    analysis, not another paid call.

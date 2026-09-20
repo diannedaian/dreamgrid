@@ -29,6 +29,9 @@ import { mountDesignsBar } from "./catalog/designsBar";
 import { mountShopBar } from "./catalog/shopBar";
 import { mountSharePopup } from "./catalog/sharePopup";
 import { saveGeneratedEntry } from "./catalog/generatedCatalog";
+import { mountBudgetBar } from "./commerce/budgetBar";
+import { saveProduct } from "./commerce/savedProducts";
+import "./commerce/commerce.css";
 
 const overlay = document.getElementById("dims") as HTMLDivElement;
 const form = document.getElementById("dims-form") as HTMLFormElement;
@@ -61,15 +64,27 @@ form.addEventListener("submit", (e) => {
 document.getElementById("phone-link")!.addEventListener("click", async () => {
   const out = document.getElementById("phone-out")!;
   out.hidden = false;
-  out.textContent = "Looking up this Mac's address…";
+  out.innerHTML = `<p class="note">Looking up this Mac's address…</p>`;
   try {
     const { url, https } = (await (await fetch("/api/phone-link", { cache: "no-store" })).json()) as { url: string; https: boolean };
-    out.innerHTML = https
-      ? `Point your iPhone camera at this (same Wi-Fi), tap the link, accept the certificate warning, and leave this page open.<canvas id="qr"></canvas><code>${url}</code>The room appears here when you send it.`
-      : `The server is on http, and Safari needs https for the camera. Restart with <b>npm run dev</b> (https is the default), then try again.<canvas id="qr"></canvas><code>${url}</code>`;
-    await QRCode.toCanvas(document.getElementById("qr") as HTMLCanvasElement, url, { width: 220, margin: 1, color: { dark: "#3f3a2e", light: "#fbf5ea" } });
+    const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+    out.innerHTML = `<div class="phone-card">
+      <div class="qr"><canvas id="qr"></canvas></div>
+      <div class="phone-body">
+        <h3>Scan with your phone</h3>
+        <ol><li>Same Wi-Fi as this Mac</li><li>Open the link, allow the camera${https ? ", accept the certificate" : ""}</li><li>Measure — the room appears here</li></ol>
+      </div>
+      <div class="phone-url"><code>${esc(url)}</code><button type="button" class="copy">Copy</button></div>
+      ${https ? "" : `<p class="phone-warn">Safari needs https for the camera. Restart with <b>npm run dev</b> (https is the default).</p>`}
+    </div>`;
+    out.querySelector(".copy")!.addEventListener("click", async (e) => {
+      const b = e.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(url); b.textContent = "Copied"; } catch { b.textContent = "Select it"; }
+      setTimeout(() => (b.textContent = "Copy"), 1600);
+    });
+    await QRCode.toCanvas(document.getElementById("qr") as HTMLCanvasElement, url, { width: 128, margin: 0, color: { dark: "#3f3a2e", light: "#ffffff" } });
   } catch {
-    out.textContent = "Couldn't reach the dev server.";
+    out.innerHTML = `<p class="note">Couldn't reach the dev server.</p>`;
   }
 });
 
@@ -148,6 +163,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   };
   window.addEventListener("resize", onResize);
+  new ResizeObserver(onResize).observe(document.getElementById("stage")!);
 
   // View snaps (subtle text links, bottom-right of the stage).
   let viewAnim: (() => boolean) | null = null;
@@ -173,6 +189,8 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
   const catalog = await Catalog.load();
   let picker: WallPicker | null = null;
   let placement: PlacementController | null = null;
+  let budgetUsd = plan?.b ?? 0;
+  let refreshBudget = () => {};
 
   // Keep the address bar in sync so the current URL is always the current plan.
   let sun: SunSettings = plan ? sunFromPlan(plan) : { ...DEFAULT_SUN };
@@ -182,6 +200,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       floor: shell.floor !== DEFAULT_FLOOR ? shell.floor : undefined,
       sun,
       view: shell.view,
+      budgetUsd,
       openItems: placement?.openItemIds ?? plan?.openItems,
       ignored: placement?.ignoredIds ?? plan?.ign,
     });
@@ -194,6 +213,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     if (designId) u.searchParams.set("design", designId);
     history.replaceState(null, "", u.toString());
     refreshShopList();
+    refreshBudget();
   };
   const listUrl = () => `${new URL("/list.html", location.href)}?plan=${encodePlan(currentPlan())}`;
   const shoppingRows = () => {
@@ -253,6 +273,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       upBtn.hidden = downBtn.hidden = !raisable;
       upBtn.disabled = downBtn.disabled = false;
       upBtn.title = downBtn.title = "Move up or down (↑ / ↓, shift for a foot)";
+      document.getElementById("tool-rotate")!.title = placement!.isWallMounted(item.id) ? "Move to the other wall (R)" : "Rotate 90° (R)";
     });
     document.getElementById("tool-rotate")!.addEventListener("click", () => placement!.rotateSelected());
     document.getElementById("tool-delete")!.addEventListener("click", () => placement!.removeSelected());
@@ -277,19 +298,26 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     const thumbs = new ThumbnailRenderer();
     const detail = mountDetail(document.getElementById("detail")!, {
       thumbnail: (entry, size) => thumbs.render(entry, size),
-      onAdd: (entry) => placement!.add(entry.product, entry.asset, [0, 0, 0]),
+      onAdd: (entry) => {
+        if (!entry.asset && entry.product.styleTags.includes("model-pending")) importer.open(entry.product);
+        else void placement!.add(entry.product, entry.asset, [0, 0, 0]).catch(e => { hint.hidden = false; hint.textContent = (e as Error).message; });
+      },
     });
     const onImported = async (r: { product: Product; asset: ModelAsset }) => {
       // Await the actual GLB before reporting success. No placeholder for live imports.
       await placement!.add(r.product, r.asset, [0, 0, 0]);
       catalog.add([r.product], [r.asset]);
+      saveProduct(r.product);
       try { saveGeneratedEntry(r); }
       catch { hint.hidden = false; hint.textContent = "Model added, but browser storage is full. It may not survive a reload."; }
     };
     const importer = mountImporter(document.getElementById("import-popup")!, onImported);
     mountSidebar(sidebar, {
       catalog,
-      drag: { start: (entry, e) => placement!.beginCatalogDrag(entry, e) },
+      drag: { start: (entry, e) => {
+        if (!entry.asset && entry.product.styleTags.includes("model-pending")) { importer.open(entry.product); return null; }
+        return placement!.beginCatalogDrag(entry, e);
+      } },
       thumbnail: (entry, size) => thumbs.render(entry, size),
       onOpen: (entry) => detail.open(entry),
       onImport: () => importer.open(),
@@ -328,7 +356,7 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     const measureLabel = document.getElementById("measure-label")!;
     measureBtn.hidden = false;
     const measure = new MeasureTool(scene, camera, canvas, room, () => placement!.objects(), measureLabel, (on) => {
-      measureBtn.textContent = on ? "Measuring… click two points (Esc to stop)" : "Measure";
+      measureBtn.querySelector(".lbl")!.textContent = on ? "Click two points · Esc to stop" : "Measure";
       measureBtn.classList.toggle("on", on);
       hint.hidden = true;
     });
@@ -347,9 +375,28 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       rows: shoppingRows,
       listUrl,
       addFromUrl: (url) => importer.open(url),
+      addFurniture: (seed) => {
+        // A listing generated earlier is already in the catalog: open its card instead of paying again.
+        const existing = [...catalog.allProducts()].find((p) => p.sourceUrl && p.sourceUrl === seed.sourceUrl);
+        const entry = existing && catalog.get(existing.id);
+        if (entry?.asset?.status === "ready") { detail.open(entry); return; }
+        shopBar.setOpen(false);
+        importer.open(seed);
+      },
       measure: (cb) => measure.measureOnce(cb),
+      remainingBudgetUsd: () => budgetUsd > 0 ? budget.summary.remainingUsd : undefined,
+      onOpen: () => budget.setOpen(false),
     });
+    const budget = mountBudgetBar(document.getElementById("budgetbar")!, document.getElementById("budget") as HTMLButtonElement, {
+      room, catalog, items: () => placement!.items, budgetUsd,
+      onBudgetChange: (usd) => { budgetUsd = usd; syncUrl(); },
+      swap: (id, product) => placement!.replace(id, product, catalog.get(product.id)?.asset),
+      copyText,
+      onOpen: () => shopBar.setOpen(false),
+    });
+    refreshBudget = () => budget.refresh();
     refreshShopList = () => shopBar.refresh();
+    catalog.onChange(() => { refreshBudget(); refreshShopList(); });
 
     // Reset: back to an empty room with the same measurements (two clicks, no dialog).
     const reset = document.getElementById("reset-design")!;
@@ -357,9 +404,9 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
     let armed = 0;
     reset.addEventListener("click", () => {
       if (!armed) {
-        reset.textContent = "Reset? Click again";
+        reset.querySelector(".lbl")!.textContent = "Reset? Click again";
         reset.classList.add("armed");
-        armed = window.setTimeout(() => { armed = 0; reset.textContent = "Reset"; reset.classList.remove("armed"); }, 3500);
+        armed = window.setTimeout(() => { armed = 0; reset.querySelector(".lbl")!.textContent = "Reset"; reset.classList.remove("armed"); }, 3500);
         return;
       }
       const inches = (m: number) => Math.round(m / INCH_M);

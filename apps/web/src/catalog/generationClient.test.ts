@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { GenerationJob, PreparedImport, Product } from "@contracts";
 import { createGenerationClient, waitForGeneration, furnitureImageDataUrl } from "./generationClient";
-import { reviewedRequest, dimensionDisclosure } from "./importer";
+import { reviewedRequest, dimensionDisclosure, generatedProduct } from "./importer";
 import { readGeneratedEntries, saveGeneratedEntry } from "./generatedCatalog";
 import { loadModel } from "../interactions/models";
 
@@ -18,11 +18,17 @@ const product: Product = { id: asset.productId, title: "Test lamp", category: "l
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
 describe("real generation boundary", () => {
+  it("preserves sourced identity, photos and price while using the confirmed model dimensions", () => {
+    const source = { ...product, title: "Sourced lamp", priceUsd: 90, merchant: "Store", imageUrl: "https://example.com/lamp.jpg", dimensionsM: [1, 2, 1] as [number, number, number], styleTags: ["warm", "model-pending", "price-not-provided"] };
+    const result = generatedProduct(prepared, asset, 85, "https://example.com/lamp", source);
+    expect(result).toMatchObject({ id: source.id, title: source.title, priceUsd: 85, imageUrl: source.imageUrl, merchant: "Store", dimensionsM: asset.dimensionsM, styleTags: ["warm"], modelAssetId: asset.id });
+    expect(generatedProduct(prepared, asset, null, "", source).styleTags).toContain("price-not-provided");
+  });
   it("uses versioned endpoints and returns the real same-origin GLB URL", async () => {
     const fetcher = vi.fn().mockResolvedValueOnce(response(prepared)).mockResolvedValueOnce(response(queued, 202)).mockResolvedValueOnce(response(ready));
     const api = createGenerationClient(fetcher);
     expect(await api.prepare({ imageDataUrl: "data:image/png;base64,abc", mode: "live" })).toEqual(prepared);
-    await api.generate(reviewedRequest(prepared, product.id, [52, 181.61, 24.13], [false, false, false], true));
+    await api.generate(reviewedRequest(prepared, product.id, [.52, 1.8161, .2413]));
     expect((await api.job(queued.jobId)).asset?.glbUrl).toBe(asset.glbUrl);
     expect(fetcher.mock.calls.map(c => c[0])).toEqual(["/api/v1/models/prepare", "/api/v1/models/generate", `/api/v1/models/jobs/${queued.jobId}`]);
     expect(fetcher.mock.calls[0][1].body).toContain('"mode":"live"');
@@ -54,23 +60,26 @@ describe("real generation boundary", () => {
     expect(api.job).toHaveBeenCalledTimes(160);
   });
 
-  it("requires explicit estimates acceptance and preserves exact height", () => {
-    expect(() => reviewedRequest(prepared, "id", [52, 181.61, 24.13], [false, false, false], false)).toThrow("accept");
-    const req = reviewedRequest(prepared, "id", [52, 181.61, 24.13], [false, false, false], true);
-    expect(req.dimensions.heightM).toBe(1.8161);
+  it("keeps untouched sizes exact, labels untouched guesses as accepted estimates, and never asks for a checkbox", () => {
+    const inch = .0254;
+    const req = reviewedRequest(prepared, "id", [Math.round(.52 / inch * 10) / 10 * inch, Math.round(1.8161 / inch * 10) / 10 * inch, Math.round(.2413 / inch * 10) / 10 * inch]);
+    expect(req.dimensions).toEqual({ widthM: .52, heightM: 1.8161, depthM: .2413 });
     expect(req.estimatedAxes).toEqual(["width", "depth"]);
+    expect(req.acceptEstimated).toBe(true);
+    expect(req.confirmed).toBe(true);
     expect(dimensionDisclosure(dimensions)).toContain("Estimate — not measured");
   });
 
-  it("does not call edited guesses measurements, and rejects invalid sizes", () => {
-    expect(reviewedRequest(prepared, "id", [60, 181.61, 24.13], [false, false, false], true).estimatedAxes).toContain("width");
-    expect(reviewedRequest(prepared, "id", [60, 181.61, 24.13], [true, false, false], true).estimatedAxes).not.toContain("width");
-    for (const n of [0, -3, 501, NaN, Infinity]) expect(() => reviewedRequest(prepared, "id", [n, 181.61, 24.13], [], true)).toThrow("between");
+  it("treats a typed size as the user's measurement and rejects invalid sizes", () => {
+    const req = reviewedRequest(prepared, "id", [.6, 1.8161, .2413]);
+    expect(req.dimensions.widthM).toBe(.6);
+    expect(req.estimatedAxes).toEqual(["depth"]);
+    for (const n of [0, -3, 5.01, NaN, Infinity]) expect(() => reviewedRequest(prepared, "id", [n, 1.8161, .2413])).toThrow("between");
   });
 
   it("keeps explicitly estimated source text estimated even in an older cached response", () => {
     const p = { ...prepared, dimensions: { ...dimensions, width: { ...dimensions.width, source: "product_text" as const, evidence: "Width about 52 cm is an estimate" } } };
-    expect(reviewedRequest(p, "id", [52, 181.61, 24.13], [], true).estimatedAxes).toContain("width");
+    expect(reviewedRequest(p, "id", [.52, 1.8161, .2413]).estimatedAxes).toContain("width");
   });
 
   it("rejects non-images and oversized files before paid analysis", async () => {

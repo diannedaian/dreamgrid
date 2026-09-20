@@ -12,6 +12,12 @@ Blender-exported GLB → `PlacementController.add`. Vite's `/api/v1` proxy reach
 FastAPI on port 8000; shop and phone endpoints still run in Vite. No generated
 Python is executed. Product/SceneItem fields remain compatible; shared types are
 re-exported from `packages/contracts/src` through its root compatibility entry.
+Commerce sourcing uses `/api/v1/products/import` and `/products/search` behind
+provider adapters; its own OpenAI model setting does not replace Sol's generation
+settings. Source drafts go through manual review and the same image-first importer.
+Budget, ready-model swaps, undo and shopping-plan approval derive from placed items;
+zero/tagged unknown prices are excluded with an incomplete-budget warning. Approval
+is not a payment integration. The existing shopping-agent/list UI is retained.
 The API and browser have separate caches; local generated entries are not yet
 portable across browsers. See `docs/MODEL_PIPELINE_HANDOFF.md` for backend limits.
 

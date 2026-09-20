@@ -1,9 +1,26 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
-import { cellAt, cornerWindowFromCells, doorArc, footprintBlocksDoor, fromWallUV, openingsOverlap, toWallUV, windowFromCells } from "./wallGrid";
+import { cellAt, cornerWindowFromCells, doorArc, footprintBlocksDoor, fromWallUV, openingShape, openingsOverlap, toWallUV, windowFromCells } from "./wallGrid";
 import { feetInchesToM, mToInches } from "./units";
 
 const room = { widthM: feetInchesToM(12, 0), depthM: feetInchesToM(10, 0), heightM: feetInchesToM(8, 0), gridSizeM: 0.0254, lightingMode: "day" as const };
+
+describe("opening outlines", () => {
+  it("arched windows are a full-width half-circle on a rectangle, even when wider than tall", () => {
+    for (const [w, h] of [[1.2, 1.5], [2.4, 1.5], [1.0, 2.0]]) {
+      const pts = openingShape(w, h, "arch").getPoints(32);
+      const ry = Math.min(w / 2, h);
+      const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+      expect(Math.min(...xs)).toBeCloseTo(0, 6); expect(Math.max(...xs)).toBeCloseTo(w, 6);
+      expect(Math.min(...ys)).toBeCloseTo(0, 6); expect(Math.max(...ys)).toBeCloseTo(h, 6);
+      // The arc spans the whole width and springs from vertical sides: no shoulder, no diagonal.
+      const crown = pts.find((p) => Math.abs(p.x - w / 2) < 1e-6 && p.y > h - ry + 1e-6)!;
+      expect(crown.y).toBeCloseTo(h, 6);
+      for (const p of pts) if (p.y < h - ry - 1e-6) expect(p.x === 0 || Math.abs(p.x - w) < 1e-6 || p.y === 0).toBe(true);
+      for (const p of pts) if (p.y > h - ry + 1e-6) expect(((p.x - w / 2) / (w / 2)) ** 2 + ((p.y - (h - ry)) / ry) ** 2).toBeCloseTo(1, 4);
+    }
+  });
+});
 
 describe("wall coordinates", () => {
   it("round-trips wall-local and world points on both walls", () => {

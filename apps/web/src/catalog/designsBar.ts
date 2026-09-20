@@ -28,7 +28,7 @@ export function mountDesignsBar(bar: HTMLElement, popup: HTMLElement, o: Designs
   const saveBtn = document.getElementById("save-design") as HTMLButtonElement;
   saveBtn.hidden = false;
 
-  const setOpen = (open: boolean) => { document.body.classList.toggle("leftbar-open", open); toggle.textContent = open ? "←" : "☰"; toggle.title = open ? "Close layouts" : "Saved layouts"; try { localStorage.setItem("dreamgrid.leftbar", open ? "1" : "0"); } catch { /* ignore */ } };
+  const setOpen = (open: boolean) => { document.body.classList.toggle("leftbar-open", open); toggle.classList.toggle("open", open); toggle.title = open ? "Close layouts" : "Saved layouts"; try { localStorage.setItem("dreamgrid.leftbar", open ? "1" : "0"); } catch { /* ignore */ } };
   let open = false;
   try { open = localStorage.getItem("dreamgrid.leftbar") === "1"; } catch { /* ignore */ }
   setOpen(open);

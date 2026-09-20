@@ -1,0 +1,68 @@
+body.has-rightbar.budgetbar-open { --right-w: 340px; }
+.chip.action.budget.under { color: #3f7d4e; background: #e6f0e2; }
+.chip.action.budget.under:hover { background: #d8e8d2; }
+.chip.action.budget.over { color: #c8412c; background: #fbeae6; }
+.chip.action.budget.over:hover { background: #f6dcd6; }
+#budgetbar { position: fixed; top: 0; bottom: 0; right: 0; width: 340px; z-index: 7; box-sizing: border-box; background: var(--cream); box-shadow: -8px 0 30px rgba(40,50,30,.14); transform: translateX(100%); transition: transform .25s ease; display: flex; flex-direction: column; }
+#budgetbar[hidden] { display: none; }
+body.budgetbar-open #budgetbar { transform: none; }
+#budgetbar .head { display: flex; align-items: center; gap: 8px; padding: 14px 14px 8px 10px; }
+#budgetbar h2 { flex: 1; font-family: var(--serif); font-weight: 500; font-size: 18px; margin: 0; }
+#budgetbar .collapse { font: inherit; font-size: 22px; border: 0; background: none; cursor: pointer; padding: 2px 6px; }
+#budgetbar .pane { flex: 1; overflow-y: auto; padding: 0 14px 16px; }
+#budgetbar h3 { font-family: var(--serif); font-weight: 500; font-size: 17px; margin: 14px 0 4px; }
+#budgetbar .sub, #budgetbar .empty, #budgetbar .unpriced, #budgetbar .fit-msg { font-size: 12px; line-height: 1.45; color: var(--ink-soft); }
+#budgetbar button, #rightbar .source button { cursor: pointer; font: inherit; }
+#budgetbar button:disabled, #rightbar .source button:disabled { cursor: default; opacity: .6; }
+#budgetbar .find { padding: 8px 14px; font-size: 12.5px; border: 0; border-radius: 999px; background: var(--honey); color: #fff; }
+#budgetbar .ghost { border: 0; background: transparent; font-size: 12.5px; padding: 8px; }
+#budgetbar .agent-actions { display: flex; gap: 8px; margin: 8px 0; }
+#budgetbar .textlink, #budgetbar .add, #rightbar .source .textlink { font-size: 12px; border: 0; background: none; padding: 0; color: var(--honey-deep); text-decoration: underline; }
+#budgetbar input, #rightbar .source input, #rightbar .source select, #rightbar .source textarea { font: inherit; font-size: 12.5px; color: var(--ink); background: #fff; border: 1px solid #e3d9c6; border-radius: 8px; padding: 5px 8px; box-sizing: border-box; min-width: 0; }
+#budgetbar .amount-row { display: grid; grid-template-columns: 1fr auto 7em; align-items: center; gap: 4px; font-size: 13px; margin: 4px 2px 10px; }
+#budgetbar .amount { width: 100%; text-align: right; }
+#budgetbar .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 8px; }
+#budgetbar .totals div { background: #fff; border-radius: 10px; padding: 8px 10px; }
+#budgetbar .totals span { display: block; font-size: 10.5px; text-transform: uppercase; color: var(--ink-soft); }
+#budgetbar .totals b { font-size: 17px; font-variant-numeric: tabular-nums; }
+#budgetbar .over { color: #c8412c; } #budgetbar .under { color: #3f7d4e; }
+#budgetbar .bar { height: 8px; border-radius: 999px; background: #eee8db; overflow: hidden; }
+#budgetbar .fill { height: 100%; background: var(--sage-deep); } #budgetbar .fill.over { background: #c8412c; }
+#budgetbar .status { font-size: 12.5px; font-weight: 600; }
+#budgetbar .lines, #budgetbar .applied ul, #budgetbar .merchant ul { list-style: none; margin: 0 0 6px; padding: 0; font-size: 12px; }
+#budgetbar .lines li, #budgetbar .merchant li { display: flex; gap: 6px; padding: 3px 2px; }
+#budgetbar .lines li > span:first-child, #budgetbar .merchant a { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#budgetbar .dots { flex: 1; border-bottom: 1px dotted #d9cdb8; min-width: 12px; }
+#budgetbar .applied { font-size: 12px; background: #dfeadb; padding: 8px; margin: 8px 0; }
+#budgetbar .alt { padding: 8px 10px; border-radius: 3px; background: #fff; margin-bottom: 8px; font-size: 12px; }
+#budgetbar .swap-line { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px; font-weight: 600; }
+#budgetbar .from { text-decoration: line-through; color: var(--ink-soft); }
+#budgetbar .meta, #budgetbar .why { font-size: 11px; color: var(--ink-soft); margin: 4px 0; }
+#budgetbar .meta { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+#budgetbar .merchant h4 { display: flex; justify-content: space-between; font-family: var(--serif); font-weight: 500; }
+#budgetbar .merchant a { color: var(--ink); }
+#rightbar .tabs { gap: 12px; } #rightbar .tab { font-size: 12px; }
+#rightbar .source .address { display: flex; gap: 6px; margin-bottom: 8px; }
+#rightbar .source .address input { flex: 1; width: 0; }
+#rightbar .source .refine { margin: 10px 0; font-size: 12px; }
+#rightbar .source .refine label { display: grid; grid-template-columns: 6em 1fr; gap: 6px; margin: 5px 0; }
+#rightbar .source .size { display: grid; gap: 4px; }
+#rightbar .source .pform { padding: 10px; margin: 12px 0; background: #fff; }
+#rightbar .source .pform h3 { font-family: var(--serif); font-size: 17px; margin: 0; }
+#rightbar .source .sub, #rightbar .source .note, #rightbar .source .paste-msg { font-size: 12px; line-height: 1.4; }
+#rightbar .source .link { display: flex; gap: 6px; } #rightbar .source .link input { flex: 1; width: 0; }
+#rightbar .source .pform button:not(.find):not(.ghost) { font-size: 11px; border: 1px solid #d9cdb8; border-radius: 8px; background: #fff; padding: 4px 8px; }
+#rightbar .source .field { display: grid; gap: 3px; font-size: 12px; margin: 6px 0; }
+#rightbar .source .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#rightbar .source .pform .dims { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto; gap: 4px; }
+#rightbar .source .pform .dims input { width: 100%; }
+#rightbar .source textarea { width: 100%; margin: 6px 0; }
+#rightbar .source details summary { font-size: 12px; cursor: pointer; margin: 6px 0; }
+#rightbar .source .err { color: #c8412c; font-size: 12px; }
+#rightbar .source .bad { border-color: #c8412c; }
+#rightbar .source [hidden] { display: none; }
+#rightbar .source .pic { position: relative; }
+#rightbar .source .photo-status { position: absolute; inset: 0; display: grid; place-items: center; padding: 6px; text-align: center; font-size: 11px; line-height: 1.3; color: var(--ink-soft); }
+#rightbar .source .hit .actions { flex-wrap: wrap; gap: 4px 8px; }
+#rightbar .source .hit .add { padding: 6px 12px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-size: 11.5px; font-weight: 600; text-decoration: none; }
+#rightbar .source .hit .add:hover { background: #000; }

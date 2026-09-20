@@ -1,5 +1,6 @@
 // Right-hand panel: catalog cards (drag into the room), wall paint, floor presets, sun.
 import type { Catalog, CatalogEntry } from "./catalog";
+import { priceKnown } from "../commerce/budget";
 import { FLOOR_PRESETS, PAINT_COLORS, floorSwatchDataUrl } from "../room/floors";
 import { HEADINGS, TIMES, TIME_T, nearestTime, snapT, type SunSettings, type TimeOfDay } from "../room/sun";
 import { VIEWS, type OutsideView } from "../room/outside";
@@ -74,8 +75,8 @@ export function mountSidebar(root: HTMLElement, o: SidebarOptions): void {
   const showPaint = () => {
     const c = PAINT_COLORS.find((x) => x.key.toLowerCase() === paint);
     paintInfo.innerHTML = c
-      ? `<b>${escapeHtml(c.label)}</b> · ${escapeHtml(c.brand)}<br><a href="${escapeHtml(c.url)}" target="_blank" rel="noopener">Buy at Home Depot ↗</a>`
-      : `Custom color ${escapeHtml(paint)}`;
+      ? `<b>${escapeHtml(c.label)}</b><span class="code">${escapeHtml(c.brand)}</span><br><a href="${escapeHtml(c.url)}" target="_blank" rel="noopener">Buy at Home Depot ↗</a>`
+      : `<b>Custom color</b><span class="code">${escapeHtml(paint)}</span>`;
   };
   const setPaint = (hex: string) => {
     paint = hex.toLowerCase();
@@ -96,7 +97,10 @@ export function mountSidebar(root: HTMLElement, o: SidebarOptions): void {
   const custom = document.createElement("input");
   custom.type = "color"; custom.value = paint; custom.title = "Custom color";
   custom.addEventListener("input", () => setPaint(custom.value));
-  swatches.appendChild(custom);
+  const customWrap = document.createElement("label");
+  customWrap.className = "custom"; customWrap.title = "Custom color";
+  customWrap.appendChild(custom);
+  swatches.appendChild(customWrap);
   paintEl.appendChild(swatches);
   showPaint();
   paintEl.appendChild(paintInfo);
@@ -183,16 +187,20 @@ export function mountSidebar(root: HTMLElement, o: SidebarOptions): void {
   viewRow.appendChild(views);
   sceneryEl.appendChild(viewRow);
 
+  const hemiRow = document.createElement("div");
+  hemiRow.className = "row hemi";
+  hemiRow.innerHTML = `<span class="lbl">Hemisphere</span>`;
   const hemi = document.createElement("div");
   hemi.className = "seg";
   const hemiButtons = (["Northern", "Southern"] as const).map((label, i) => {
     const b = document.createElement("button");
-    b.type = "button"; b.textContent = `${label} hemisphere`; b.classList.toggle("on", (i === 1) === sun.southern);
+    b.type = "button"; b.textContent = label; b.title = `${label} hemisphere`; b.classList.toggle("on", (i === 1) === sun.southern);
     b.addEventListener("click", () => { sun.southern = i === 1; for (const x of hemiButtons) x.classList.toggle("on", x === b); o.onSun({ ...sun }); });
     hemi.appendChild(b);
     return b;
   });
-  sunEl.appendChild(hemi);
+  hemiRow.appendChild(hemi);
+  sunEl.appendChild(hemiRow);
 }
 
 function section(root: HTMLElement, title: string, cls = ""): HTMLElement {
@@ -213,12 +221,11 @@ function card(entry: CatalogEntry, o: SidebarOptions): HTMLElement {
   el.className = "item-card";
   const ready = !asset || asset.status === "ready";
   el.classList.toggle("pending", !ready);
-  const [w, h, d] = product.dimensionsM.map((m) => Math.round(m / 0.0254));
   el.innerHTML = `
     <div class="swatch" style="background:${SWATCH[product.category] ?? SWATCH.misc}"><img alt="" hidden></div>
     <div class="meta">
       <div class="name">${escapeHtml(product.title)}</div>
-      <div class="sub">${w}″ × ${d}″ × ${h}″ tall · ${product.styleTags.includes("price-not-provided") ? "Price not provided" : `$${product.priceUsd}`}</div>
+      ${priceKnown(product) ? `<div class="sub">$${product.priceUsd}</div>` : ""}
       ${asset && asset.status !== "ready" ? `<div class="sub status">${asset.status}…</div>` : ""}
     </div>
     <button type="button" class="hide" title="Hide from the bar" aria-label="Hide ${escapeHtml(product.title)} from the bar">✕</button>`;

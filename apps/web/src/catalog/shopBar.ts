@@ -4,6 +4,8 @@
 // the shopping list for what's in the room.
 import { copyText } from "../interactions/share";
 import { listHtml, type ShoppingRow } from "./shoppingList";
+import { mountSourcingPanel } from "../commerce/sourcingPanel";
+import type { ImportSeed } from "./importer";
 
 export type ShopBarOptions = {
   /** Open the shared image/size-review flow with this product link prefilled. */
@@ -14,6 +16,10 @@ export type ShopBarOptions = {
   rows: () => ShoppingRow[];
   /** Shareable shopping-list page for the current plan. */
   listUrl: () => string;
+  /** Open the Generate panel seeded from a sourced listing (photo, link, price, size). */
+  addFurniture: (seed: ImportSeed) => void;
+  remainingBudgetUsd: () => number | undefined;
+  onOpen?: () => void;
 };
 
 type Hit = { url: string; title: string; snippet?: string; host: string; price?: number; image?: string; dimensionsText?: string; description?: string; fit?: "fits" | "unsure" | "too big"; why?: string; dimensionsIn?: number[] | null };
@@ -23,12 +29,12 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 const money = (n?: number) => (n ? `$${Math.round(n).toLocaleString()}` : "");
 const dimsLine = (h: Hit) => h.dimensionsIn ? `${h.dimensionsIn.map((n) => Math.round(n)).join('" × ')}"` : (h.dimensionsText || "").replace(/\\"/g, '"').replace(/"\s*"/g, '"').split(" | ").slice(0, 2).join(" · ");
 
-export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): { refresh: () => void } {
+export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): { refresh: () => void; setOpen: (on: boolean) => void } {
   const toggle = document.getElementById("shop-toggle") as HTMLButtonElement;
   toggle.hidden = false;
   bar.hidden = false;
   document.body.classList.add("has-rightbar");
-  const setOpen = (on: boolean) => { document.body.classList.toggle("rightbar-open", on); if (on) { refresh(); if (tab === "agent") setTimeout(() => ask.focus(), 250); } };
+  const setOpen = (on: boolean) => { if (on) o.onOpen?.(); document.body.classList.toggle("rightbar-open", on); if (on) { refresh(); if (tab === "agent") setTimeout(() => ask.focus(), 250); } };
   toggle.addEventListener("click", () => setOpen(true));
 
   bar.innerHTML = `
@@ -37,9 +43,11 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): { refresh: ()
       <h2>Shopping</h2>
     </div>
     <div class="tabs" role="tablist">
+      <button type="button" class="tab" data-tab="source" role="tab">Source products</button>
       <button type="button" class="tab on" data-tab="agent" role="tab">Shopping agent</button>
       <button type="button" class="tab" data-tab="list" role="tab">Shopping list</button>
     </div>
+    <div class="pane source" hidden></div>
     <div class="pane list" hidden>
       <div class="list-body"></div>
       <div class="agent-actions"><a class="ghost page" href="#" target="_blank" rel="noopener">Open as a page ↗</a><button type="button" class="ghost copy-list">Copy list link</button></div>
@@ -57,12 +65,13 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): { refresh: ()
       <div class="picks"></div>
     </div>`;
   const q = <T extends HTMLElement>(sel: string) => bar.querySelector<T>(sel)!;
+  mountSourcingPanel(q(".pane.source"), { onAddFurniture: o.addFurniture, remainingBudgetUsd: o.remainingBudgetUsd });
   const ask = q<HTMLTextAreaElement>(".ask");
   q(".collapse").addEventListener("click", () => setOpen(false));
 
   // ── tabs ───────────────────────────────────────────────────────────────────
-  let tab: "agent" | "list" = "agent";
-  const panes = { agent: q(".pane.agent"), list: q(".pane.list") };
+  let tab: "agent" | "list" | "source" = "agent";
+  const panes = { agent: q(".pane.agent"), list: q(".pane.list"), source: q(".pane.source") };
   const refresh = () => {
     if (tab !== "list" || !document.body.classList.contains("rightbar-open")) return;
     q(".list-body").innerHTML = listHtml(o.rows());
@@ -70,9 +79,9 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): { refresh: ()
   };
   for (const t of bar.querySelectorAll<HTMLButtonElement>(".tab")) {
     t.addEventListener("click", () => {
-      tab = t.dataset.tab as "agent" | "list";
+      tab = t.dataset.tab as "agent" | "list" | "source";
       for (const x of bar.querySelectorAll(".tab")) x.classList.toggle("on", x === t);
-      panes.agent.hidden = tab !== "agent"; panes.list.hidden = tab !== "list";
+      panes.agent.hidden = tab !== "agent"; panes.list.hidden = tab !== "list"; panes.source.hidden = tab !== "source";
       refresh();
     });
   }
@@ -108,7 +117,7 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): { refresh: ()
       o.measure((m) => { input.value = String(Math.round(m / INCH_M)); btn.textContent = "measure"; btn.disabled = false; });
     });
   }
-  const find = q<HTMLButtonElement>(".find"), status = q(".status"), picks = q(".picks");
+  const find = q<HTMLButtonElement>(".pane.agent .find"), status = q(".pane.agent .status"), picks = q(".picks");
   const run = async () => {
     const prompt = ask.value.trim();
     if (!prompt) { ask.focus(); return; }
@@ -143,5 +152,5 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): { refresh: ()
   };
   find.addEventListener("click", run);
   ask.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); run(); } });
-  return { refresh };
+  return { refresh, setOpen };
 }

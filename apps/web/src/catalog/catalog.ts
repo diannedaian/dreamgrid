@@ -2,12 +2,16 @@
 import type { ModelAsset, Product } from "@contracts";
 import { FIXTURE_ASSETS, FIXTURE_PRODUCTS } from "./fixtures";
 import { readGeneratedEntries } from "./generatedCatalog";
+import { loadSavedProducts } from "../commerce/savedProducts";
 
 export type CatalogEntry = { product: Product; asset?: ModelAsset };
 
 export const CATEGORY_ORDER = ["bed", "desk", "chair", "shelf", "lamp", "decor", "misc"] as const;
 export type CategoryKey = (typeof CATEGORY_ORDER)[number];
-export const CATEGORY_LABELS: Record<CategoryKey, string> = { bed: "Beds", desk: "Desks / Shelves", chair: "Chairs", shelf: "Shelves", lamp: "Lamps", decor: "Decor", misc: "Misc" };
+export const CATEGORY_LABELS: Record<CategoryKey, string> = { bed: "Beds", desk: "Desks", chair: "Chairs", shelf: "Shelves", lamp: "Lamps", decor: "Decor", misc: "Misc" };
+
+/** Storage pieces the analyzer often files under desk/misc; they belong with shelves in the bar. */
+const SHELF_TITLES = /\b(shoe (racks?|stacks?|organi[sz]ers?|shelves|shelf|cabinets?|storage)|book ?(shelf|shelves|cases?)|shelving|shelf units?|cube (storage|organi[sz]ers?)|storage (racks?|towers?))\b/i;
 
 export class Catalog {
   private products = new Map<string, Product>();
@@ -22,22 +26,24 @@ export class Catalog {
     return [...this.products.values()].filter((p) => !this.hiddenProductIds.has(p.id) && !this.userHidden.has(p.id)).map((product) => ({ product, asset: product.modelAssetId ? this.assets.get(product.modelAssetId) : undefined }));
   }
 
+  allProducts(): Product[] { return [...this.products.values()]; }
+
   get(productId: string): CatalogEntry | undefined {
     const product = this.products.get(productId);
     return product && { product, asset: product.modelAssetId ? this.assets.get(product.modelAssetId) : undefined };
   }
 
-  /** Categories the contracts don't know about land in Misc. */
+  /** Categories the contracts don't know about land in Misc; shelf-like storage always shows under Shelves. */
   static categoryOf(p: Product): CategoryKey {
     const c = p.category as string;
+    if (c !== "bed" && c !== "chair" && SHELF_TITLES.test(p.title)) return "shelf";
     return (CATEGORY_ORDER as readonly string[]).includes(c) ? (c as CategoryKey) : "misc";
   }
 
   grouped(): Array<{ key: CategoryKey; label: string; entries: CatalogEntry[] }> {
     const buckets = new Map<CategoryKey, CatalogEntry[]>();
     for (const e of this.entries()) {
-      const k0 = Catalog.categoryOf(e.product);
-      const k: CategoryKey = k0 === "shelf" ? "desk" : k0; // shelves share the "Desks / Shelves" column
+      const k = Catalog.categoryOf(e.product);
       (buckets.get(k) ?? buckets.set(k, []).get(k)!).push(e);
     }
     return CATEGORY_ORDER.filter((k) => buckets.has(k)).map((key) => ({ key, label: CATEGORY_LABELS[key], entries: buckets.get(key)! }));
@@ -67,8 +73,15 @@ export class Catalog {
   static async load(): Promise<Catalog> {
     const c = new Catalog();
     const generated = () => {
+      c.add(loadSavedProducts().filter(p => !c.get(p.id)));
       // localStorage is optional (unit tests / blocked storage / private mode).
-      try { for (const row of readGeneratedEntries()) c.add([row.product], [row.asset]); } catch { /* cached demo still works */ }
+      try {
+        for (const row of readGeneratedEntries()) {
+          const saved = c.get(row.product.id)?.product;
+          const product = saved?.modelAssetId === row.asset.id ? { ...saved, dimensionsM: row.asset.dimensionsM } : row.product;
+          c.add([product], [row.asset]);
+        }
+      } catch { /* cached demo still works */ }
       return c;
     };
     try {

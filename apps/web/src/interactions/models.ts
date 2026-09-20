@@ -1,6 +1,6 @@
 // Model loading with a cache. GLBs load via GLTFLoader; "fixture:*" URLs build procedural
 // stand-ins sized from the asset's dimensions. Everything returns pivot bottom-center, facing +Z.
-import { Box3, BoxGeometry, Color, ConeGeometry, CylinderGeometry, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, SphereGeometry, Vector3 } from "three";
+import { Box3, BoxGeometry, Color, ConeGeometry, CubeTexture, CylinderGeometry, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, SphereGeometry, SRGBColorSpace, Vector3 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import type { ModelAsset, Product } from "@contracts";
@@ -48,6 +48,13 @@ async function build(product: Product, asset?: ModelAsset): Promise<Object3D> {
   });
   if (asset.lighting) obj.userData.dreamgridLighting = asset.lighting;
   obj.traverse((o) => { const m = o as Mesh; if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  // The room has no environment map, so a mirror (fully metallic, near-zero roughness) would render
+  // black. Give only such materials a soft procedural room reflection; everything else is untouched.
+  obj.traverse((node) => {
+    if (!(node instanceof Mesh)) return;
+    const mats = Array.isArray(node.material) ? node.material : [node.material];
+    for (const mat of mats) if (mat instanceof MeshStandardMaterial && mat.metalness >= 0.9 && mat.roughness <= 0.15 && !mat.envMap) { mat.envMap = mirrorEnvironment(); mat.envMapIntensity = 1; mat.needsUpdate = true; }
+  });
   // The supplied brushed-metal material has no UV/tangent frame. Its anisotropy
   // produces invalid pixels that spread through bloom; use isotropic metal here.
   // Geometry, glass transmission and the original supplied GLB stay untouched.
@@ -134,6 +141,24 @@ function meshBounds(root: Object3D): Box3 {
     out.union(tmp);
   });
   return out;
+}
+
+let mirrorEnv: CubeTexture | null = null;
+/** A tiny gradient cube (light ceiling, warm floor, pale walls) that reads as a reflected room in mirror glass. */
+function mirrorEnvironment(): CubeTexture {
+  if (mirrorEnv) return mirrorEnv;
+  const face = (top: string, bottom: string): HTMLCanvasElement | { width: number; height: number } => {
+    if (typeof document === "undefined") return { width: 1, height: 1 };
+    const c = document.createElement("canvas"); c.width = c.height = 32;
+    const g = c.getContext("2d")!; const grad = g.createLinearGradient(0, 0, 0, 32);
+    grad.addColorStop(0, top); grad.addColorStop(1, bottom); g.fillStyle = grad; g.fillRect(0, 0, 32, 32);
+    return c;
+  };
+  const wall = () => face("#f4efe6", "#a9895f");
+  mirrorEnv = new CubeTexture([wall(), wall(), face("#fbf7f0", "#fbf7f0"), face("#8a6a42", "#8a6a42"), wall(), wall()] as HTMLCanvasElement[]);
+  mirrorEnv.colorSpace = SRGBColorSpace;
+  mirrorEnv.needsUpdate = true;
+  return mirrorEnv;
 }
 
 function mat(color: string, extra: Partial<MeshStandardMaterial> = {}) {

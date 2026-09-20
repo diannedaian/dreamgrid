@@ -112,7 +112,74 @@ fixture URLs remain placeholders until Dianne supplies the corresponding assets.
   and the four named drawer parent groups are preserved. The texture reduction
   is for browser delivery; the supplied originals are unchanged.
 - Appears under the existing Misc category with the manufacturer shopping link.
-  Price was not supplied: `price-not-provided` makes the UI show that explicitly,
-  rather than presenting the numeric placeholder as a free item.
+  Price was not supplied: `price-not-provided` excludes it from known-price totals
+  and recommendations. Product price displays remain blank, never $0 or a missing-price label.
 - Shown closed; this addition does not implement drawer controls. Drawer boxes
   and slide hardware are approximate visual details, not construction drawings.
+
+## Chenille queen bed (September 20, 2026)
+
+- `chenille-queen-bed.glb`: the styled version from Dianne's supplied
+  `artifacts/chenille-queen-bed/queen_chenille_bed_styled.glb`. Original offline
+  Blender reconstruction from user reference photos and a dimension diagram;
+  not an official retailer/manufacturer mesh. Fabric, wood-grain and normal
+  textures were generated locally by the supplied builder, not downloaded assets.
+  No third-party mesh license is claimed.
+- Shopping link: the user-supplied Bed Bath & Beyond Christopher Knight Home
+  listing, product **44304387**, retained on the catalog product. No price was
+  supplied or verified, so the UI leaves the price blank and budget math excludes it.
+- Retail frame W/H/D is **67.5 × 35 × 88 inches**, or
+  `[1.7145, 0.889, 2.2352]` meters. The draped throw increases the styled model's
+  width to **1.77497673 m**; product and asset dimensions use that full preview
+  envelope so no geometry is shrunk to fit the frame dimensions.
+- Mattress, bedding and cushions are decorative styling, not part of the linked
+  retail frame. Hidden construction, slats, trim and fabric weave are estimates.
+- Already meters, Y-up, bottom-center, with the footboard facing +Z. Meshopt
+  compression with glTF Transform **4.5.0** reduced the GLB from 3.91 MB to about
+  3.11 MB. No texture recompression or mesh simplification; material names and
+  hierarchy retained (`--palette false --flatten false --join false --instance false`).
+  All images remain embedded; no studio lights or cameras are included. Source
+  renders, Blender files and the bare-frame variant remain in ignored artifacts.
+- Added as `chenille-queen-bed` / `asset-chenille-queen-bed` under Beds, alongside
+  the college bed. Normal placement, rotation, saved layouts and sharing apply.
+
+## Green velvet wall mirror (`green-velvet-mirror.glb`)
+
+- User-supplied offline Blender reconstruction of the Wayfair Mercer41 irregular
+  velvet-wrapped wall mirror; not a manufacturer mesh. Size **28 × 20 in** confirmed
+  from the listing (`[0.508, 0.7112, 0.03556]` m); depth, backing and hardware are
+  estimates. The contour is hand-traced from a perspective photo.
+- The glass is a fully metallic, near-zero-roughness material with no baked
+  reflection. `models.ts` assigns a tiny procedural gradient cube map to such
+  materials only, so it reads as glass instead of black; no scene-wide environment
+  map is added and other models are unaffected.
+- Tagged `mirror` / `wall-mounted`: `PlacementController` hangs it flat on the nearer
+  wall at eye level (centre ≈1.5 m), facing into the room; drag along the wall, ↑/↓ to
+  move up and down, and Rotate hops it to the other wall. Under Decor, unpriced.
+- 1.41 MB as supplied (glTF Transform was not available offline; 26.9k triangles,
+  two embedded images).
+
+## Prisco Olive rug (`prisco-olive-rug.glb`)
+
+- User-supplied offline Blender model of the Bungalow Rose Premium Machine Washable
+  Prisco Olive rug from a product screenshot; not a manufacturer print file.
+  **30 × 46 in** confirmed (`[0.762, 0.006, 1.1684]` m); 6 mm thickness is an
+  estimate and the cropped lower corners of the pattern are extrapolated.
+- Floor-only like the other rugs (never snaps onto desks, never raised). Under Decor,
+  unpriced. 2.52 MB as supplied; 28.7k triangles, two embedded images.
+
+## Green bouclé lounge chair (`green-boucle-lounge-chair.glb`)
+
+- User-supplied offline Blender model from lifestyle and dimension photographs.
+  Width **49.21 in** and height **27.17 in** confirmed; round depth assumed equal to
+  the width (`[1.249934, 0.690118, 1.249934]` m). Seat height, cushion diameter and
+  the hidden base are estimates; the looped bouclé textures are original procedural
+  artwork. Under Chairs, unpriced. 2.15 MB as supplied; 28.5k triangles.
+
+## Category notes
+
+- The bottom bar shows **Desks** and **Shelves** as separate columns.
+  `Catalog.categoryOf` files shelf-like titles (shoe stack / rack / organizer,
+  bookshelf, bookcase, shelving, cube storage) under Shelves regardless of the
+  category the analyzer assigned, so generated storage pieces land in the right
+  column without editing saved data.

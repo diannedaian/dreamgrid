@@ -1,5 +1,6 @@
 // Product detail panel: bigger preview, size and price, and a slot for Linda's shopping info.
 import type { CatalogEntry } from "./catalog";
+import { priceKnown } from "../commerce/budget";
 
 export type DetailOptions = {
   thumbnail: (entry: CatalogEntry, size: number) => Promise<string | null>;
@@ -25,12 +26,15 @@ export function mountDetail(root: HTMLElement, o: DetailOptions): { open: (entry
         <div class="body">
           <div class="cat">${esc(product.category)}</div>
           <h2>${esc(product.title)}</h2>
-          <div class="price">${product.styleTags.includes("price-not-provided") ? "Price not provided" : `$${product.priceUsd}`}<span> · ${esc(product.merchant || "Catalog")}</span></div>
+          <div class="price">${priceKnown(product) ? `$${product.priceUsd}` : ""}<span>${esc(product.merchant || "Catalog")}</span></div>
           <dl>
-            <dt>Size</dt><dd>${inches(w)}″ W × ${inches(d)}″ D × ${inches(h)}″ H</dd>
+            <dt>Width</dt><dd>${inches(w)}″ W</dd>
+            <dt>Depth</dt><dd>${inches(d)}″ D</dd>
+            <dt>Height</dt><dd>${inches(h)}″ H</dd>
           </dl>
-          ${product.sourceUrl ? `<div class="shop"><a href="${esc(product.sourceUrl)}" target="_blank" rel="noopener">View listing at ${esc(product.merchant || new URL(product.sourceUrl).host.replace(/^www\./, ""))} ↗</a></div>` : ""}
-          <button type="button" class="add">Add to room</button>
+          ${product.sourceUrl ? `<div class="shop"><a href="${esc(product.sourceUrl)}" target="_blank" rel="noopener">View at ${esc(shortMerchant(product))} ↗</a></div>` : ""}
+          ${asset?.disclosure ? `<details><summary>About this model</summary><p class="disclosure">${esc(priceKnown(product) ? asset.disclosure : asset.disclosure.replace(/Price not provided[^.]*\.\s*/gi, ""))}</p></details>` : ""}
+          <button type="button" class="add">${!asset && product.styleTags.includes("model-pending") ? "Generate model" : "Add to room"}</button>
         </div>
       </div>`;
     root.querySelector(".close")!.addEventListener("click", close);
@@ -43,6 +47,11 @@ export function mountDetail(root: HTMLElement, o: DetailOptions): { open: (entry
   };
 
   return { open, close };
+}
+
+function shortMerchant(p: { merchant: string; sourceUrl: string }): string {
+  const host = new URL(p.sourceUrl).host.replace(/^www\./, "");
+  return (p.merchant || host).split(" · ")[0].trim() || host;
 }
 
 function esc(s: string): string {

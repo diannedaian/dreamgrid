@@ -70,10 +70,12 @@ export function openingShape(w: number, h: number, shape: WindowShape = "rect"):
   const sh = new Shape();
   switch (shape) {
     case "arch": {
-      const r = Math.min(w / 2, h / 2);
-      sh.moveTo(0, 0); sh.lineTo(w, 0); sh.lineTo(w, h - r);
-      sh.absarc(w / 2, h - r, r, 0, Math.PI, false);
-      sh.lineTo(0, 0);
+      // A half-circle the full width of the frame sitting on a rectangle. Only when the window is too
+      // short for a true half-circle does the top flatten into a half-ellipse; the sides stay vertical.
+      const ry = Math.min(w / 2, h);
+      sh.moveTo(0, 0); sh.lineTo(w, 0); sh.lineTo(w, h - ry);
+      sh.absellipse(w / 2, h - ry, w / 2, ry, 0, Math.PI, false, 0);
+      sh.lineTo(0, h - ry); sh.lineTo(0, 0);
       break;
     }
     case "semi":

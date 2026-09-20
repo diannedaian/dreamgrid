@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
-    "paths": { "@contracts": ["../../packages/contracts/index.ts"] }
+    "paths": { "@contracts": ["../../packages/contracts/index.ts"], "@dreamgrid/contracts": ["../../packages/contracts/src/index.ts"] }
   },
   "include": ["src", "../../packages/contracts/index.ts"]
 }

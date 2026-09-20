@@ -31,6 +31,29 @@ class Settings(BaseSettings):
         default_factory=lambda: ["http://localhost:3000", "http://localhost:5173"]
     )
     openai_api_key: SecretStr = Field(default=SecretStr(""), validation_alias="OPENAI_API_KEY")
+    product_sourcing: Literal["auto", "fixture", "live"] = "auto"
+    commerce_openai_model: str = "gpt-4.1-mini"
+    openai_web_search_tool: str = "web_search"
+    product_search: Literal["auto", "serpapi", "openai", "fixture"] = "auto"
+    serpapi_api_key: SecretStr | None = Field(default=None, validation_alias="SERPAPI_API_KEY")
+    fixtures_dir: str | None = None
+
+    @property
+    def sourcing_is_live(self) -> bool:
+        return self.product_sourcing == "live" or (
+            self.product_sourcing == "auto" and bool(self.openai_api_key.get_secret_value())
+        )
+
+    @property
+    def search_backend(self) -> Literal["serpapi", "openai", "fixture"]:
+        if self.product_search != "auto":
+            return self.product_search
+        if self.serpapi_api_key and self.serpapi_api_key.get_secret_value():
+            return "serpapi"
+        if self.sourcing_is_live and self.openai_api_key.get_secret_value():
+            return "openai"
+        return "fixture"
+
     openai_model: str = "gpt-5.6-sol"
     openai_reasoning_effort: Literal["none", "low", "medium", "high"] | None = "high"
     openai_request_timeout_seconds: float = Field(default=600, ge=1, le=1200)
