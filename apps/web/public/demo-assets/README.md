@@ -126,8 +126,8 @@ fixture URLs remain placeholders until Dianne supplies the corresponding assets.
   textures were generated locally by the supplied builder, not downloaded assets.
   No third-party mesh license is claimed.
 - Shopping link: the user-supplied Bed Bath & Beyond Christopher Knight Home
-  listing, product **44304387**, retained on the catalog product. No price was
-  supplied or verified, so the UI leaves the price blank and budget math excludes it.
+  listing, product **44304387**, retained on the catalog product. Price **$702.77**
+  was supplied by Dianne on September 20, 2026 (not a live price check).
 - Retail frame W/H/D is **67.5 × 35 × 88 inches**, or
   `[1.7145, 0.889, 2.2352]` meters. The draped throw increases the styled model's
   width to **1.77497673 m**; product and asset dimensions use that full preview
@@ -174,7 +174,7 @@ fixture URLs remain placeholders until Dianne supplies the corresponding assets.
   Width **49.21 in** and height **27.17 in** confirmed; round depth assumed equal to
   the width (`[1.249934, 0.690118, 1.249934]` m). Seat height, cushion diameter and
   the hidden base are estimates; the looped bouclé textures are original procedural
-  artwork. Under Chairs, unpriced. 2.15 MB as supplied; 28.5k triangles.
+  artwork. Under Chairs, $128.99 (user-supplied). 2.15 MB as supplied; 28.5k triangles.
 
 ## Category notes
 

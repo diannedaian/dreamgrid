@@ -12,7 +12,7 @@
       "id": "green-velvet-mirror",
       "title": "Green velvet wall mirror",
       "category": "decor",
-      "priceUsd": 0,
+      "priceUsd": 66.99,
       "merchant": "Wayfair",
       "sourceUrl": "https://www.wayfair.com/Mercer41--Irregular-Shaped-Decorative-Wall-Mirror-with-VelvetWrapped-Frame-X224050025-L41-K~W113949914.html?PiID%5B%5D=1392982018&PiID%5B%5D=1392982078",
       "imageUrl": "https://assets.wfcdn.com/im/87119636/compr-r85/3461/346178081/Irregular+Shaped+Decorative+Wall+Mirror+with+Velvet-Wrapped+Frame-1392982018-1392982077.jpg",
@@ -25,8 +25,7 @@
         "mirror",
         "wall-mounted",
         "velvet",
-        "irregular",
-        "price-not-provided"
+        "irregular"
       ],
       "colorTags": [
         "chartreuse",
@@ -38,7 +37,7 @@
       "id": "prisco-olive-rug",
       "title": "Prisco Olive rug",
       "category": "decor",
-      "priceUsd": 0,
+      "priceUsd": 66.99,
       "merchant": "Wayfair",
       "sourceUrl": "https://www.wayfair.com/Bungalow-Rose--Premium-Machine-Washable-Prisco-Olive-Rug-X224003594-L167-K~W113992483.html?PiID%5B%5D=1790295972",
       "imageUrl": "https://assets.wfcdn.com/im/99868500/compr-r85/3260/326044063/Premium+Machine+Washable+Prisco+Olive+Rug-1790295974.jpg",
@@ -50,8 +49,7 @@
       "styleTags": [
         "rug",
         "machine washable",
-        "pattern",
-        "price-not-provided"
+        "pattern"
       ],
       "colorTags": [
         "olive",
@@ -61,9 +59,9 @@
     },
     {
       "id": "green-boucle-lounge-chair",
-      "title": "Green boucl\u00e9 lounge chair",
+      "title": "Green bouclé lounge chair",
       "category": "chair",
-      "priceUsd": 0,
+      "priceUsd": 128.99,
       "merchant": "Wayfair",
       "sourceUrl": "https://www.wayfair.com/furniture/pdp/mercer41-49-wide-ice-flower-velvet-pumpkin-bean-bag-chair-for-adults-foam-filled-floor-lounge-chair-w120840846.html?piid=1798293399",
       "imageUrl": "https://assets.wfcdn.com/im/88166416/resize-h800-w800%5Ecompr-r85/4802/480270259/49%22+Wide+Ice-Flower+Velvet+Pumpkin+Bean+Bag+Chair+for+Adults%2C+Foam-Filled+Floor+Lounge+Chair-Green-1798293399.jpg",
@@ -75,8 +73,7 @@
       "styleTags": [
         "lounge",
         "boucle",
-        "round",
-        "price-not-provided"
+        "round"
       ],
       "colorTags": [
         "sage",
@@ -88,7 +85,7 @@
       "id": "chenille-queen-bed",
       "title": "Chenille queen bed",
       "category": "bed",
-      "priceUsd": 0,
+      "priceUsd": 702.77,
       "merchant": "Bed Bath & Beyond",
       "sourceUrl": "https://www.bedbathandbeyond.com/Home-Garden/Christopher-Knight-Home-Modern-Low-Profile-Platform-Bed-with-Chenille-Upholstered-Headboard-Side-Rails-Slat-Wood-Support/44304387/product.html",
       "imageUrl": "https://ak1.ostkcdn.com/images/products/is/images/direct/c32e60525f14f80b17c5a13c18f122b531e1b4fe/Christopher-Knight-Home---Modern-Low-Profile-Platform-Bed-with-Chenille-Upholstered-Headboard-%26-Side-Rails%2C-Slat-Wood-Support.jpg",
@@ -100,8 +97,7 @@
       "styleTags": [
         "queen",
         "upholstered",
-        "chenille",
-        "price-not-provided"
+        "chenille"
       ],
       "colorTags": [
         "forest green",
@@ -139,7 +135,7 @@
       "title": "Whirlpool mini fridge",
       "category": "misc",
       "priceUsd": 128.99,
-      "merchant": "Lowe's \u00b7 Whirlpool",
+      "merchant": "Lowe's · Whirlpool",
       "sourceUrl": "https://www.lowes.com/pd/Whirlpool-4-3-cu-ft-Counter-Depth-Freestanding-Compact-Refrigerator-black-stainless-steel-ENERGY-STAR/1000319705",
       "imageUrl": "",
       "dimensionsM": [
@@ -276,7 +272,7 @@
       "title": "Cloud Checker rug",
       "category": "decor",
       "priceUsd": 58.99,
-      "merchant": "Wayfair \u00b7 Orren Ellis",
+      "merchant": "Wayfair · Orren Ellis",
       "sourceUrl": "https://www.wayfair.com/Orren-Ellis--Machine-Washable-IndoorOutdoor-Micelotta-ACN2345-Geometric-Rug-X226555181-L167-K~W115444070.html?PiID%5B%5D=1498454332",
       "imageUrl": "https://assets.wfcdn.com/im/86567903/compr-r85/3718/371806662/Machine+Washable+Indoor%2FOutdoor+Micelotta+ACN2345+Geometric+Rug-1498454332.jpg",
       "dimensionsM": [
@@ -301,7 +297,7 @@
       "title": "Aqua Halo rug",
       "category": "decor",
       "priceUsd": 46.99,
-      "merchant": "Wayfair \u00b7 Highland Dunes",
+      "merchant": "Wayfair · Highland Dunes",
       "sourceUrl": "https://www.wayfair.com/Highland-Dunes--Wallin-Hand-Woven-Performance-Rug-X113618190-L167-K~W002507089.html?PiID%5B%5D=817641371",
       "imageUrl": "https://assets.wfcdn.com/im/17585517/compr-r85/1096/109627576/Wallin+Hand+Woven+Performance+Rug-817641371.jpg",
       "dimensionsM": [
@@ -389,7 +385,7 @@
       "forwardAxis": "+Z",
       "generationMethod": "gpt-blender",
       "status": "ready",
-      "disclosure": "User-supplied offline Blender model from lifestyle and dimension photographs, not a manufacturer asset. Width 49.21 in and height 27.17 in confirmed; the round depth is assumed equal to the width, and seat height, cushion diameter and hidden base are estimates. The looped boucl\u00e9 texture is original procedural artwork."
+      "disclosure": "User-supplied offline Blender model from lifestyle and dimension photographs, not a manufacturer asset. Width 49.21 in and height 27.17 in confirmed; the round depth is assumed equal to the width, and seat height, cushion diameter and hidden base are estimates. The looped bouclé texture is original procedural artwork."
     },
     {
       "id": "asset-chenille-queen-bed",

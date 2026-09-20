@@ -8,13 +8,13 @@ import { testProduct } from "../commerce/testFixtures";
 afterEach(() => vi.unstubAllGlobals());
 
 describe("curated demo catalog", () => {
-  it("adds the styled chenille queen bed without replacing the college bed or inventing a price", async () => {
+  it("adds the styled chenille queen bed without replacing the college bed, at the user-supplied price", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => catalogData })));
     const catalog = await Catalog.load();
     const entry = catalog.get("chenille-queen-bed")!;
     expect(entry.product.category).toBe("bed");
-    expect(entry.product.priceUsd).toBe(0);
-    expect(entry.product.styleTags).toContain("price-not-provided");
+    expect(entry.product.priceUsd).toBe(702.77);
+    expect(entry.product.styleTags).not.toContain("price-not-provided");
     expect(entry.product.sourceUrl).toContain("44304387/product.html");
     expect(entry.product.dimensionsM).toEqual([1.77497673, 0.889, 2.2352]);
     expect(entry.asset?.dimensionsM).toEqual(entry.product.dimensionsM);
@@ -22,18 +22,19 @@ describe("curated demo catalog", () => {
     expect(entry.asset?.disclosure).toContain("bedding");
     expect(catalog.grouped().find(g => g.key === "bed")?.entries.map(e => e.product.id)).toEqual(expect.arrayContaining(["college-bed", "chenille-queen-bed"]));
   });
-  it("adds the velvet mirror and olive rug to Decor and the bouclé lounge chair to Chairs, all unpriced", async () => {
+  it("adds the velvet mirror and olive rug to Decor and the bouclé lounge chair to Chairs, with user-supplied prices", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => catalogData })));
     const catalog = await Catalog.load();
     const expected = [
-      ["green-velvet-mirror", "decor", "/demo-assets/green-velvet-mirror.glb", [0.508, 0.7112, 0.03556]],
-      ["prisco-olive-rug", "decor", "/demo-assets/prisco-olive-rug.glb", [0.762, 0.006, 1.1684]],
-      ["green-boucle-lounge-chair", "chair", "/demo-assets/green-boucle-lounge-chair.glb", [1.249934, 0.690118, 1.249934]],
+      ["green-velvet-mirror", "decor", "/demo-assets/green-velvet-mirror.glb", [0.508, 0.7112, 0.03556], 66.99],
+      ["prisco-olive-rug", "decor", "/demo-assets/prisco-olive-rug.glb", [0.762, 0.006, 1.1684], 66.99],
+      ["green-boucle-lounge-chair", "chair", "/demo-assets/green-boucle-lounge-chair.glb", [1.249934, 0.690118, 1.249934], 128.99],
     ] as const;
-    for (const [id, category, glb, dims] of expected) {
+    for (const [id, category, glb, dims, price] of expected) {
       const entry = catalog.get(id)!;
       expect(entry.product.category).toBe(category);
-      expect(entry.product.styleTags).toContain("price-not-provided");
+      expect(entry.product.priceUsd).toBe(price);
+      expect(entry.product.styleTags).not.toContain("price-not-provided");
       expect(entry.asset?.status).toBe("ready");
       expect(entry.asset?.glbUrl).toBe(glb);
       expect(entry.asset?.dimensionsM).toEqual([...dims]);

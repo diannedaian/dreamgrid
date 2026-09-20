@@ -46,13 +46,21 @@ it("loads the textured queen bed without changing its size, pivot, or front dire
   expect(foot?.getWorldPosition(new Vector3()).z).toBeGreaterThan(0);
 });
 
-it("leaves the bed price blank in shopping rows while keeping it unpriced for budgets", () => {
+it("prices the bed at the user-supplied $702.77 in shopping rows and budgets", () => {
   const product = catalog.products.find(p => p.id === "chenille-queen-bed") as Product;
+  expect(priceKnown(product)).toBe(true);
+  const html = listHtml([{ product, qty: 1 }]);
+  expect(html).toMatch(/\$702\.77/);
+  const summary = summarizeBudget({ room: { widthM: 4, depthM: 4, heightM: 3, gridSizeM: .0254, lightingMode: "day" }, budgetUsd: 500, items: [{ id: "bed", productId: product.id, modelAssetId: product.modelAssetId!, positionM: [0, 0, 0], rotationYDeg: 0 }] }, [product]);
+  expect(summary.subtotalUsd).toBe(702.77);
+  expect(summary.unpricedItemIds).toEqual([]);
+  expect(summary.status).toBe("over");
+});
+
+it("keeps rendering nothing for a product that truly has no price", () => {
+  const product = { ...(catalog.products.find(p => p.id === "campus-drawer-chest") as Product) };
   expect(priceKnown(product)).toBe(false);
   const html = listHtml([{ product, qty: 1 }]);
   expect(html).toContain('<span class="li-price"></span>');
   expect(html).not.toMatch(/Price not provided|Price unknown|No price available/);
-  const summary = summarizeBudget({ room: { widthM: 4, depthM: 4, heightM: 3, gridSizeM: .0254, lightingMode: "day" }, budgetUsd: 500, items: [{ id: "bed", productId: product.id, modelAssetId: product.modelAssetId!, positionM: [0, 0, 0], rotationYDeg: 0 }] }, [product]);
-  expect(summary.subtotalUsd).toBe(0);
-  expect(summary.unpricedItemIds).toEqual(["bed"]);
 });
