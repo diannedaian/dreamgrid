@@ -130,6 +130,20 @@ def register_passkey(
     return RegisterResponse(credential_id=key.credential_id, created_at=key.created_at)
 
 
+class EnrolledResponse(CamelModel):
+    credential_id: str
+    enrolled: bool
+
+
+@router.get("/passkeys/{credential_id}", response_model=EnrolledResponse)
+def passkey_enrolled(
+    credential_id: str, registry: Annotated[PasskeyRegistry, Depends(passkeys)]
+) -> EnrolledResponse:
+    """Does the in-memory sandbox still know this credential? Lets the browser re-enrol."""
+
+    return EnrolledResponse(credential_id=credential_id, enrolled=registry.has(credential_id))
+
+
 # ── intents ───────────────────────────────────────────────────────────────────
 
 

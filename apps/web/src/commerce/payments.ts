@@ -101,6 +101,12 @@ export function createPaymentsClient(fetcher: typeof fetch = fetch, storage: Pic
   async function approveWithPasskey(plan: PaymentPlan): Promise<{ challenge: string; passkey: { credentialId: string; clientDataJson: string; authenticatorData: string; signature: string } }> {
     let credentialId = enrolledCredential();
     if (!credentialId) credentialId = await enrollPasskey();
+    // The sandbox keeps enrolments in memory: after an API restart the browser may hold a passkey the
+    // server no longer knows. Check first and enrol a fresh one instead of failing at approval time.
+    if (!(await request<{ enrolled: boolean }>(`/passkeys/${encodeURIComponent(credentialId)}`)).enrolled) {
+      storage?.removeItem(CRED_KEY);
+      credentialId = await enrollPasskey();
+    }
     const { challenge, rpId } = await request<{ challenge: string; rpId: string }>("/passkeys/challenge", { plan, purpose: "approve" });
     const assertion = await navigator.credentials.get({
       publicKey: { challenge: unb64(challenge), rpId, allowCredentials: [{ type: "public-key", id: unb64(credentialId) }], userVerification: "required", timeout: 60_000 },

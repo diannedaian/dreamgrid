@@ -410,6 +410,15 @@ def test_challenge_cannot_be_reused_and_unknown_passkey_is_rejected(client: Test
     assert rejected.status_code == 400 and "not enrolled" in rejected.json()["detail"]
 
 
+def test_browser_can_check_whether_its_passkey_is_still_enrolled(client: TestClient) -> None:
+    assert client.get("/api/v1/payments/passkeys/unknown-cred").json() == {
+        "credentialId": "unknown-cred",
+        "enrolled": False,
+    }
+    credential_id = enroll(client, FakeAuthenticator())
+    assert client.get(f"/api/v1/payments/passkeys/{credential_id}").json()["enrolled"] is True
+
+
 def test_openapi_lists_payment_routes(client: TestClient) -> None:
     paths = client.get("/openapi.json").json()["paths"]
     for path in (
