@@ -166,3 +166,77 @@ def test_analyzer_uses_environment_limits(monkeypatch: pytest.MonkeyPatch) -> No
     analyzer = OpenAIAnalyzer(Settings(_env_file=None))
     assert analyzer.max_output_tokens == 8000
     assert analyzer.request_timeout == 240
+
+
+def _run(monkeypatch: pytest.MonkeyPatch, text: str) -> Any:
+    client = httpx.AsyncClient(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(
+                200,
+                json={
+                    "status": "completed",
+                    "usage": {},
+                    "output": [
+                        {"type": "message", "content": [{"type": "output_text", "text": text}]}
+                    ],
+                },
+            )
+        )
+    )
+    monkeypatch.setattr(httpx, "AsyncClient", lambda **kwargs: client)
+    settings = Settings(_env_file=None, OPENAI_API_KEY="unit-test-not-a-real-key")
+    return asyncio.run(OpenAIAnalyzer(settings).analyze("image", "", "", None))
+
+
+def test_harmless_model_slips_are_repaired_instead_of_failing_the_build(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A too-wide bevel and a stray profile on a box used to kill the whole (paid) analysis."""
+
+    data = geometry_data()
+    part = data["parts"][0]
+    part["bevel"] = 0.09  # > min(size)/2 for a small part
+    part["size"] = [0.1, 0.1, 0.1]
+    part["profile"] = [{"radius": 0.1, "height": 0}, {"radius": 0.1, "height": 0.1}]
+    part["primitive"] = "rounded-box"
+    data["referenceSize"] = [0.01, 0.5, 0.5]  # below the 5 cm floor
+    result, _ = _run(monkeypatch, json.dumps(data))
+    assert result.parts[0].bevel == pytest.approx(0.05)
+    assert result.parts[0].profile == []
+    assert result.referenceSize[0] == pytest.approx(0.05)
+
+
+def test_structural_errors_name_the_rule_and_the_part(monkeypatch: pytest.MonkeyPatch) -> None:
+    data = geometry_data()
+    data["parts"][0]["material"] = "no-such-material"
+    with pytest.raises(PipelineError) as caught:
+        _run(monkeypatch, json.dumps(data))
+    assert "Invalid part dimensions/material" in str(caught.value)
+    assert caught.value.status == 502
+
+
+def test_timeouts_and_transport_errors_get_their_own_messages(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def timeout(request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("slow", request=request)
+
+    def down(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("dns", request=request)
+
+    clients = [
+        httpx.AsyncClient(transport=httpx.MockTransport(timeout)),
+        httpx.AsyncClient(transport=httpx.MockTransport(down)),
+    ]
+    monkeypatch.setattr(httpx, "AsyncClient", lambda **kwargs: clients.pop(0))
+    settings = Settings(_env_file=None, OPENAI_API_KEY="unit-test-not-a-real-key")
+    with pytest.raises(PipelineError, match="timed out") as caught:
+        asyncio.run(OpenAIAnalyzer(settings).analyze("image", "", "", None))
+    assert caught.value.status == 504
+    with pytest.raises(PipelineError, match="Could not reach"):
+        asyncio.run(OpenAIAnalyzer(settings).analyze("image", "", "", None))
+
+
+def test_unparseable_text_keeps_the_generic_message(monkeypatch: pytest.MonkeyPatch) -> None:
+    with pytest.raises(PipelineError, match="no usable description"):
+        _run(monkeypatch, "not json at all")

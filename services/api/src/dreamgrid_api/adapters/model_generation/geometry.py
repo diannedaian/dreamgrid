@@ -106,6 +106,77 @@ class ImageGeometry(Data):
         return self
 
 
+def repair_geometry(raw: Any) -> tuple[Any, list[str]]:
+    """Fix the model-output slips that are safe to fix, so one stray number does not waste a build.
+
+    Only bounded, geometry-preserving clamps: part sizes into the printable range, bevels to half
+    the smallest side, reference size into 5 cm–5 m, and dropping a profile/path/tubeRadius that
+    does not belong to the part's primitive. Anything structural (unknown material, duplicate ids,
+    a lathe with no profile) is left for the strict validator to reject. Returns the repaired
+    document and a human-readable list of what changed; both are content-safe to log.
+    """
+
+    if not isinstance(raw, dict):
+        return raw, []
+    notes: list[str] = []
+
+    def clamp(v: float, lo: float, hi: float) -> float:
+        return min(max(float(v), lo), hi)
+
+    ref = raw.get("referenceSize")
+    if isinstance(ref, list) and len(ref) == 3 and all(isinstance(v, int | float) for v in ref):
+        fixed = [clamp(v, 0.05, 5) for v in ref]
+        if fixed != [float(v) for v in ref]:
+            raw["referenceSize"] = fixed
+            notes.append("referenceSize clamped to 0.05–5 m")
+    for part in raw.get("parts", []) if isinstance(raw.get("parts"), list) else []:
+        if not isinstance(part, dict):
+            continue
+        pid = str(part.get("id", "?"))
+        size = part.get("size")
+        if (
+            isinstance(size, list)
+            and len(size) == 3
+            and all(isinstance(v, int | float) for v in size)
+        ):
+            fixed = [clamp(v, 0.0001, 5) for v in size]
+            if fixed != [float(v) for v in size]:
+                part["size"] = fixed
+                notes.append(f"{pid}: size clamped")
+            bevel = part.get("bevel")
+            if isinstance(bevel, int | float):
+                limit = min(0.1, min(fixed) / 2)
+                if bevel < 0 or bevel > limit:
+                    part["bevel"] = clamp(bevel, 0, limit)
+                    notes.append(f"{pid}: bevel clamped to {part['bevel']:.4f}")
+        primitive = part.get("primitive")
+        if primitive != "lathe" and part.get("profile"):
+            part["profile"] = []
+            notes.append(f"{pid}: dropped profile on {primitive}")
+        if primitive != "tube":
+            if part.get("path"):
+                part["path"] = []
+                notes.append(f"{pid}: dropped path on {primitive}")
+            if part.get("tubeRadius"):
+                part["tubeRadius"] = 0
+                notes.append(f"{pid}: dropped tubeRadius on {primitive}")
+    return raw, notes
+
+
+def explain_validation_error(error: Exception) -> str:
+    """One short, content-safe line naming the failing rule and where (never echoes values)."""
+
+    errors = getattr(error, "errors", None)
+    if not callable(errors):
+        return error.__class__.__name__
+    first = next(iter(errors()), None)
+    if not first:
+        return error.__class__.__name__
+    loc = ".".join(str(x) for x in first.get("loc", ()) if x != "__root__")
+    msg = str(first.get("msg", "")).removeprefix("Value error, ")
+    return f"{msg} at {loc}" if loc else msg
+
+
 class ModelLight(Data):
     id: str
     type: Literal["point", "spot"]
