@@ -262,7 +262,7 @@ export function mountImporter(root: HTMLElement, onImported: (r: GeneratedEntry)
       <div class="progress" hidden>
         <div class="builder" aria-hidden="true"><i class="leg a"></i><i class="leg b"></i><i class="seat"></i><i class="back"></i><i class="cushion"></i><i class="shadow"></i></div>
         <div class="headline"></div><div class="note"></div><div class="clock"></div>
-        <button type="button" class="minimize">Keep building in the background →</button>
+        <button type="button" class="minimize">Hide</button>
       </div>
       <div class="done" hidden><div class="check">✓</div><p><b></b> is in your room. Drag it wherever you like.</p></div>
       <div class="status" role="status" aria-live="polite" hidden></div>
