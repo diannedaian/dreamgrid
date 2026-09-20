@@ -14,12 +14,26 @@ export type SourcingPanelOptions = {
   onAddFurniture: (seed: ImportSeed) => void;
   remainingBudgetUsd: () => number | undefined;
   fetchDraft?: (url: string, options: { titleHint?: string }) => Promise<ProductDraft>;
+  /** A render of the 3D model DreamGrid already built for this listing, if there is one. */
+  renderedThumbnail?: (draft: ProductDraft) => Promise<string | null>;
   search?: (query: ProductSearchQuery) => Promise<import("../lib/commerce/productSourcing").ProductSearchResult>;
 };
 
 const esc = (s: string) => s.replace(/[&<>\"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 const http = (s: string) => { try { const u = new URL(s); return ["http:", "https:"].includes(u.protocol) && !u.username && !u.password; } catch { return false; } };
 const knownPrice = (n?: number) => n !== undefined && Number.isFinite(n) && n > 0;
+
+/** Quiet category silhouettes for listings with no photo and no model yet. Never a "not available" label. */
+const SILHOUETTE: Record<string, string> = {
+  bed: '<path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6"/><path d="M3 18h18"/><path d="M6 10V7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v3"/><path d="M8 10h8"/>',
+  desk: '<path d="M3 8h18"/><path d="M5 8v10M19 8v10"/><path d="M13 8v5h6"/>',
+  chair: '<path d="M7 4h7a2 2 0 0 1 2 2v6H7z"/><path d="M5 12h12v3H5z"/><path d="M6 15v5M16 15v5"/>',
+  shelf: '<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M4 9h16M4 15h16"/>',
+  lamp: '<path d="M9 3h6l3 8H6z"/><path d="M12 11v8"/><path d="M8 21h8"/>',
+  decor: '<circle cx="12" cy="10" r="6"/><path d="M12 16v5M8 21h8"/>',
+  misc: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16M12 4v16"/>',
+};
+const silhouette = (category?: string) => `<svg class="silhouette" viewBox="0 0 24 24" aria-hidden="true">${SILHOUETTE[category ?? ""] ?? SILHOUETTE.misc}</svg>`;
 
 /** Everything a draft can contribute; missing fields stay missing so the panel keeps them blank. */
 export function seedFromDraft(draft: ProductDraft): ImportSeed {
@@ -60,22 +74,25 @@ export function mountSourcingPanel(root: HTMLElement, o: SourcingPanelOptions) {
   const card = (draft: ProductDraft, reasons: string[]) => {
     const el = document.createElement("div"); el.className = "hit";
     const dims = draft.dimensionsM?.map(m => Math.round(m / .0254));
-    el.innerHTML = `<div class="pic"><span class="photo-status">Photo unavailable</span></div><div class="info">
+    el.innerHTML = `<div class="pic">${silhouette(draft.category)}</div><div class="info">
       ${http(draft.sourceUrl) ? `<a class="title" href="${esc(draft.sourceUrl)}" target="_blank" rel="noopener">${esc(draft.title || draft.sourceUrl)}</a>` : `<span class="title">${esc(draft.title || "Product")}</span>`}
       <div class="meta">${esc(draft.merchant || "")}${knownPrice(draft.priceUsd) ? ` · ${formatUsd(draft.priceUsd!)}` : ""}</div>
       <div class="dims">${dims ? `${dims[0]} W × ${dims[2]} D × ${dims[1]} H in` : ""}</div>
       ${reasons.length ? `<p class="why">${esc(reasons.join(" · "))}</p>` : ""}
       <div class="actions"><button type="button" class="add">+ Add furniture</button><span class="st"></span></div></div>`;
     const photo = el.querySelector<HTMLElement>(".pic")!;
-    if (draft.imageUrl && http(draft.imageUrl)) {
-      photo.replaceChildren(Object.assign(document.createElement("span"), { className: "photo-status", textContent: "Loading photo…" }));
+    const show = (src: string, alt: string) => {
       const image = new Image();
-      image.alt = draft.title || "Product photo"; image.loading = "lazy"; image.referrerPolicy = "no-referrer";
-      image.onload = () => { photo.querySelector(".photo-status")?.remove(); };
-      image.onerror = () => { photo.replaceChildren(Object.assign(document.createElement("span"), { className: "photo-status", textContent: "Photo unavailable" })); };
-      image.src = draft.imageUrl;
-      photo.append(image);
-    }
+      image.alt = alt; image.referrerPolicy = "no-referrer"; // not lazy: a detached lazy image never loads, so it never errors either
+      image.onload = () => photo.replaceChildren(image);
+      image.src = src;
+      return image;
+    };
+    // Store photo first; if the store blocks it (or never gave one) show DreamGrid's own render of
+    // the model built for this listing; failing that the category silhouette simply stays.
+    const rendered = async () => { const url = await o.renderedThumbnail?.(draft).catch(() => null); if (url) show(url, `${draft.title || "Product"} (3D model)`); };
+    if (draft.imageUrl && http(draft.imageUrl)) show(draft.imageUrl, draft.title || "Product photo").onerror = () => void rendered();
+    else void rendered();
     const button = el.querySelector<HTMLButtonElement>("button")!, status = el.querySelector<HTMLElement>(".st")!;
     button.addEventListener("click", async () => {
       button.disabled = true; status.textContent = "Reading the listing…";

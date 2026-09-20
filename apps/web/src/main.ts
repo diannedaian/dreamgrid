@@ -23,7 +23,7 @@ import QRCode from "qrcode";
 import { mountSidebar } from "./catalog/sidebar";
 import { ThumbnailRenderer } from "./catalog/thumbnails";
 import { mountDetail } from "./catalog/detail";
-import { mountImporter } from "./catalog/importer";
+import { mountImporter, stableProductId } from "./catalog/importer";
 import { createDesignStore, loadBuiltinDesigns } from "./interactions/designs";
 import { mountDesignsBar } from "./catalog/designsBar";
 import { mountShopBar } from "./catalog/shopBar";
@@ -404,6 +404,11 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       },
       measure: (cb) => measure.measureOnce(cb),
       remainingBudgetUsd: () => budgetUsd > 0 ? budget.summary.remainingUsd : undefined,
+      // A listing we already turned into a model gets its own render when the store photo is blocked.
+      renderedThumbnail: async ({ sourceUrl }) => {
+        const entry = catalog.get(await stableProductId(sourceUrl));
+        return entry?.asset?.status === "ready" ? thumbs.render(entry, 152) : null;
+      },
       onOpen: () => budget.setOpen(false),
     });
     const checkout = mountCheckout(document.getElementById("checkout-popup")!, { payments: createPaymentsClient(), copyText });

@@ -96,8 +96,13 @@ try {
     const image = document.querySelector(".source .hit .pic img");
     return image?.complete && image.naturalWidth > 0;
   });
-  await page.locator(".source .hit").filter({ hasText: "Missing photo chair" }).getByText("Photo unavailable").waitFor();
-  await page.locator(".source .hit").filter({ hasText: "Broken photo chair" }).getByText("Photo unavailable").waitFor();
+  // No photo (or a blocked one) and no model yet → a quiet category silhouette, never a "not available" label.
+  for (const title of ["Missing photo chair", "Broken photo chair"]) {
+    const pic = page.locator(".source .hit").filter({ hasText: title }).locator(".pic");
+    await pic.locator(".silhouette").waitFor();
+    assert.equal(await pic.locator("img").count(), 0);
+    assert.equal((await pic.innerText()).trim(), "");
+  }
   assert.equal(await page.locator(".source .pform").count(), 0); // no intermediate form
   await page.locator(".source .hit .add").first().click();
   await page.locator("#import-popup").waitFor({ state: "visible" });

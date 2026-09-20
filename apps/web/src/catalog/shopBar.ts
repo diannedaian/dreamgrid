@@ -19,6 +19,8 @@ export type ShopBarOptions = {
   /** Open the Generate panel seeded from a sourced listing (photo, link, price, size). */
   addFurniture: (seed: ImportSeed) => void;
   remainingBudgetUsd: () => number | undefined;
+  /** Render of the model already generated for a listing URL, for search cards without a usable photo. */
+  renderedThumbnail?: (draft: { sourceUrl: string }) => Promise<string | null>;
   onOpen?: () => void;
 };
 
@@ -65,7 +67,7 @@ export function mountShopBar(bar: HTMLElement, o: ShopBarOptions): { refresh: ()
       <div class="picks"></div>
     </div>`;
   const q = <T extends HTMLElement>(sel: string) => bar.querySelector<T>(sel)!;
-  mountSourcingPanel(q(".pane.source"), { onAddFurniture: o.addFurniture, remainingBudgetUsd: o.remainingBudgetUsd });
+  mountSourcingPanel(q(".pane.source"), { onAddFurniture: o.addFurniture, remainingBudgetUsd: o.remainingBudgetUsd, renderedThumbnail: o.renderedThumbnail });
   const ask = q<HTMLTextAreaElement>(".ask");
   q(".collapse").addEventListener("click", () => setOpen(false));
 
