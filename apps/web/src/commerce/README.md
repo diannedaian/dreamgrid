@@ -43,6 +43,41 @@ at their current placement. Only completed, still-applicable swaps count as savi
 Approval confirms a shopping plan for the current session, not a payment or Visa
 integration. Room/catalog changes invalidate the reviewed plan. Nothing is purchased.
 
+## Agent payments (sandbox)
+
+"Approve plan" is now a real authorization flow against DreamGrid's own **sandbox payment
+network** (`services/api` `/api/v1/payments`, Linda's boundary `boundaries/payments.py`).
+It moves no money and contacts no card network; every response says `provider:
+"dreamgrid-sandbox", isSandbox: true`. The shape mirrors Visa Intelligent Commerce so a real
+adapter can replace the mock behind the same port.
+
+1. **Spending mandate.** The review sheet shows the exact priced lines and a mandate: a cap
+   the shopper can raise (never below the total), the stores involved, 24-hour validity, and
+   the room budget if one is set.
+2. **Consent.** The browser asks the API for a one-time challenge bound to a SHA-256 digest of
+   the plan, then signs it with a **platform passkey** (WebAuthn `navigator.credentials`,
+   Touch ID / Face ID / Windows Hello; enrolled once per browser). The API verifies origin,
+   RP ID hash, user-present/verified flags, the challenge, and the **ES256 signature**
+   (`cryptography`). "Approve without passkey" still uses a single-use plan-bound challenge.
+   A challenge cannot authorize a different plan; nothing can swap items after approval.
+3. **Intent.** `POST /intents` checks the mandate (`MANDATE_EXCEEDED`, `BUDGET_EXCEEDED`,
+   `MANDATE_EXPIRED`, `MERCHANT_NOT_ALLOWED`, `CONSENT_INVALID`, `EMPTY_PLAN`, `UNPRICED_LINE`)
+   and returns `authorized` with an HMAC-signed sandbox token, or `declined` with a code and
+   reason (HTTP 201 either way; declines are ledger entries, not errors). Idempotent per key.
+4. **Receipt.** Intent id, network, how it was approved, mandate, token, and a status timeline.
+   **Complete purchase** captures; **Release hold** / **Refund** reverses. The receipt is kept
+   in `localStorage` (`dreamgrid.paymentIntent`) so it survives a reload; the API's ledger is
+   in-memory for the process.
+5. **Agents.** `tools/payments-mcp/server.mjs` is a dependency-free stdio MCP server exposing
+   the same flow as tools (`request_payment_instruction`, `authorize_payment`,
+   `capture_payment`, `reverse_payment`, `get_payment_intent`, `list_payment_ledger`,
+   `verify_payment_token`). `node tools/payments-mcp/smoke.mjs` exercises it end to end.
+
+Frontend: `payments.ts` (client + WebAuthn ceremony), `budgetBar.ts` (mandate → receipt).
+Backend: `adapters/commerce/mock_payment_network.py`, `adapters/commerce/passkeys.py`,
+`api/v1/routes/payments.py`. Tests: `payments.test.ts`, `tests/test_payments.py` (includes a
+software ES256 authenticator so forged signatures are provably rejected).
+
 ## API and configuration
 
 `POST /api/v1/products/import { url, titleHint? }` returns a partial `ProductDraft`.

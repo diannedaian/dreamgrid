@@ -10,6 +10,7 @@ import { activeSwaps, applySwap, fitToBudget, rankAlternatives, revertSwaps, typ
 import { roundUsd, summarizeBudget, type BudgetSummary } from "./budget";
 import { formatSignedUsd, formatUsd } from "./format";
 import { approvePlan, buildShoppingPlan, planToText, type ShoppingPlan } from "./shoppingPlan";
+import { createPaymentsClient, paymentPlanFrom, planIdempotencyKey, type PaymentIntent, type PaymentsClient } from "./payments";
 
 export type BudgetBarOptions = {
   room: RoomSpec;
@@ -23,12 +24,19 @@ export type BudgetBarOptions = {
   copyText: (text: string) => Promise<boolean>;
   /** Called when this drawer opens, so the shop drawer can close (they share the right edge). */
   onOpen?: () => void;
+  /** Sandbox payment network client (passkey approval → signed intent). Injected in tests. */
+  payments?: PaymentsClient;
+  /** Restore a receipt for the current room from an earlier session, if any. */
+  savedIntent?: PaymentIntent;
+  onIntentChange?: (intent: PaymentIntent | undefined) => void;
 };
 
 export type BudgetBar = {
   /** Re-derive totals and alternatives (call after any room or catalog change). */
   refresh: () => void;
   setOpen: (on: boolean) => void;
+  /** Open the drawer on the receipt of the current sandbox intent, if there is one. */
+  showReceipt: () => void;
   readonly budgetUsd: number;
   readonly summary: BudgetSummary;
 };
@@ -43,6 +51,12 @@ export function mountBudgetBar(bar: HTMLElement, chip: HTMLButtonElement, o: Bud
   let fitMessage = "";
   let plan: ShoppingPlan | undefined;
   let busy = false;
+  const payments = o.payments ?? createPaymentsClient();
+  let intent: PaymentIntent | undefined = o.savedIntent;
+  let mandateMaxUsd = 0;
+  let payError = "";
+  let paying = false;
+  const setIntent = (next: PaymentIntent | undefined) => { intent = next; o.onIntentChange?.(next); };
 
   bar.hidden = false;
   chip.hidden = false;
@@ -158,11 +172,8 @@ export function mountBudgetBar(bar: HTMLElement, chip: HTMLButtonElement, o: Bud
       </div>`;
   };
 
-  // ── plan review / approval ─────────────────────────────────────────────────
-  const renderPlan = (p: ShoppingPlan) => {
-    const approved = p.status === "approved";
-    pane.innerHTML = `
-      <h3>${approved ? "Plan approved" : "Review your shopping plan"}</h3>
+  // ── plan review → mandate + passkey → sandbox intent → receipt ─────────────
+  const planBody = (p: ShoppingPlan) => `
       <div class="totals">
         <div><span>Total</span><b>${formatUsd(p.totalUsd)}</b></div>
         <div><span>Budget</span><b>${p.budgetUsd > 0 ? formatUsd(p.budgetUsd) : "—"}</b></div>
@@ -174,17 +185,110 @@ export function mountBudgetBar(bar: HTMLElement, chip: HTMLButtonElement, o: Bud
           <h4>${esc(g.merchant)}<span>${formatUsd(g.subtotalUsd)}</span></h4>
           <ul>${g.lines.map((l) => `<li>${l.product.sourceUrl && /^https?:/.test(l.product.sourceUrl) ? `<a href="${esc(l.product.sourceUrl)}" target="_blank" rel="noopener">${esc(l.product.title)}</a>` : `<span>${esc(l.product.title)}</span>`}${l.quantity > 1 ? ` <em>×${l.quantity}</em>` : ""}<span class="dots"></span><b>${formatUsd(l.lineTotalUsd)}</b></li>`).join("")}</ul>
         </div>`).join("")}
-      ${p.unpricedItemCount > 0 ? `<p class="unpriced">${p.unpricedItemCount} item(s) without a price are not included.</p>` : ""}
-      ${approved
-        ? `<p class="sub">Your plan is approved for this session. Open each store link above to buy the items yourself; DreamGrid does not place orders.</p>
-           <div class="agent-actions"><button type="button" class="find copy">Copy plan as text</button><button type="button" class="ghost back">Back to budget</button></div>`
-        : `<p class="sub">Approving freezes this list with links to each store. Nothing is purchased through DreamGrid and no payment details are collected.</p>
-           <div class="agent-actions"><button type="button" class="find approve">Approve plan</button><button type="button" class="ghost back">Back</button></div>`}`;
-    pane.querySelector(".approve")?.addEventListener("click", () => { plan = approvePlan(p); render(); });
-    pane.querySelector(".back")?.addEventListener("click", () => { plan = undefined; render(); });
+      ${p.unpricedItemCount > 0 ? `<p class="unpriced">${p.unpricedItemCount} item(s) without a price are not included.</p>` : ""}`;
+
+  const authorize = async (p: ShoppingPlan, method: "passkey" | "confirm") => {
+    if (paying) return;
+    paying = true; payError = ""; render();
+    try {
+      const request = paymentPlanFrom(p, mandateMaxUsd);
+      const consent = method === "passkey" ? await payments.approveWithPasskey(request) : await payments.approveWithConfirm(request);
+      const result = await payments.createIntent(request, consent, await planIdempotencyKey(request, p.createdAt));
+      setIntent(result);
+      plan = approvePlan(p);
+    } catch (error) {
+      payError = (error as Error).message;
+    } finally { paying = false; render(); }
+  };
+
+  const renderPlan = (p: ShoppingPlan) => {
+    if (intent && p.status === "approved") return renderReceipt(p, intent);
+    if (mandateMaxUsd < p.totalUsd) mandateMaxUsd = Math.ceil(p.totalUsd / 10) * 10 || p.totalUsd;
+    const merchants = [...new Set(p.groups.map((g) => g.merchant || "Unknown store"))];
+    const passkey = payments.passkeySupport() === "available";
+    pane.innerHTML = `
+      <h3>Review your shopping plan</h3>
+      ${planBody(p)}
+      <div class="mandate">
+        <h4>Spending mandate</h4>
+        <p class="sub">What you're letting the DreamGrid agent do. Nothing outside these limits can be authorized.</p>
+        <label class="amount-row"><span>Up to</span><span class="cur">$</span><input class="cap" type="number" min="${p.totalUsd}" step="1" value="${mandateMaxUsd}" ${paying ? "disabled" : ""} /></label>
+        <ul class="terms">
+          <li><b>${merchants.length}</b> ${merchants.length === 1 ? "store" : "stores"}: ${merchants.map(esc).join(", ")}</li>
+          <li><b>${p.groups.reduce((n, g) => n + g.lines.reduce((m, l) => m + l.quantity, 0), 0)}</b> items exactly as listed above</li>
+          <li>Valid for <b>24 hours</b>, one authorization</li>
+          ${p.budgetUsd > 0 ? `<li>Room budget <b>${formatUsd(p.budgetUsd)}</b> is enforced too</li>` : ""}
+        </ul>
+        <p class="sandbox-note">Sandbox network: a signed test token is issued and no money moves.</p>
+      </div>
+      ${payError ? `<p class="pay-error">${esc(payError)}</p>` : ""}
+      <div class="agent-actions">
+        ${passkey ? `<button type="button" class="find approve passkey" ${paying ? "disabled" : ""}>${paying ? "Waiting for your passkey…" : `${payments.hasPasskey() ? "Approve with passkey" : "Create passkey & approve"}`}</button>` : ""}
+        <button type="button" class="${passkey ? "textlink" : "find"} approve confirm" ${paying ? "disabled" : ""}>${passkey ? "Approve without passkey" : "Approve plan"}</button>
+        <button type="button" class="ghost back" ${paying ? "disabled" : ""}>Back</button>
+      </div>`;
+    pane.querySelector<HTMLInputElement>(".cap")?.addEventListener("change", (e) => {
+      const v = Number((e.currentTarget as HTMLInputElement).value);
+      mandateMaxUsd = Number.isFinite(v) ? Math.max(p.totalUsd, roundUsd(v)) : p.totalUsd;
+      (e.currentTarget as HTMLInputElement).value = String(mandateMaxUsd);
+    });
+    pane.querySelector(".approve.passkey")?.addEventListener("click", () => void authorize(p, "passkey"));
+    pane.querySelector(".approve.confirm")?.addEventListener("click", () => void authorize(p, "confirm"));
+    pane.querySelector(".back")?.addEventListener("click", () => { plan = undefined; payError = ""; render(); });
+  };
+
+  const transition = async (action: "capture" | "reverse") => {
+    if (!intent || paying) return;
+    paying = true; payError = ""; render();
+    try { setIntent(await payments[action](intent.intentId)); }
+    catch (error) { payError = (error as Error).message; }
+    finally { paying = false; render(); }
+  };
+
+  const renderReceipt = (p: ShoppingPlan, i: PaymentIntent) => {
+    const declined = i.status === "declined";
+    const label = { authorized: "Authorized · hold placed", captured: "Purchase complete", reversed: "Hold released", declined: "Declined" }[i.status];
+    const when = (s: string) => new Date(s).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+    pane.innerHTML = `
+      <h3>${declined ? "The network declined this plan" : "Plan approved"}</h3>
+      <div class="receipt ${i.status}">
+        <div class="badge">${declined ? "✕" : "✓"}</div>
+        <div class="receipt-body">
+          <b>${label}</b>
+          <span>${declined ? esc(i.declineReason || i.declineCode || "") : `${formatUsd(Number(i.amountUsd))} across ${i.merchants.length} ${i.merchants.length === 1 ? "store" : "stores"}`}</span>
+        </div>
+      </div>
+      <dl class="receipt-meta">
+        <dt>Intent</dt><dd><code>${esc(i.intentId)}</code></dd>
+        <dt>Network</dt><dd>${esc(i.provider)} <em>sandbox</em></dd>
+        <dt>Approved by</dt><dd>${i.consentMethod === "passkey" ? `Passkey${i.userVerified ? " · verified" : ""}` : "Confirmation click"}</dd>
+        <dt>Mandate</dt><dd>up to ${formatUsd(Number(i.mandateMaxUsd))} until ${when(i.mandateExpiresAt)}</dd>
+        ${i.token ? `<dt>Token</dt><dd><code class="token" title="${esc(i.token)}">${esc(i.token.slice(0, 18))}…${esc(i.token.slice(-8))}</code> <button type="button" class="textlink copy-token">Copy</button></dd>` : ""}
+      </dl>
+      <ol class="timeline">${i.history.map((h) => `<li><span>${esc(h.status)}</span><time>${when(h.at)}</time></li>`).join("")}</ol>
+      ${planBody(p)}
+      ${payError ? `<p class="pay-error">${esc(payError)}</p>` : ""}
+      <p class="sub">${declined
+        ? "Nothing was authorized. Go back, trim the plan or raise the mandate, and approve again."
+        : i.status === "authorized" ? "The hold is on the sandbox network. Complete the purchase, or release it to walk away with nothing charged."
+        : i.status === "captured" ? "Done. Your stores will see one order each; open the links above to track them." : "The hold was released. Nothing was charged."}</p>
+      <div class="agent-actions">
+        ${i.status === "authorized" ? `<button type="button" class="find capture" ${paying ? "disabled" : ""}>Complete purchase</button><button type="button" class="ghost reverse" ${paying ? "disabled" : ""}>Release hold</button>` : ""}
+        ${i.status === "captured" ? `<button type="button" class="ghost reverse" ${paying ? "disabled" : ""}>Refund (reverse)</button>` : ""}
+        <button type="button" class="ghost copy">Copy plan as text</button>
+        <button type="button" class="ghost back">${declined ? "Fix the plan" : "Back to budget"}</button>
+      </div>`;
+    pane.querySelector(".capture")?.addEventListener("click", () => void transition("capture"));
+    pane.querySelector(".reverse")?.addEventListener("click", () => void transition("reverse"));
+    pane.querySelector(".copy-token")?.addEventListener("click", async (e) => {
+      const b = e.currentTarget as HTMLButtonElement;
+      b.textContent = (await o.copyText(i.token || "")) ? "Copied" : "Copy failed";
+      setTimeout(() => (b.textContent = "Copy"), 1600);
+    });
+    pane.querySelector(".back")?.addEventListener("click", () => { plan = undefined; if (declined) setIntent(undefined); render(); });
     pane.querySelector<HTMLButtonElement>(".copy")?.addEventListener("click", async (e) => {
       const b = e.currentTarget as HTMLButtonElement;
-      b.textContent = (await o.copyText(planToText(p))) ? "Copied" : "Copy failed";
+      b.textContent = (await o.copyText(`${planToText(p)}\n\nSandbox payment intent ${i.intentId}: ${i.status} (${i.provider}).`)) ? "Copied" : "Copy failed";
       setTimeout(() => (b.textContent = "Copy plan as text"), 1800);
     });
   };
@@ -197,10 +301,12 @@ export function mountBudgetBar(bar: HTMLElement, chip: HTMLButtonElement, o: Bud
 
   return {
     refresh: () => {
-      // A room edit while reviewing: the plan is stale, go back to the live numbers.
-      if (plan) plan = undefined;
+      // A room edit while reviewing: the plan is stale, go back to the live numbers. An authorized
+      // receipt is kept (it is a record of what the network holds), but a stale draft is dropped.
+      if (plan && !(intent && plan.status === "approved")) plan = undefined;
       render();
     },
+    showReceipt: () => { if (intent) { plan = approvePlan(buildShoppingPlan(state(), products(), swapsApplied)); render(); setOpen(true); } },
     setOpen,
     get budgetUsd() { return budgetUsd; },
     get summary() { return summarize(); },

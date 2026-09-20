@@ -31,7 +31,13 @@ import { mountSharePopup } from "./catalog/sharePopup";
 import { saveGeneratedEntry } from "./catalog/generatedCatalog";
 import { mountBudgetBar } from "./commerce/budgetBar";
 import { saveProduct } from "./commerce/savedProducts";
+import type { PaymentIntent } from "./commerce/payments";
 import "./commerce/commerce.css";
+
+const INTENT_KEY = "dreamgrid.paymentIntent";
+function readSavedIntent(): PaymentIntent | undefined {
+  try { const raw = localStorage.getItem(INTENT_KEY); return raw ? (JSON.parse(raw) as PaymentIntent) : undefined; } catch { return undefined; }
+}
 
 const overlay = document.getElementById("dims") as HTMLDivElement;
 const form = document.getElementById("dims-form") as HTMLFormElement;
@@ -396,6 +402,9 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       swap: (id, product) => placement!.replace(id, product, catalog.get(product.id)?.asset),
       copyText,
       onOpen: () => shopBar.setOpen(false),
+      // The sandbox receipt for this room survives a reload (the API keeps the ledger while it runs).
+      savedIntent: readSavedIntent(),
+      onIntentChange: (intent) => { try { intent ? localStorage.setItem(INTENT_KEY, JSON.stringify(intent)) : localStorage.removeItem(INTENT_KEY); } catch { /* storage full or blocked */ } },
     });
     refreshBudget = () => budget.refresh();
     refreshShopList = () => shopBar.refresh();

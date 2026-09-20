@@ -66,3 +66,29 @@ body.budgetbar-open #budgetbar { transform: none; }
 #rightbar .source .hit .actions { flex-wrap: wrap; gap: 4px 8px; }
 #rightbar .source .hit .add { padding: 6px 12px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-size: 11.5px; font-weight: 600; text-decoration: none; }
 #rightbar .source .hit .add:hover { background: #000; }
+
+/* ── Spending mandate + sandbox receipt ─────────────────────────────────────── */
+#budgetbar .find { background: var(--ink); } #budgetbar .find:hover:not(:disabled) { background: #000; }
+#budgetbar .agent-actions { flex-wrap: wrap; align-items: center; }
+#budgetbar .mandate { margin: 12px 0 6px; padding: 12px; border-radius: 16px; background: #fff; box-shadow: inset 0 0 0 1px rgba(63,58,46,.08); }
+#budgetbar .mandate h4 { margin: 0 0 2px; font-family: var(--display); font-weight: 400; font-size: 18px; }
+#budgetbar .mandate .amount-row { margin: 8px 0 6px; }
+#budgetbar .mandate .cap { width: 100%; text-align: right; font-weight: 600; }
+#budgetbar .terms { margin: 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.5; color: var(--ink-soft); }
+#budgetbar .terms li { position: relative; padding-left: 16px; } #budgetbar .terms li::before { content: ""; position: absolute; left: 2px; top: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--sage-deep); }
+#budgetbar .terms b { color: var(--ink); }
+#budgetbar .sandbox-note { margin: 10px 0 0; padding: 6px 10px; border-radius: 10px; background: var(--cream); font-size: 11px; color: var(--ink-soft); }
+#budgetbar .pay-error { margin: 8px 0; padding: 8px 12px; border-radius: 12px; background: #fbeae6; color: #c8412c; font-size: 12px; line-height: 1.4; }
+#budgetbar .receipt { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: #fff; box-shadow: inset 0 0 0 1px rgba(63,58,46,.08); margin: 6px 0 10px; animation: sheet-in .3s cubic-bezier(.2,.8,.2,1); }
+#budgetbar .receipt .badge { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; font-weight: 700; background: #dfeadb; color: #3f7d4e; animation: pop .5s cubic-bezier(.2,1.4,.4,1); }
+#budgetbar .receipt.declined .badge { background: #fbeae6; color: #c8412c; }
+#budgetbar .receipt.reversed .badge { background: var(--cream-2); color: var(--ink-soft); }
+#budgetbar .receipt-body { display: grid; gap: 2px; min-width: 0; } #budgetbar .receipt-body b { font-size: 14px; } #budgetbar .receipt-body span { font-size: 12px; color: var(--ink-soft); }
+#budgetbar .receipt-meta { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin: 0 0 10px; font-size: 11.5px; }
+#budgetbar .receipt-meta dt { color: var(--ink-soft); } #budgetbar .receipt-meta dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+#budgetbar .receipt-meta code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; background: var(--cream); padding: 1px 6px; border-radius: 6px; }
+#budgetbar .receipt-meta em { font-style: normal; padding: 1px 6px; border-radius: 999px; background: #fdf3c8; color: #7a5a12; font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+#budgetbar .timeline { list-style: none; margin: 0 0 12px; padding: 0 0 0 10px; border-left: 2px solid #e3d9c6; font-size: 11.5px; }
+#budgetbar .timeline li { position: relative; display: flex; justify-content: space-between; gap: 8px; padding: 2px 0 2px 10px; }
+#budgetbar .timeline li::before { content: ""; position: absolute; left: -15px; top: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
+#budgetbar .timeline span { text-transform: capitalize; font-weight: 500; } #budgetbar .timeline time { color: var(--ink-soft); }

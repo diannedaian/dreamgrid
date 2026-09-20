@@ -36,7 +36,8 @@ Product catalog / room controls / budget UI
          services/api (FastAPI /api/v1)
              /                       \
  model-generation boundary      commerce boundary
- OpenAI -> Blender -> GLB        budget -> Visa sandbox
+ OpenAI -> Blender -> GLB        budget -> mandate -> passkey -> sandbox payment intent
+                                 (services/api /api/v1/payments; Visa adapter can replace the mock)
 ```
 
 The browser and backend share data contracts, not implementation details. The backend can replace a live provider with a fixture without changing the frontend.

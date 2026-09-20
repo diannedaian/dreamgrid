@@ -108,14 +108,24 @@ def test_benchmark_overrides_and_safe_diagnostics(
 
     def handler(request: httpx.Request) -> httpx.Response:
         calls.append(json.loads(request.content))
-        return httpx.Response(200, json={
-            "model": "gpt-5.6-sol", "status": "completed",
-            "usage": {"input_tokens": 100, "output_tokens": 50,
-                      "output_tokens_details": {"reasoning_tokens": 20}},
-            "output": [{"type": "message", "content": [
-                {"type": "output_text", "text": json.dumps(geometry_data())}
-            ]}],
-        })
+        return httpx.Response(
+            200,
+            json={
+                "model": "gpt-5.6-sol",
+                "status": "completed",
+                "usage": {
+                    "input_tokens": 100,
+                    "output_tokens": 50,
+                    "output_tokens_details": {"reasoning_tokens": 20},
+                },
+                "output": [
+                    {
+                        "type": "message",
+                        "content": [{"type": "output_text", "text": json.dumps(geometry_data())}],
+                    }
+                ],
+            },
+        )
 
     client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
 
@@ -125,11 +135,19 @@ def test_benchmark_overrides_and_safe_diagnostics(
 
     monkeypatch.setattr(httpx, "AsyncClient", factory)
     output = tmp_path / "geometry.json"
-    asyncio.run(OpenAIAnalyzer(
-        Settings(_env_file=None, OPENAI_API_KEY="unit-test-not-a-real-key",
-                 openai_model="gpt-5.6-sol", openai_reasoning_effort="high"),
-        output, request_timeout=300, max_output_tokens=10000,
-    ).analyze("data:image/jpeg;base64,PRIVATE_IMAGE", "private-input", "", None))
+    asyncio.run(
+        OpenAIAnalyzer(
+            Settings(
+                _env_file=None,
+                OPENAI_API_KEY="unit-test-not-a-real-key",
+                openai_model="gpt-5.6-sol",
+                openai_reasoning_effort="high",
+            ),
+            output,
+            request_timeout=300,
+            max_output_tokens=10000,
+        ).analyze("data:image/jpeg;base64,PRIVATE_IMAGE", "private-input", "", None)
+    )
     assert client_options["timeout"] == 300
     assert len(calls) == 1 and calls[0]["max_output_tokens"] == 10000
     assert calls[0]["reasoning"] == {"effort": "high"}

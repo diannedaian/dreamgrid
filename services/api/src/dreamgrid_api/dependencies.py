@@ -4,7 +4,10 @@ from typing import cast
 
 from fastapi import Request
 
+from dreamgrid_api.adapters.commerce.mock_payment_network import MockPaymentNetwork
+from dreamgrid_api.adapters.commerce.passkeys import PasskeyRegistry
 from dreamgrid_api.adapters.commerce.product_sourcing_service import build_product_sourcing
+from dreamgrid_api.boundaries.payments import PaymentNetwork
 from dreamgrid_api.boundaries.product_sourcing import ProductSourcingGateway
 from dreamgrid_api.config import Settings
 
@@ -21,3 +24,21 @@ def product_sourcing(request: Request) -> ProductSourcingGateway:
         gateway = build_product_sourcing(runtime_settings(request))
         request.app.state.product_sourcing = gateway
     return cast(ProductSourcingGateway, gateway)
+
+
+def payment_network(request: Request) -> PaymentNetwork:
+    network = getattr(request.app.state, "payment_network", None)
+    if network is None:
+        settings = runtime_settings(request)
+        network = MockPaymentNetwork(settings.payment_signing_key.get_secret_value())
+        request.app.state.payment_network = network
+    return cast(PaymentNetwork, network)
+
+
+def passkeys(request: Request) -> PasskeyRegistry:
+    registry = getattr(request.app.state, "passkeys", None)
+    if registry is None:
+        settings = runtime_settings(request)
+        registry = PasskeyRegistry(settings.passkey_rp_id, tuple(settings.passkey_origins))
+        request.app.state.passkeys = registry
+    return cast(PasskeyRegistry, registry)

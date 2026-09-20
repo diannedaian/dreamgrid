@@ -198,22 +198,34 @@ def test_decor_prepare_generate_and_download_through_api(tmp_path):
     analyzer, builder = PlantAnalyzer(), FakeBuilder()
     pipeline = Pipeline(settings, analyzer, builder)
     with TestClient(create_app(settings, pipeline)) as client:
-        response = client.post("/api/v1/models/prepare", json={
-            "imageDataUrl": image_data(), "categoryHint": "decor",
-        })
+        response = client.post(
+            "/api/v1/models/prepare",
+            json={
+                "imageDataUrl": image_data(),
+                "categoryHint": "decor",
+            },
+        )
         assert response.status_code == 200
         prepared = response.json()
         assert prepared["category"] == "decor" and prepared["template"] == "custom"
         assert all(m["source"] == "estimated" for m in prepared["dimensions"].values())
-        spec = compile_geometry(pipeline.imports[prepared["importId"]].analysis,
-                                Dimensions(widthM=.6, heightM=1.7, depthM=.3), ROOT)
+        spec = compile_geometry(
+            pipeline.imports[prepared["importId"]].analysis,
+            Dimensions(widthM=0.6, heightM=1.7, depthM=0.3),
+            ROOT,
+        )
         assert spec["category"] == "decor" and spec["lights"] == []
-        generated = client.post("/api/v1/models/generate", json={
-            "importId": prepared["importId"], "productId": "plant-test",
-            "dimensions": {"widthM": .6, "heightM": 1.7, "depthM": .3},
-            "confirmed": True, "acceptEstimated": True,
-            "estimatedAxes": ["width", "height", "depth"],
-        })
+        generated = client.post(
+            "/api/v1/models/generate",
+            json={
+                "importId": prepared["importId"],
+                "productId": "plant-test",
+                "dimensions": {"widthM": 0.6, "heightM": 1.7, "depthM": 0.3},
+                "confirmed": True,
+                "acceptEstimated": True,
+                "estimatedAxes": ["width", "height", "depth"],
+            },
+        )
         assert generated.status_code == 202
 
         async def complete():
@@ -231,9 +243,14 @@ def test_decor_preset_fails_clearly_without_provider_or_builder(tmp_path):
     builder = FakeBuilder()
     pipeline = Pipeline(settings, builder=builder)
     with TestClient(create_app(settings, pipeline)) as client:
-        response = client.post("/api/v1/models/prepare", json={
-            "imageDataUrl": image_data(), "categoryHint": "decor", "mode": "preset",
-        })
+        response = client.post(
+            "/api/v1/models/prepare",
+            json={
+                "imageDataUrl": image_data(),
+                "categoryHint": "decor",
+                "mode": "preset",
+            },
+        )
         assert response.status_code == 400
         assert "No decor preset" in response.json()["detail"]
         assert pipeline.ai_calls == builder.calls == 0

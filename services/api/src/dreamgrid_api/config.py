@@ -37,6 +37,22 @@ class Settings(BaseSettings):
     product_search: Literal["auto", "serpapi", "openai", "fixture"] = "auto"
     serpapi_api_key: SecretStr | None = Field(default=None, validation_alias="SERPAPI_API_KEY")
     fixtures_dir: str | None = None
+    # Sandbox agent payments: signs mock payment-intent tokens and verifies passkey approvals.
+    # Only "sandbox" exists today; a Visa adapter would add another value behind the same port.
+    payment_network: Literal["sandbox"] = "sandbox"
+    payment_signing_key: SecretStr = Field(
+        default=SecretStr("dreamgrid-dev-signing-key-change-me"),
+        validation_alias="DREAMGRID_PAYMENT_SIGNING_KEY",
+    )
+    passkey_rp_id: str = "localhost"
+    passkey_origins: list[str] = Field(
+        default_factory=lambda: [
+            "http://localhost:5173",
+            "https://localhost:5173",
+            "http://127.0.0.1:5173",
+            "https://127.0.0.1:5173",
+        ]
+    )
 
     @property
     def sourcing_is_live(self) -> bool:
