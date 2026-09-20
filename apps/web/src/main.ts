@@ -248,9 +248,11 @@ async function start(room: RoomSpec, plan: Plan | null, view: boolean) {
       ignoreBtn.hidden = !(flagged || ignoring);
       ignoreBtn.textContent = ignoring ? "Show overlap" : "Ignore overlap";
       ignoreBtn.title = ignoring ? "Turn the red overlap warning back on for this item" : "Keep this item here without the red overlap warning";
-      const wall = placement!.isAgainstWall(item.id);
-      upBtn.disabled = downBtn.disabled = !wall;
-      upBtn.title = downBtn.title = wall ? "Move up or down the wall (↑ / ↓, shift for a foot)" : "Push the item against a wall to move it up or down";
+      // Only decor and table lamps move vertically; everything else stays on the floor.
+      const raisable = placement!.canRaise(item.id);
+      upBtn.hidden = downBtn.hidden = !raisable;
+      upBtn.disabled = downBtn.disabled = false;
+      upBtn.title = downBtn.title = "Move up or down (↑ / ↓, shift for a foot)";
     });
     document.getElementById("tool-rotate")!.addEventListener("click", () => placement!.rotateSelected());
     document.getElementById("tool-delete")!.addEventListener("click", () => placement!.removeSelected());

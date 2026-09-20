@@ -104,7 +104,8 @@ export class PlacementController {
     const sx = this.snapClamp(x, W, fw), sz = this.snapClamp(z, D, fd);
     const against = sx - fw / 2 <= -W / 2 + 1e-6 || sz - fd / 2 <= -D / 2 + 1e-6;
     const ih = p.product.dimensionsM[1];
-    const sy = against ? Math.min(Math.max(0, snapToInch(y)), Math.max(0, H - ih)) : 0;
+    // Wall-hugging items keep their height; decor and table lamps can sit at any height (e.g. on a desk).
+    const sy = against || this.canRaise(id) ? Math.min(Math.max(0, snapToInch(y)), Math.max(0, H - ih)) : 0;
     p.item.positionM = [sx, sy, sz];
     p.object.position.set(sx, sy, sz);
     if (this.selected === id) this.placeRing(p);
@@ -118,10 +119,18 @@ export class PlacementController {
     return p.item.positionM[0] - fw / 2 <= -this.room.widthM / 2 + 1e-6 || p.item.positionM[2] - fd / 2 <= -this.room.depthM / 2 + 1e-6;
   }
 
-  /** Raise or lower a wall-hugging item by whole inches (clamped to floor and ceiling). */
+  /** Items that may move up and down: decor, and table / desk lamps. */
+  canRaise(id: string): boolean {
+    const p = this.placed.get(id);
+    if (!p) return false;
+    const c = p.product.category as string;
+    return c === "decor" || (c === "lamp" && /\b(table|desk)\b/i.test(p.product.title));
+  }
+
+  /** Raise or lower a raisable item by whole inches (clamped to floor and ceiling). */
   raise(id: string, inches: number) {
     const p = this.placed.get(id);
-    if (!p || !this.isAgainstWall(id)) return;
+    if (!p || !this.canRaise(id)) return;
     this.moveTo(id, p.item.positionM[0], p.item.positionM[2], p.item.positionM[1] + inches * INCH_M);
     this.emit();
   }
@@ -141,7 +150,7 @@ export class PlacementController {
     if (!this.selected) return;
     const id = this.selected;
     this.ignored.has(id) ? this.ignored.delete(id) : this.ignored.add(id);
-    this.applyTints();
+    this.updateOverlaps(); // re-pairs: the partner item is cleared (or flagged again) too
     this.refreshHover(this.hovered);
     const p = this.placed.get(id);
     if (p) this.onSelect(p.item);
@@ -283,6 +292,10 @@ export class PlacementController {
     this.overlapping.clear();
     for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
       const a = boxes[i], b = boxes[j];
+      // Rugs and mats lie under everything, so they never count as an overlap.
+      if (isFloorCovering(list[i]) || isFloorCovering(list[j])) continue;
+      // "Ignore overlap" on either item clears the pair for both.
+      if (this.ignored.has(a.id) || this.ignored.has(b.id)) continue;
       if (a.x0 < b.x1 - eps && b.x0 < a.x1 - eps && a.z0 < b.z1 - eps && b.z0 < a.z1 - eps && a.y0 < b.y1 - eps && b.y0 < a.y1 - eps) {
         this.overlapping.add(a.id); this.overlapping.add(b.id);
       }
@@ -404,6 +417,11 @@ export class PlacementController {
     else if (e.key === "ArrowDown") { e.preventDefault(); this.raise(this.selected, e.shiftKey ? -12 : -1); }
     else if (e.key === "Escape") this.select(null);
   }
+}
+
+/** Rugs, mats and anything a couple of inches thick: furniture sits on top, never "overlaps". */
+function isFloorCovering(p: Placed): boolean {
+  return /\b(rug|mat|carpet)\b/i.test(p.product.title) || p.product.dimensionsM[1] <= 0.06;
 }
 
 /** Emissive tint on every mesh of an object (null clears). */
