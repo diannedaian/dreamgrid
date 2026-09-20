@@ -45,10 +45,19 @@ const unb64 = (s: string) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/
 
 const CRED_KEY = "dreamgrid.passkey";
 
-export type PasskeySupport = "available" | "unsupported";
+export type PasskeySupport = "available" | "ip-host" | "unsupported";
 
-export function passkeySupport(): PasskeySupport {
-  return typeof PublicKeyCredential !== "undefined" && !!navigator.credentials?.create ? "available" : "unsupported";
+/** WebAuthn needs a real hostname as the relying-party ID: browsers reject IP literals like 127.0.0.1. */
+export function passkeySupport(hostname = typeof location === "undefined" ? "" : location.hostname): PasskeySupport {
+  if (typeof PublicKeyCredential === "undefined" || !navigator.credentials?.create) return "unsupported";
+  return /^(\d{1,3}\.){3}\d{1,3}$|^\[?[0-9a-f:]+\]?$/i.test(hostname) && hostname !== "localhost" ? "ip-host" : "available";
+}
+
+/** The same page served from `localhost`, where a passkey is allowed. */
+export function localhostUrl(href = location.href): string {
+  const u = new URL(href);
+  u.hostname = "localhost";
+  return u.toString();
 }
 
 export function createPaymentsClient(fetcher: typeof fetch = fetch, storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null = typeof localStorage === "undefined" ? null : localStorage) {

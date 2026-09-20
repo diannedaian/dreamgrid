@@ -10,7 +10,7 @@ import { activeSwaps, applySwap, fitToBudget, rankAlternatives, revertSwaps, typ
 import { roundUsd, summarizeBudget, type BudgetSummary } from "./budget";
 import { formatSignedUsd, formatUsd } from "./format";
 import { approvePlan, buildShoppingPlan, planToText, type ShoppingPlan } from "./shoppingPlan";
-import { createPaymentsClient, paymentPlanFrom, planIdempotencyKey, type PaymentIntent, type PaymentsClient } from "./payments";
+import { createPaymentsClient, localhostUrl, paymentPlanFrom, planIdempotencyKey, type PaymentIntent, type PaymentsClient } from "./payments";
 
 export type BudgetBarOptions = {
   room: RoomSpec;
@@ -205,7 +205,8 @@ export function mountBudgetBar(bar: HTMLElement, chip: HTMLButtonElement, o: Bud
     if (intent && p.status === "approved") return renderReceipt(p, intent);
     if (mandateMaxUsd < p.totalUsd) mandateMaxUsd = Math.ceil(p.totalUsd / 10) * 10 || p.totalUsd;
     const merchants = [...new Set(p.groups.map((g) => g.merchant || "Unknown store"))];
-    const passkey = payments.passkeySupport() === "available";
+    const support = payments.passkeySupport();
+    const passkey = support === "available";
     pane.innerHTML = `
       <h3>Review your shopping plan</h3>
       ${planBody(p)}
@@ -222,6 +223,7 @@ export function mountBudgetBar(bar: HTMLElement, chip: HTMLButtonElement, o: Bud
         <p class="sandbox-note">Sandbox network: a signed test token is issued and no money moves.</p>
       </div>
       ${payError ? `<p class="pay-error">${esc(payError)}</p>` : ""}
+      ${support === "ip-host" ? `<p class="sub host-note">Passkeys need a hostname, not an IP address. <a href="${esc(localhostUrl())}">Open this room at localhost</a> to approve with Touch ID, or approve without a passkey below.</p>` : ""}
       <div class="agent-actions">
         ${passkey ? `<button type="button" class="find approve passkey" ${paying ? "disabled" : ""}>${paying ? "Waiting for your passkey…" : `${payments.hasPasskey() ? "Approve with passkey" : "Create passkey & approve"}`}</button>` : ""}
         <button type="button" class="${passkey ? "textlink" : "find"} approve confirm" ${paying ? "disabled" : ""}>${passkey ? "Approve without passkey" : "Approve plan"}</button>

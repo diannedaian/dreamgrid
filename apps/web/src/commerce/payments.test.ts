@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createPaymentsClient, paymentPlanFrom, planIdempotencyKey, type PaymentIntent } from "./payments";
+import { createPaymentsClient, localhostUrl, passkeySupport, paymentPlanFrom, planIdempotencyKey, type PaymentIntent } from "./payments";
 import { buildShoppingPlan } from "./shoppingPlan";
 import { testProduct } from "./testFixtures";
 
@@ -64,6 +64,18 @@ describe("payments client", () => {
     await expect(down.ledger()).rejects.toThrow("payment sandbox is unreachable");
     const rejecting = createPaymentsClient(vi.fn().mockResolvedValue(json({ detail: "The plan changed after the challenge was issued." }, 400)), null);
     await expect(rejecting.createIntent({ lines: [], mandate: { maxAmountUsd: "1", merchants: ["x"], validForMinutes: 1 } }, { challenge: "c" }, "key-12345678")).rejects.toThrow("plan changed");
+  });
+
+  it("refuses to offer a passkey on an IP host (browsers reject IP relying parties) and points at localhost", () => {
+    vi.stubGlobal("PublicKeyCredential", function () {});
+    vi.stubGlobal("navigator", { credentials: { create: () => {}, get: () => {} } });
+    try {
+      expect(passkeySupport("127.0.0.1")).toBe("ip-host");
+      expect(passkeySupport("192.168.1.20")).toBe("ip-host");
+      expect(passkeySupport("localhost")).toBe("available");
+      expect(passkeySupport("dreamgrid.app")).toBe("available");
+      expect(localhostUrl("http://127.0.0.1:5175/?w=144&d=120#x")).toBe("http://localhost:5175/?w=144&d=120#x");
+    } finally { vi.unstubAllGlobals(); }
   });
 
   it("reports passkey support and remembers the enrolled credential per browser", () => {

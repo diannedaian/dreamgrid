@@ -15,7 +15,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
@@ -87,14 +87,17 @@ class ChallengeResponse(CamelModel):
 @router.post("/passkeys/challenge", response_model=ChallengeResponse)
 def passkey_challenge(
     request: ChallengeRequest,
+    http: Request,
     registry: Annotated[PasskeyRegistry, Depends(passkeys)],
 ) -> ChallengeResponse:
     digest = plan_digest(request.plan) if request.purpose == "approve" else "register"
     challenge = registry.issue_challenge(digest)
+    # The browser must use an RP ID matching the host it is on; derive it from the page's Origin.
+    origin = http.headers.get("origin") or http.headers.get("referer") or ""
     return ChallengeResponse(
         challenge=challenge.value,
         plan_digest=digest,
-        rp_id=registry.rp_id,
+        rp_id=registry.rp_id_for(origin),
         expires_at=challenge.expires_at,
     )
 

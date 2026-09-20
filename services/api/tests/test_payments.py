@@ -245,6 +245,58 @@ def test_passkey_registration_and_assertion_verify_the_real_es256_signature() ->
         )
 
 
+def test_passkeys_are_scoped_to_the_host_the_page_is_on() -> None:
+    """A page on 127.0.0.1 must get rpId 127.0.0.1 (WebAuthn rejects 'localhost' there)."""
+
+    registry = PasskeyRegistry("localhost", (), now=lambda: NOW)
+    assert registry.rp_id_for("http://127.0.0.1:5175") == "127.0.0.1"
+    assert registry.rp_id_for("http://localhost:5173") == "localhost"
+    assert registry.rp_id_for("https://evil.example") == "localhost"  # not allowed → configured RP
+    auth = FakeAuthenticator(rp_id="127.0.0.1")
+    origin = "http://127.0.0.1:5175"
+    reg_challenge = registry.issue_challenge("register")
+    reg = auth.register(reg_challenge.value, origin=origin)
+    key = registry.register(
+        base64.urlsafe_b64decode(reg["clientDataJson"] + "=="),
+        base64.urlsafe_b64decode(reg["authenticatorData"] + "=="),
+        reg_challenge.value,
+    )
+    assert key.rp_id == "127.0.0.1"
+    challenge = registry.issue_challenge("d")
+    assertion = auth.assert_(challenge.value, origin=origin)
+    verified = registry.verify_assertion(
+        assertion["credentialId"],
+        base64.urlsafe_b64decode(assertion["clientDataJson"] + "=="),
+        base64.urlsafe_b64decode(assertion["authenticatorData"] + "=="),
+        base64.urlsafe_b64decode(assertion["signature"] + "=="),
+        challenge.value,
+    )
+    assert verified.user_verified
+
+
+def test_challenge_route_reports_the_rp_id_for_the_caller_origin(client: TestClient) -> None:
+    body = {"plan": PLAN}
+    assert (
+        client.post(
+            "/api/v1/payments/passkeys/challenge",
+            json=body,
+            headers={"origin": "http://127.0.0.1:5175"},
+        ).json()["rpId"]
+        == "127.0.0.1"
+    )
+    assert (
+        client.post(
+            "/api/v1/payments/passkeys/challenge",
+            json=body,
+            headers={"origin": "http://localhost:5173"},
+        ).json()["rpId"]
+        == "localhost"
+    )
+    assert (
+        client.post("/api/v1/payments/passkeys/challenge", json=body).json()["rpId"] == "localhost"
+    )
+
+
 def test_origin_rule_follows_the_rp_id() -> None:
     registry = PasskeyRegistry("localhost", ("https://app.example",))
     assert registry.origin_allowed("https://app.example")

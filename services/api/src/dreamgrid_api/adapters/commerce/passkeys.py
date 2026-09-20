@@ -47,6 +47,7 @@ class Passkey:
     credential_id: str
     public_key: ec.EllipticCurvePublicKey
     created_at: datetime
+    rp_id: str = "localhost"
 
 
 @dataclass(frozen=True)
@@ -142,13 +143,23 @@ class PasskeyRegistry:
         self, client_data_json: bytes, authenticator_data: bytes, expected_challenge: str
     ) -> Passkey:
         client = self._client_data(client_data_json, "webauthn.create", expected_challenge)
-        del client
-        self._check_rp_hash(authenticator_data)
+        # The passkey is scoped to the host the page was served from (localhost ≠ 127.0.0.1).
+        rp_id = self.rp_id_for(str(client.get("origin", "")))
+        self._check_rp_hash(authenticator_data, rp_id)
         credential_id, public_key = public_key_from_attested_credential(authenticator_data)
-        key = Passkey(credential_id=credential_id, public_key=public_key, created_at=self._now())
+        key = Passkey(
+            credential_id=credential_id, public_key=public_key, created_at=self._now(), rp_id=rp_id
+        )
         with self._lock:
             self._keys[credential_id] = key
         return key
+
+    def rp_id_for(self, origin: str) -> str:
+        """The relying-party ID a browser at ``origin`` must use: its own host when that host is
+        allowed (so a page on 127.0.0.1 gets ``127.0.0.1``), else the configured RP ID."""
+
+        host = (urlsplit(origin).hostname or "").lower()
+        return host if host and self.origin_allowed(origin) else self.rp_id
 
     def has(self, credential_id: str) -> bool:
         return credential_id in self._keys
@@ -190,7 +201,7 @@ class PasskeyRegistry:
         if key is None:
             raise PasskeyError("This passkey is not enrolled with DreamGrid.")
         self._client_data(client_data_json, "webauthn.get", expected_challenge)
-        self._check_rp_hash(authenticator_data)
+        self._check_rp_hash(authenticator_data, key.rp_id)
         flags = authenticator_data[32]
         if not flags & FLAG_USER_PRESENT:
             raise PasskeyError("The authenticator did not report user presence.")
@@ -238,10 +249,10 @@ class PasskeyRegistry:
             return True
         return self.rp_id == "localhost" and host == "127.0.0.1"
 
-    def _check_rp_hash(self, authenticator_data: bytes) -> None:
+    def _check_rp_hash(self, authenticator_data: bytes, rp_id: str) -> None:
         if len(authenticator_data) < 37:
             raise PasskeyError("authenticatorData is too short.")
-        if authenticator_data[:32] != hashlib.sha256(self.rp_id.encode()).digest():
+        if authenticator_data[:32] != hashlib.sha256(rp_id.encode()).digest():
             raise PasskeyError("The passkey belongs to a different site.")
 
 
