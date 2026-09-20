@@ -130,7 +130,7 @@ try {
   await page.waitForFunction(id => window.__dg.placement.items[0].productId === id, generatedId);
   assert.match(await page.locator("#budgetbar .subtotal").innerText(), /999/);
   await page.locator("#budgetbar .review").click();
-  assert.match(await page.locator("#budgetbar .mandate").innerText(), /Spending mandate.*Sandbox network/s);
+  assert.match(await page.locator("#budgetbar .mandate").innerText(), /Spending mandate.*Test network only/s);
   // Over-mandate first: the fake network declines with a code, nothing is authorized, and the plan can be fixed.
   declineNext = true;
   await page.locator("#budgetbar .approve.confirm").click();
@@ -140,7 +140,7 @@ try {
   await page.locator("#budgetbar .review").click();
   await page.locator("#budgetbar .approve.confirm").click();
   await page.locator("#budgetbar .receipt.authorized").waitFor();
-  assert.match(await page.locator("#budgetbar .pane").innerText(), /Plan approved.*Authorized · hold placed.*dreamgrid-sandbox.*Confirmation click/s);
+  assert.match(await page.locator("#budgetbar .pane").innerText(), /Plan approved.*Authorized · hold placed.*DreamGrid sandbox.*Confirmation click/s);
   await page.locator("#budgetbar .capture").click();
   await page.locator("#budgetbar .receipt.captured").waitFor();
   assert.match(await page.locator("#budgetbar .pane").innerText(), /Purchase complete/);

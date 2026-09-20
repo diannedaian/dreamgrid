@@ -10,7 +10,7 @@ import { activeSwaps, applySwap, fitToBudget, rankAlternatives, revertSwaps, typ
 import { roundUsd, summarizeBudget, type BudgetSummary } from "./budget";
 import { formatSignedUsd, formatUsd } from "./format";
 import { approvePlan, buildShoppingPlan, planToText, type ShoppingPlan } from "./shoppingPlan";
-import { createPaymentsClient, localhostUrl, paymentPlanFrom, planIdempotencyKey, type PaymentIntent, type PaymentsClient } from "./payments";
+import { createPaymentsClient, localhostUrl, paymentPlanFrom, planIdempotencyKey, providerLabel, type PaymentIntent, type PaymentsClient } from "./payments";
 
 export type BudgetBarOptions = {
   room: RoomSpec;
@@ -220,7 +220,7 @@ export function mountBudgetBar(bar: HTMLElement, chip: HTMLButtonElement, o: Bud
           <li>Valid for <b>24 hours</b>, one authorization</li>
           ${p.budgetUsd > 0 ? `<li>Room budget <b>${formatUsd(p.budgetUsd)}</b> is enforced too</li>` : ""}
         </ul>
-        <p class="sandbox-note">Sandbox network: a signed test token is issued and no money moves.</p>
+        <p class="sandbox-note">Test network only: the authorization goes to Visa's sandbox (or DreamGrid's if it is down). A signed token is issued and no money moves.</p>
       </div>
       ${payError ? `<p class="pay-error">${esc(payError)}</p>` : ""}
       ${support === "ip-host" ? `<p class="sub host-note">Passkeys need a hostname, not an IP address. <a href="${esc(localhostUrl())}">Open this room at localhost</a> to approve with Touch ID, or approve without a passkey below.</p>` : ""}
@@ -262,7 +262,9 @@ export function mountBudgetBar(bar: HTMLElement, chip: HTMLButtonElement, o: Bud
       </div>
       <dl class="receipt-meta">
         <dt>Intent</dt><dd><code>${esc(i.intentId)}</code></dd>
-        <dt>Network</dt><dd>${esc(i.provider)} <em>sandbox</em></dd>
+        <dt>Network</dt><dd>${esc(providerLabel(i))} <em>${i.provider === "visa-acceptance-sandbox" ? "test host" : "sandbox"}</em></dd>
+        ${i.networkReference ? `<dt>Visa txn</dt><dd><code>${esc(i.networkReference)}</code>${i.approvalCode ? ` · approval <b>${esc(i.approvalCode)}</b>` : ""}</dd>` : ""}
+        ${i.fallbackReason ? `<dt>Note</dt><dd class="fallback">Visa test host was unreachable; the local sandbox stood in.</dd>` : ""}
         <dt>Approved by</dt><dd>${i.consentMethod === "passkey" ? `Passkey${i.userVerified ? " · verified" : ""}` : "Confirmation click"}</dd>
         <dt>Mandate</dt><dd>up to ${formatUsd(Number(i.mandateMaxUsd))} until ${when(i.mandateExpiresAt)}</dd>
         ${i.token ? `<dt>Token</dt><dd><code class="token" title="${esc(i.token)}">${esc(i.token.slice(0, 18))}…${esc(i.token.slice(-8))}</code> <button type="button" class="textlink copy-token">Copy</button></dd>` : ""}
@@ -290,7 +292,7 @@ export function mountBudgetBar(bar: HTMLElement, chip: HTMLButtonElement, o: Bud
     pane.querySelector(".back")?.addEventListener("click", () => { plan = undefined; if (declined) setIntent(undefined); render(); });
     pane.querySelector<HTMLButtonElement>(".copy")?.addEventListener("click", async (e) => {
       const b = e.currentTarget as HTMLButtonElement;
-      b.textContent = (await o.copyText(`${planToText(p)}\n\nSandbox payment intent ${i.intentId}: ${i.status} (${i.provider}).`)) ? "Copied" : "Copy failed";
+      b.textContent = (await o.copyText(`${planToText(p)}\n\nPayment intent ${i.intentId}: ${i.status} via ${providerLabel(i)} (test network${i.networkReference ? `, txn ${i.networkReference}` : ""}).`)) ? "Copied" : "Copy failed";
       setTimeout(() => (b.textContent = "Copy plan as text"), 1800);
     });
   };

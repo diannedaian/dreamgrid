@@ -26,7 +26,17 @@ export type PaymentIntent = {
   declineCode: string | null;
   declineReason: string | null;
   history: Array<{ at: string; status: string }>;
+  /** Present when a real network (Visa Acceptance test host) authorized the intent. */
+  networkReference?: string | null;
+  approvalCode?: string | null;
+  /** Present when the external network was unreachable and the local sandbox stood in. */
+  fallbackReason?: string | null;
 };
+
+/** Human label for the network that answered. */
+export function providerLabel(intent: Pick<PaymentIntent, "provider">): string {
+  return intent.provider === "visa-acceptance-sandbox" ? "Visa Acceptance" : "DreamGrid sandbox";
+}
 
 const usd = (n: number) => n.toFixed(2);
 

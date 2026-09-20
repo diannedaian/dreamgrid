@@ -7,6 +7,11 @@ from fastapi import Request
 from dreamgrid_api.adapters.commerce.mock_payment_network import MockPaymentNetwork
 from dreamgrid_api.adapters.commerce.passkeys import PasskeyRegistry
 from dreamgrid_api.adapters.commerce.product_sourcing_service import build_product_sourcing
+from dreamgrid_api.adapters.commerce.visa_acceptance import (
+    VisaAcceptanceClient,
+    VisaAcceptanceCredentials,
+    VisaAcceptanceNetwork,
+)
 from dreamgrid_api.boundaries.payments import PaymentNetwork
 from dreamgrid_api.boundaries.product_sourcing import ProductSourcingGateway
 from dreamgrid_api.config import Settings
@@ -29,10 +34,21 @@ def product_sourcing(request: Request) -> ProductSourcingGateway:
 def payment_network(request: Request) -> PaymentNetwork:
     network = getattr(request.app.state, "payment_network", None)
     if network is None:
-        settings = runtime_settings(request)
-        network = MockPaymentNetwork(settings.payment_signing_key.get_secret_value())
+        network = build_payment_network(runtime_settings(request))
         request.app.state.payment_network = network
     return cast(PaymentNetwork, network)
+
+
+def build_payment_network(settings: Settings) -> PaymentNetwork:
+    local = MockPaymentNetwork(settings.payment_signing_key.get_secret_value())
+    if settings.payment_backend != "visa-acceptance":
+        return local
+    credentials = VisaAcceptanceCredentials(
+        merchant_id=settings.visa_acceptance_merchant_id,
+        key_id=settings.visa_acceptance_key_id,
+        shared_secret=settings.visa_acceptance_shared_secret.get_secret_value(),
+    )
+    return VisaAcceptanceNetwork(local, VisaAcceptanceClient(credentials))
 
 
 def passkeys(request: Request) -> PasskeyRegistry:

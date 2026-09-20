@@ -185,8 +185,43 @@ class MockPaymentNetwork:
     def get(self, intent_id: str) -> PaymentIntent | None:
         return self._intents.get(intent_id)
 
+    def get_by_idempotency(self, idempotency_key: str) -> PaymentIntent | None:
+        intent_id = self._by_idempotency.get(idempotency_key)
+        return self._intents.get(intent_id) if intent_id else None
+
     def ledger(self) -> tuple[PaymentIntent, ...]:
         return tuple(self._intents[i] for i in self._order)
+
+    # ── hooks for an external network layered on top ─────────────────────────
+
+    def update(self, intent_id: str, **fields: object) -> PaymentIntent:
+        """Record external-network details (provider, reference, approval code, fallback note)."""
+
+        with self._lock:
+            intent = self._intents[intent_id]
+            updated = PaymentIntent(**{**intent.__dict__, **fields})
+            self._intents[intent_id] = updated
+            return updated
+
+    def decline(self, intent_id: str, code: str, reason: str, **fields: object) -> PaymentIntent:
+        """An external network refused an intent the local rules had passed: void the token."""
+
+        with self._lock:
+            intent = self._intents[intent_id]
+            now = self._now()
+            updated = PaymentIntent(
+                **{
+                    **intent.__dict__,
+                    **fields,
+                    "status": "declined",
+                    "token": None,
+                    "decline_code": code,
+                    "decline_reason": reason,
+                    "history": (*intent.history, (now, "declined")),
+                }
+            )
+            self._intents[intent_id] = updated
+            return updated
 
     # ── tokens ────────────────────────────────────────────────────────────────
 

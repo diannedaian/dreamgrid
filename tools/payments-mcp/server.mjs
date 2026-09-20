@@ -137,7 +137,7 @@ function summarize(name, result) {
     const r = result;
     return r.status === "declined"
       ? `DECLINED (${r.declineCode}): ${r.declineReason} — sandbox, nothing charged.`
-      : `${r.status.toUpperCase()} $${r.amountUsd} across ${r.merchants.join(", ")} · intent ${r.intentId} · ${r.provider} sandbox, no money moved.`;
+      : `${r.status.toUpperCase()} $${r.amountUsd} across ${r.merchants.join(", ")} · intent ${r.intentId} · ${r.provider}${r.networkReference ? ` (Visa txn ${r.networkReference}, approval ${r.approvalCode ?? "n/a"})` : ""} · test network, no money moved.`;
   }
   if (name === "request_payment_instruction") return `Challenge issued for plan ${result.planDigest.slice(0, 12)}…; ask the shopper to approve.`;
   if (name === "list_payment_ledger") return `${result.length} sandbox intent(s).`;

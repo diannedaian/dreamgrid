@@ -27,6 +27,7 @@ DeclineCode = Literal[
     "CONSENT_INVALID",
     "EMPTY_PLAN",
     "UNPRICED_LINE",
+    "NETWORK_DECLINED",
 ]
 
 
@@ -79,6 +80,11 @@ class PaymentIntent:
     decline_code: DeclineCode | None = None
     decline_reason: str | None = None
     history: tuple[tuple[datetime, IntentStatus], ...] = field(default_factory=tuple)
+    # Transaction id / approval code at the external network (Visa Acceptance), when one was used.
+    network_reference: str | None = None
+    approval_code: str | None = None
+    # Set when the external network could not be reached and the local sandbox stood in.
+    fallback_reason: str | None = None
 
 
 class PaymentNetwork(Protocol):

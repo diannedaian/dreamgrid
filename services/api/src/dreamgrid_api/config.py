@@ -37,9 +37,16 @@ class Settings(BaseSettings):
     product_search: Literal["auto", "serpapi", "openai", "fixture"] = "auto"
     serpapi_api_key: SecretStr | None = Field(default=None, validation_alias="SERPAPI_API_KEY")
     fixtures_dir: str | None = None
-    # Sandbox agent payments: signs mock payment-intent tokens and verifies passkey approvals.
-    # Only "sandbox" exists today; a Visa adapter would add another value behind the same port.
-    payment_network: Literal["sandbox"] = "sandbox"
+    # Agent payments. "auto" uses the Visa Acceptance test host when merchant credentials are
+    # present, else the local sandbox. Only apitest.* is ever contacted; no money moves either way.
+    payment_network: Literal["auto", "sandbox", "visa-acceptance"] = "auto"
+    visa_acceptance_merchant_id: str = Field(
+        default="", validation_alias="VISA_ACCEPTANCE_MERCHANT_ID"
+    )
+    visa_acceptance_key_id: str = Field(default="", validation_alias="VISA_ACCEPTANCE_KEY_ID")
+    visa_acceptance_shared_secret: SecretStr = Field(
+        default=SecretStr(""), validation_alias="VISA_ACCEPTANCE_SHARED_SECRET"
+    )
     payment_signing_key: SecretStr = Field(
         default=SecretStr("dreamgrid-dev-signing-key-change-me"),
         validation_alias="DREAMGRID_PAYMENT_SIGNING_KEY",
@@ -59,6 +66,17 @@ class Settings(BaseSettings):
         return self.product_sourcing == "live" or (
             self.product_sourcing == "auto" and bool(self.openai_api_key.get_secret_value())
         )
+
+    @property
+    def payment_backend(self) -> Literal["sandbox", "visa-acceptance"]:
+        if self.payment_network != "auto":
+            return self.payment_network
+        has_creds = bool(
+            self.visa_acceptance_merchant_id
+            and self.visa_acceptance_key_id
+            and self.visa_acceptance_shared_secret.get_secret_value()
+        )
+        return "visa-acceptance" if has_creds else "sandbox"
 
     @property
     def search_backend(self) -> Literal["serpapi", "openai", "fixture"]:

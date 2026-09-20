@@ -19,7 +19,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
-from dreamgrid_api.adapters.commerce.mock_payment_network import MockPaymentNetwork
 from dreamgrid_api.adapters.commerce.passkeys import PasskeyError, PasskeyRegistry
 from dreamgrid_api.boundaries.payments import (
     ConsentEvidence,
@@ -197,6 +196,9 @@ class IntentResponse(CamelModel):
     decline_code: str | None
     decline_reason: str | None
     history: list[dict[str, str]]
+    network_reference: str | None = None
+    approval_code: str | None = None
+    fallback_reason: str | None = None
 
     @classmethod
     def from_intent(cls, intent: PaymentIntent) -> IntentResponse:
@@ -229,6 +231,9 @@ class IntentResponse(CamelModel):
             decline_code=intent.decline_code,
             decline_reason=intent.decline_reason,
             history=[{"at": at.isoformat(), "status": status} for at, status in intent.history],
+            network_reference=intent.network_reference,
+            approval_code=intent.approval_code,
+            fallback_reason=intent.fallback_reason,
         )
 
 
@@ -346,7 +351,6 @@ def verify_token(
     """Lets a merchant-side tool (or the MCP stub) check a token the agent presents."""
 
     del settings
-    payload = (
-        network.verify_token(request.token) if isinstance(network, MockPaymentNetwork) else None
-    )
+    verifier = getattr(network, "verify_token", None)
+    payload = verifier(request.token) if callable(verifier) else None
     return VerifyResponse(valid=payload is not None, payload=payload, provider="dreamgrid-sandbox")

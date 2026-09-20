@@ -43,13 +43,20 @@ at their current placement. Only completed, still-applicable swaps count as savi
 Approval confirms a shopping plan for the current session, not a payment or Visa
 integration. Room/catalog changes invalidate the reviewed plan. Nothing is purchased.
 
-## Agent payments (sandbox)
+## Agent payments (Visa Acceptance test host + local sandbox)
 
-"Approve plan" is now a real authorization flow against DreamGrid's own **sandbox payment
-network** (`services/api` `/api/v1/payments`, Linda's boundary `boundaries/payments.py`).
-It moves no money and contacts no card network; every response says `provider:
-"dreamgrid-sandbox", isSandbox: true`. The shape mirrors Visa Intelligent Commerce so a real
-adapter can replace the mock behind the same port.
+"Approve plan" is a real authorization flow through `services/api` `/api/v1/payments`
+(Linda's boundary `boundaries/payments.py`). Mandate, consent and token rules run locally;
+with merchant credentials present (`VISA_ACCEPTANCE_MERCHANT_ID` / `_KEY_ID` /
+`_SHARED_SECRET` in the ignored `.env`) the authorization is then placed on **Visa
+Acceptance's test host** (`apitest.visaacceptance.com`, HTTP-Signature auth, Visa's published
+test card, `capture: false`), and capture / reversal / refund follow the same transaction
+(`adapters/commerce/visa_acceptance.py`). The receipt shows the Visa transaction id and
+approval code (`provider: "visa-acceptance-sandbox"`). Without credentials, or if Visa is
+unreachable, the local network answers instead (`provider: "dreamgrid-sandbox"`, with a
+`fallbackReason`). Only test hosts are ever contacted; no money moves either way, and
+`isSandbox` is always `true`. A Visa decline surfaces as `NETWORK_DECLINED` with the token
+voided.
 
 1. **Spending mandate.** The review sheet shows the exact priced lines and a mandate: a cap
    the shopper can raise (never below the total), the stores involved, 24-hour validity, and
